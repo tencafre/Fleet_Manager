@@ -1060,10 +1060,10 @@ const CFG_DEFAULTS = {
 
 // URL del Cloudflare Worker — cambiar a la URL de producción al deployar
 // Desarrollo local:  http://localhost:8787
-// Producción:        https://fleet-worker.TU-USUARIO.workers.dev // https://fleet.fleetpromt.workers.dev
+// Producción:        https://fleet-worker.TU-USUARIO.workers.dev
 const WORKER_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'http://localhost:8787'
-  : 'https://fleet.fleetpromt.workers.dev'; // ← REEMPLAZAR al deployar
+  : 'https://fleet-worker.TU-USUARIO.workers.dev'; // ← REEMPLAZAR al deployar
 
 function getCfg(){
   try{ return Object.assign({}, CFG_DEFAULTS, JSON.parse(localStorage.getItem(CFG_KEY)||'{}')); }

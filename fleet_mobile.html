@@ -959,7 +959,7 @@ function setDot(k,s){
 }
 const WORKER_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'http://localhost:8787'
-  : 'https://fleet.fleetpromt.workers.dev'; // ← REEMPLAZAR al deployar
+  : 'https://fleet-worker.TU-USUARIO.workers.dev'; // ← REEMPLAZAR al deployar
 
 async function fetchTxt(fileName){
   const r = await fetch(`${WORKER_URL}/data/txt?file=${encodeURIComponent(fileName)}`, {

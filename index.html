@@ -2,39 +2,417 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://api.github.com;">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fleet Calendar — Retiro CERRITO CAR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0b">
+<title>Fleet Calendar — Acceso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  body{margin:0;font-family:'Inter',system-ui,sans-serif;background:#0d0f14;
-    color:#e8eaf0;display:flex;align-items:center;justify-content:center;
-    min-height:100vh;flex-direction:column;gap:12px;text-align:center;padding:20px}
-  .spinner{width:36px;height:36px;border:3px solid rgba(20,184,166,.2);
-    border-top-color:#14b8a6;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  p{font-size:12px;color:#4e5a6e;margin:0}
-  a{color:#14b8a6;font-size:12px}
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:15px;-webkit-text-size-adjust:100%;height:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:#0a0a0b;
+  color:#f0f0f2;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── CARD ── */
+.card{
+  width:100%;
+  max-width:380px;
+  background:#161618;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  padding:36px 32px 32px;
+  box-shadow:0 8px 40px rgba(0,0,0,.5);
+}
+
+/* ── LOGO / BRAND ── */
+.brand{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:32px;
+}
+.brand-icon{
+  width:52px;height:52px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#2dd4bf,#0d9488);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(45,212,191,.25);
+}
+.brand-name{
+  font-size:18px;font-weight:700;
+  letter-spacing:-.025em;
+  color:#f0f0f2;
+  line-height:1;
+}
+.brand-sub{
+  font-size:11px;color:#52525a;
+  margin-top:4px;letter-spacing:.02em;
+}
+
+/* ── FORM ── */
+.form-group{
+  margin-bottom:16px;
+}
+.form-label{
+  display:block;
+  font-size:11px;font-weight:600;
+  color:#8b8b96;
+  text-transform:uppercase;letter-spacing:.07em;
+  margin-bottom:6px;
+}
+.form-input{
+  width:100%;
+  background:#0f0f11;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:9px;
+  padding:12px 14px;
+  font-size:14px;
+  color:#f0f0f2;
+  font-family:'Inter',sans-serif;
+  outline:none;
+  transition:border-color .15s, box-shadow .15s;
+  -webkit-appearance:none;
+}
+.form-input:focus{
+  border-color:#2dd4bf;
+  box-shadow:0 0 0 3px rgba(45,212,191,.12);
+}
+.form-input::placeholder{color:#3a3a42}
+.form-input.error{
+  border-color:#f87171;
+  box-shadow:0 0 0 3px rgba(248,113,113,.10);
+}
+
+/* ── SUBMIT BUTTON ── */
+.btn-login{
+  width:100%;
+  padding:13px;
+  margin-top:8px;
+  background:linear-gradient(135deg,#2dd4bf,#0d9488);
+  color:#000;
+  border:none;
+  border-radius:9px;
+  font-size:14px;font-weight:700;
+  font-family:'Inter',sans-serif;
+  cursor:pointer;
+  letter-spacing:.01em;
+  transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 3px 14px rgba(45,212,191,.25);
+}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(45,212,191,.35)}
+.btn-login:active{transform:scale(.97);box-shadow:none}
+.btn-login:disabled{
+  opacity:.45;cursor:not-allowed;
+  transform:none;box-shadow:none;
+}
+
+/* ── SPINNER ── */
+.spinner{
+  width:16px;height:16px;
+  border:2px solid rgba(0,0,0,.2);
+  border-top-color:#000;
+  border-radius:50%;
+  animation:spin .6s linear infinite;
+  display:none;
+}
+.btn-login.loading .spinner{display:block}
+.btn-login.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── ERROR MESSAGE ── */
+.error-msg{
+  background:rgba(248,113,113,.08);
+  border:1px solid rgba(248,113,113,.2);
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:12px;
+  color:#f87171;
+  margin-top:14px;
+  display:none;
+  line-height:1.5;
+}
+.error-msg.show{display:block}
+
+/* ── RATE LIMIT WARNING ── */
+.rate-msg{
+  font-size:11px;
+  color:#52525a;
+  text-align:center;
+  margin-top:12px;
+  min-height:16px;
+  transition:color .15s;
+}
+.rate-msg.warn{color:#f59e0b}
+
+/* ── LOADING OVERLAY (verificando sesión) ── */
+.checking{
+  position:fixed;inset:0;
+  background:#0a0a0b;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:14px;z-index:100;
+  transition:opacity .3s;
+}
+.checking.hidden{opacity:0;pointer-events:none}
+.check-spinner{
+  width:32px;height:32px;
+  border:2px solid rgba(45,212,191,.15);
+  border-top-color:#2dd4bf;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+.check-label{font-size:12px;color:#52525a;letter-spacing:.02em}
+
+/* ── FOOTER ── */
+.footer{
+  margin-top:28px;
+  font-size:10px;
+  color:#3a3a42;
+  text-align:center;
+  letter-spacing:.03em;
+  line-height:1.6;
+}
 </style>
 </head>
 <body>
-<div class="spinner"></div>
-<p id="msg">Detectando dispositivo…</p>
-<p style="margin-top:8px"><a id="fallback" href="fleet_calendar.html">Acceder manualmente</a></p>
-<script>
-(function(){
-  var ua = navigator.userAgent || '';
-  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua)
-    || (window.innerWidth <= 768);
 
-  if(isMobile){
-    document.getElementById('msg').textContent = 'Abriendo versión móvil…';
-    document.getElementById('fallback').href = 'fleet_mobile.html';
-    window.location.replace('fleet_mobile.html');
-  } else {
-    document.getElementById('msg').textContent = 'Abriendo versión escritorio…';
-    window.location.replace('fleet_calendar.html');
+<!-- Verificando sesión existente -->
+<div class="checking" id="checking">
+  <div class="check-spinner"></div>
+  <div class="check-label">Verificando sesión…</div>
+</div>
+
+<!-- Login card -->
+<div class="card" id="loginCard" style="display:none">
+  <div class="brand">
+    <div class="brand-icon">🚗</div>
+    <div class="brand-name">Fleet Calendar</div>
+    <div class="brand-sub">RETIRO CERRITO CAR</div>
+  </div>
+
+  <form id="loginForm" autocomplete="on" onsubmit="return false">
+    <div class="form-group">
+      <label class="form-label" for="email">Email</label>
+      <input
+        class="form-input"
+        id="email"
+        type="email"
+        name="email"
+        placeholder="tu@email.com"
+        autocomplete="username email"
+        inputmode="email"
+        required
+      >
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">Contraseña</label>
+      <input
+        class="form-input"
+        id="password"
+        type="password"
+        name="password"
+        placeholder="••••••••"
+        autocomplete="current-password"
+        required
+      >
+    </div>
+
+    <button class="btn-login" id="loginBtn" type="submit">
+      <div class="spinner"></div>
+      <span class="btn-text">Ingresar</span>
+    </button>
+
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="rate-msg" id="rateMsg"></div>
+  </form>
+</div>
+
+<div class="footer">
+  Fleet Calendar v2.0 · Retiro CERRITO CAR<br>
+  Acceso restringido — solo personal autorizado
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const WORKER_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:8787'
+  : 'https://fleet-worker.TU-USUARIO.workers.dev'; // ← REEMPLAZAR al deployar
+
+// ── DETECTAR DISPOSITIVO ──────────────────────────────────────
+function isMobile() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i
+    .test(navigator.userAgent) || window.innerWidth <= 768;
+}
+
+function redirectByRole(role) {
+  const dest = (role === 'admin' && !isMobile())
+    ? './fleet_calendar.html'
+    : './fleet_mobile.html';
+  window.location.replace(dest);
+}
+
+// ── VERIFICAR SESIÓN EXISTENTE ────────────────────────────────
+async function checkExistingSession() {
+  try {
+    const r = await fetch(`${WORKER_URL}/auth/me`, {
+      credentials: 'include',
+      cache:       'no-store',
+    });
+    if (r.ok) {
+      const me = await r.json();
+      redirectByRole(me.role);
+      return; // redirigiendo — no mostrar login
+    }
+  } catch(e) {
+    console.warn('Session check failed:', e.message);
   }
-})();
+  // Sin sesión válida — mostrar formulario
+  showLogin();
+}
+
+function showLogin() {
+  document.getElementById('checking').classList.add('hidden');
+  document.getElementById('loginCard').style.display = 'block';
+  // Foco en email después de la animación
+  setTimeout(() => document.getElementById('email').focus(), 300);
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────
+let failedAttempts = 0;
+
+async function doLogin() {
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn      = document.getElementById('loginBtn');
+  const errEl    = document.getElementById('errorMsg');
+  const rateEl   = document.getElementById('rateMsg');
+
+  // Limpiar estados
+  errEl.classList.remove('show');
+  errEl.textContent = '';
+  rateEl.textContent = '';
+  rateEl.classList.remove('warn');
+  document.getElementById('email').classList.remove('error');
+  document.getElementById('password').classList.remove('error');
+
+  // Validación básica
+  if (!email || !password) {
+    showError('Completá todos los campos');
+    return;
+  }
+  if (!email.includes('@')) {
+    showError('Ingresá un email válido');
+    document.getElementById('email').classList.add('error');
+    return;
+  }
+
+  // Loading state
+  btn.disabled = true;
+  btn.classList.add('loading');
+
+  try {
+    const r = await fetch(`${WORKER_URL}/auth/login`, {
+      method:      'POST',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({ email, password }),
+    });
+
+    const data = await r.json();
+
+    if (r.ok) {
+      // Login exitoso — redirigir según rol y dispositivo
+      btn.classList.remove('loading');
+      btn.textContent = '✓ Acceso concedido';
+      failedAttempts = 0;
+      setTimeout(() => redirectByRole(data.role), 500);
+      return;
+    }
+
+    // Error de login
+    failedAttempts++;
+    btn.disabled = false;
+    btn.classList.remove('loading');
+
+    if (r.status === 429) {
+      showError(data.error || 'Demasiados intentos. Esperá unos minutos.');
+      rateEl.textContent = 'Acceso temporalmente bloqueado';
+      rateEl.classList.add('warn');
+      btn.disabled = true;
+      setTimeout(() => { btn.disabled = false; }, 60000);
+    } else if (r.status === 401) {
+      showError('Email o contraseña incorrectos');
+      document.getElementById('password').value = '';
+      document.getElementById('password').classList.add('error');
+      document.getElementById('password').focus();
+      if (failedAttempts >= 3) {
+        rateEl.textContent = `${5 - failedAttempts} intentos restantes antes del bloqueo`;
+        rateEl.classList.add('warn');
+      }
+    } else if (r.status === 403) {
+      showError('Usuario inactivo. Contactá al administrador.');
+    } else {
+      showError(data.error || 'Error al conectar con el servidor');
+    }
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    showError('No se pudo conectar al servidor. Verificá tu conexión.');
+    console.error('Login error:', e.message);
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+// ── EVENTOS ───────────────────────────────────────────────────
+document.getElementById('loginForm').addEventListener('submit', doLogin);
+
+// Enter en cualquier campo dispara login
+document.getElementById('email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('password').focus();
+  }
+});
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    doLogin();
+  }
+});
+
+// Limpiar error al escribir
+['email','password'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    document.getElementById(id).classList.remove('error');
+    document.getElementById('errorMsg').classList.remove('show');
+  });
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+checkExistingSession();
 </script>
 </body>
 </html>
