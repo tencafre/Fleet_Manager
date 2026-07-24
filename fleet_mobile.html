@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://api.github.com;">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B5E20">
+<title>Fleet Mobile · Retiro CERRITO CAR</title>
+<!-- Materialize CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<!-- Inter + JetBrains Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   Fleet Mobile — Fine Design System
+   Inspired by: Linear, Vercel, Raycast dark aesthetics
+   Typography: Inter (UI) + JetBrains Mono (data/codes)
+═══════════════════════════════════════════════════ */
+
+:root{
+  /* Surfaces — layered depth */
+  --bg:     #0a0a0b;
+  --s0:     #0f0f11;
+  --s1:     #161618;
+  --s2:     #1c1c1f;
+  --s3:     #242428;
+  --s4:     #2e2e33;
+
+  /* Borders — ultra-subtle */
+  --b:      rgba(255,255,255,.055);
+  --bs:     rgba(255,255,255,.10);
+  --bm:     rgba(255,255,255,.16);
+
+  /* Text hierarchy */
+  --t:      #f0f0f2;
+  --t2:     #8b8b96;
+  --t3:     #52525a;
+  --t-inv:  #0a0a0b;
+
+  /* Brand — teal with warm tint */
+  --acc:    #2dd4bf;
+  --acc2:   #0d9488;
+  --accl:   rgba(45,212,191,.10);
+  --acc-glow: 0 0 20px rgba(45,212,191,.18);
+
+  /* Semantic status — muted, desaturated for dark */
+  --c-ok:   #34d399;  --cl-ok:  rgba(52,211,153,.10);
+  --c-new:  #f59e0b;  --cl-new: rgba(245,158,11,.10);
+  --c-fut:  #818cf8;  --cl-fut: rgba(129,140,248,.10);
+  --c-svc:  --c-new;  --cl-svc: rgba(245,158,11,.10);
+  --c-err:  #f87171;  --cl-err: rgba(248,113,113,.10);
+  --c-blu:  #60a5fa;  --cl-blu: rgba(96,165,250,.10);
+  --nav: 52px;
+  --tab: 56px;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --r:  10px;
+  --rs: 6px;
+  --rl: 14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:15px;-webkit-text-size-adjust:100%}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--t);
+  min-height:100dvh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:.01em}
+
+/* ══════════════════════════════════════════════════
+   TOP APP BAR — frosted glass, ultra-thin
+══════════════════════════════════════════════════ */
+.top-app-bar{
+  position:fixed;top:0;left:0;right:0;z-index:90;
+  height:var(--nav);
+  background:rgba(10,10,11,.88);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--b);
+  display:flex;align-items:center;
+  padding:0 6px 0 14px;gap:8px;
+}
+.brand{flex:1;min-width:0}
+.brand-title{
+  font-size:14px;font-weight:700;letter-spacing:-.025em;
+  color:var(--t);line-height:1;
+}
+.brand-sub{font-size:10px;color:var(--t3);margin-top:1px;letter-spacing:.01em}
+.topbar-date{
+  font-size:10px;color:var(--t3);
+  font-family:'JetBrains Mono',monospace;white-space:nowrap;
+}
+.icon-btn{
+  width:34px;height:34px;border-radius:8px;border:none;
+  background:var(--s2);color:var(--t2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;flex-shrink:0;border:1px solid var(--b);
+}
+.icon-btn:active{background:var(--s3);transform:scale(.92)}
+.icon-btn .material-icons{font-size:18px}
+.src-dots{display:flex;gap:5px;align-items:center}
+.src-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--t3);transition:all .3s;
+}
+.src-dot.ok{background:var(--c-ok);box-shadow:0 0 6px rgba(52,211,153,.45)}
+.src-dot.err{background:var(--c-err)}
+.src-dot.loading{background:var(--c-new);animation:blink .9s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+
+/* ══════════════════════════════════════════════════
+   KPI STRIP — glass morphism, minimal
+══════════════════════════════════════════════════ */
+.kpi-strip{
+  position:fixed;top:var(--nav);left:0;right:0;z-index:89;
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--b);
+  border-bottom:1px solid var(--b);
+}
+.kpi-cell{
+  background:var(--s0);
+  padding:7px 8px 8px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.kpi-cell::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(45,212,191,.03) 0%,transparent 60%);
+  pointer-events:none;
+}
+.kpi-n{
+  font-size:20px;font-weight:700;
+  letter-spacing:-.04em;color:var(--t);line-height:1;
+  font-family:'Inter',sans-serif;
+}
+.kpi-l{
+  font-size:8px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--t3);margin-top:3px;font-weight:600;
+}
+
+/* ══════════════════════════════════════════════════
+   VIEW TABS — pill-style, refined
+══════════════════════════════════════════════════ */
+.view-tabs{
+  position:fixed;
+  top:calc(var(--nav) + 38px);
+  left:0;right:0;z-index:88;
+  display:flex;gap:0;
+  background:var(--s0);
+  border-bottom:1px solid var(--b);
+  padding:0 4px;
+}
+.vtab{
+  flex:1;
+  padding:8px 4px 9px;
+  font-size:9px;font-weight:700;
+  color:var(--t3);
+  border:none;background:none;cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:all .18s;letter-spacing:.05em;
+  text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.vtab .material-icons{font-size:17px;transition:color .18s}
+.vtab.active{color:var(--acc)}
+.vtab.active .material-icons{color:var(--acc)}
+.vtab.active{border-bottom-color:var(--acc)}
+
+/* ══════════════════════════════════════════════════
+   SCROLL AREA
+══════════════════════════════════════════════════ */
+.scroll-area{
+  padding-top:calc(var(--nav) + 38px + 36px + 2px);
+  padding-bottom:calc(var(--tab) + var(--safe-b) + 20px);
+  min-height:100dvh;
+}
+
+/* ══════════════════════════════════════════════════
+   MONTH NAV
+══════════════════════════════════════════════════ */
+.month-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 14px 8px;
+}
+.month-title{
+  font-size:17px;font-weight:700;letter-spacing:-.03em;
+  color:var(--t);
+}
+.mnav-btns{display:flex;gap:5px;align-items:center}
+.mnav-btn{
+  width:30px;height:30px;border-radius:var(--rs);
+  border:1px solid var(--b);
+  background:var(--s1);color:var(--t2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;
+}
+.mnav-btn:active{background:var(--s2);transform:scale(.9)}
+.mnav-btn .material-icons{font-size:16px}
+.today-chip{
+  font-size:9px;font-weight:700;height:26px;
+  border-radius:5px;padding:0 10px;
+  border:1px solid rgba(45,212,191,.3);
+  color:var(--acc);background:var(--accl);
+  cursor:pointer;letter-spacing:.06em;text-transform:uppercase;
+  transition:all .15s;
+}
+.today-chip:active{background:rgba(45,212,191,.2)}
+
+/* ══════════════════════════════════════════════════
+   MONTH GRID — refined cells
+══════════════════════════════════════════════════ */
+.month-wrap{padding:0 10px 10px}
+.dow-row{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:2px;margin-bottom:3px;
+}
+.dow-lbl{
+  text-align:center;font-size:8px;font-weight:700;
+  color:var(--t3);text-transform:uppercase;letter-spacing:.07em;padding:3px 0;
+}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-day{
+  background:var(--s1);border-radius:var(--rs);
+  min-height:54px;padding:5px 4px 3px;
+  position:relative;overflow:hidden;cursor:pointer;
+  transition:all .15s;border:1px solid transparent;
+}
+.cal-day:active{background:var(--s2);transform:scale(.96)}
+.cal-day.other{opacity:.22}
+.cal-day.today{
+  border-color:var(--acc);
+  background:var(--accl);
+  box-shadow:inset 0 0 0 1px rgba(45,212,191,.15);
+}
+.cal-day.today .day-num{color:var(--acc);font-weight:800}
+.cal-day.weekend{background:rgba(255,255,255,.018)}
+.day-num{
+  font-size:11px;font-weight:600;color:var(--t2);
+  font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:3px;
+}
+.day-pips{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}
+.pip{
+  width:4px;height:4px;border-radius:50%;flex-shrink:0;
+  box-shadow:0 0 4px currentColor;
+}
+.day-more{
+  position:absolute;bottom:3px;right:4px;
+  font-size:7px;color:var(--t3);font-weight:600;letter-spacing:.03em;
+}
+
+/* ══════════════════════════════════════════════════
+   WEEK VIEW — fine grid
+══════════════════════════════════════════════════ */
+.week-wrap{padding:0 10px 10px}
+.week-head{
+  display:grid;grid-template-columns:28px repeat(7,1fr);gap:2px;margin-bottom:2px;
+}
+.wh-col{
+  text-align:center;padding:5px 2px;
+  border-radius:var(--rs);background:var(--s1);
+  border:1px solid var(--b);
+}
+.wh-dow{
+  font-size:7px;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.06em;
+}
+.wh-num{
+  font-size:15px;font-weight:700;color:var(--t2);
+  font-family:'JetBrains Mono',monospace;line-height:1;margin-top:2px;
+}
+.wh-col.today{background:var(--accl);border-color:rgba(45,212,191,.2)}
+.wh-col.today .wh-num{color:var(--acc)}
+.week-body{display:grid;grid-template-columns:28px repeat(7,1fr);gap:2px}
+.h-lbl{
+  font-size:7px;color:var(--t3);
+  font-family:'JetBrains Mono',monospace;
+  text-align:right;padding-right:3px;
+  display:flex;align-items:flex-start;
+  padding-top:3px;height:48px;letter-spacing:-.01em;
+}
+.w-slot{
+  height:48px;background:var(--s1);
+  border-radius:3px;position:relative;overflow:hidden;
+  border:1px solid transparent;
+}
+.w-slot.today-col{
+  background:rgba(45,212,191,.04);
+  border-color:rgba(45,212,191,.08);
+}
+.w-event{
+  position:absolute;left:1px;right:1px;top:1px;
+  border-radius:3px;padding:2px 4px;
+  font-size:8px;font-weight:600;line-height:1.3;
+  overflow:hidden;cursor:pointer;
+  transition:filter .12s;
+}
+.w-event:active{filter:brightness(.82)}
+
+/* ══════════════════════════════════════════════════
+   DAY VIEW — fine vehicle cards
+══════════════════════════════════════════════════ */
+.day-wrap{padding:0 10px 10px}
+.veh-card{
+  background:var(--s1);
+  border-radius:var(--r);
+  border:1px solid var(--b);
+  overflow:hidden;margin-bottom:7px;
+  transition:border-color .15s;
+}
+.veh-card:has(.res-row:hover){border-color:var(--bs)}
+.veh-head{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px 9px;
+  border-bottom:1px solid var(--b);
+  background:linear-gradient(to right,rgba(45,212,191,.025),transparent);
+}
+.veh-model{
+  font-size:12px;font-weight:600;letter-spacing:-.015em;
+  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:var(--t);
+}
+.plate-chip{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:700;letter-spacing:.07em;
+  color:var(--c-blu);background:var(--cl-blu);
+  border-radius:4px;padding:2px 7px;white-space:nowrap;
+  border:1px solid rgba(96,165,250,.15);
+}
+.fuel-row{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.fbar{
+  width:24px;height:2px;
+  background:var(--s4);border-radius:1px;overflow:hidden;
+}
+.fbar-f{height:100%;border-radius:1px;transition:width .4s ease}
+.fuel-txt{
+  font-size:9px;color:var(--t3);
+  font-family:'JetBrains Mono',monospace;letter-spacing:-.01em;
+}
+.veh-body{padding:6px 10px 8px}
+.res-row{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 8px;border-radius:var(--rs);
+  cursor:pointer;transition:background .12s;
+  margin-bottom:3px;
+}
+.res-row:last-child{margin-bottom:0}
+.res-row:active{background:var(--s3)}
+.res-stripe{
+  width:2px;align-self:stretch;border-radius:1px;
+  flex-shrink:0;min-height:28px;opacity:.8;
+}
+.res-info{flex:1;min-width:0}
+.res-name{
+  font-size:12px;font-weight:500;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:var(--t);letter-spacing:-.01em;
+}
+.res-dates{
+  font-size:9px;color:var(--t3);margin-top:2px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:-.01em;
+}
+.status-chip{
+  font-size:8px;font-weight:700;border-radius:4px;
+  padding:2px 6px;white-space:nowrap;flex-shrink:0;
+  text-transform:uppercase;letter-spacing:.05em;
+}
+.cta-btn{
+  width:28px;height:28px;border-radius:7px;
+  background:var(--s2);border:1px solid var(--b);
+  color:var(--t3);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;flex-shrink:0;
+  transition:all .12s;
+}
+.cta-btn .material-icons{font-size:15px}
+.cta-btn:active{background:var(--s3);color:var(--acc)}
+.no-res{
+  font-size:11px;color:var(--t3);
+  padding:10px 0;text-align:center;letter-spacing:.01em;
+}
+
+/* ══════════════════════════════════════════════════
+   BADGES — fine pill style
+══════════════════════════════════════════════════ */
+.badge-row{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;align-items:center}
+.badge{
+  display:inline-flex;align-items:center;gap:2px;
+  font-size:7px;font-weight:700;border-radius:3px;
+  padding:2px 5px;text-transform:uppercase;letter-spacing:.06em;
+}
+.badge-maint{
+  background:var(--cl-err);color:var(--c-err);
+  border:1px solid rgba(248,113,113,.2);
+  animation:pulse-badge 2.5s infinite;
+}
+.badge-transfer{
+  background:rgba(245,158,11,.10);color:var(--c-new);
+  border:1px solid rgba(245,158,11,.2);
+  animation:pulse-badge 2.5s infinite;
+}
+@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ══════════════════════════════════════════════════
+   FLEET LIST — linear-style rows
+══════════════════════════════════════════════════ */
+.fleet-wrap{padding:0 10px 10px}
+.fl-item{
+  background:var(--s1);border-radius:var(--r);
+  border:1px solid var(--b);
+  display:flex;align-items:center;gap:12px;
+  padding:11px 13px;margin-bottom:5px;
+  cursor:pointer;transition:all .15s;
+}
+.fl-item:active{background:var(--s2);transform:scale(.99)}
+.fl-avatar{
+  width:34px;height:34px;border-radius:8px;
+  background:var(--s3);border:1px solid var(--b);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.fl-avatar .material-icons{font-size:17px;color:var(--t3)}
+.fl-info{flex:1;min-width:0}
+.fl-model{
+  font-size:12px;font-weight:600;letter-spacing:-.015em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t);
+}
+.fl-sub{
+  font-size:9px;color:var(--t3);margin-top:3px;
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  letter-spacing:.01em;
+}
+.fl-status{
+  font-size:8px;font-weight:700;border-radius:4px;
+  padding:2px 7px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;
+}
+
+/* ══════════════════════════════════════════════════
+   BOTTOM NAV — glass, minimal
+══════════════════════════════════════════════════ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:90;
+  height:calc(var(--tab) + var(--safe-b));
+  background:rgba(10,10,11,.92);
+  backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border-top:1px solid var(--b);
+  display:flex;align-items:flex-start;padding-top:5px;
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-size:8px;font-weight:700;color:var(--t3);
+  border:none;background:none;cursor:pointer;padding:5px 4px;
+  text-transform:uppercase;letter-spacing:.06em;transition:color .18s;
+}
+.nav-item .material-icons{font-size:20px;transition:color .18s}
+.nav-item.active{color:var(--t)}
+.nav-item.active .material-icons{color:var(--acc)}
+
+/* ══════════════════════════════════════════════════
+   FAB — refined
+══════════════════════════════════════════════════ */
+.fab{
+  position:fixed;right:16px;
+  bottom:calc(var(--tab) + var(--safe-b) + 12px);
+  z-index:95;
+  width:48px;height:48px;border-radius:14px;
+  background:var(--acc);color:var(--t-inv);border:none;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(45,212,191,.35), var(--acc-glow);
+  cursor:pointer;transition:transform .15s,box-shadow .15s;
+}
+.fab:active{transform:scale(.9);box-shadow:0 2px 8px rgba(45,212,191,.2)}
+.fab .material-icons{font-size:20px}
+.fab.show{display:flex}
+
+/* ══════════════════════════════════════════════════
+   BOTTOM SHEETS — ultra-refined
+══════════════════════════════════════════════════ */
+.sheet-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  z-index:200;display:none;flex-direction:column;justify-content:flex-end;
+}
+.sheet-overlay.open{display:flex}
+.sheet{
+  background:var(--s1);
+  border-radius:18px 18px 0 0;
+  border:1px solid var(--b);
+  border-bottom:none;
+  max-height:88dvh;overflow-y:auto;
+  padding-bottom:calc(24px + var(--safe-b));
+  animation:slideUp .2s cubic-bezier(.32,0,.67,0);
+}
+@keyframes slideUp{from{transform:translateY(60%);opacity:.2}to{transform:translateY(0);opacity:1}}
+.drag-handle{
+  width:32px;height:3px;border-radius:2px;
+  background:var(--s4);margin:10px auto 0;
+}
+.sheet-title{
+  font-size:16px;font-weight:700;letter-spacing:-.025em;color:var(--t);
+}
+.sheet-sub{
+  font-size:10px;color:var(--t3);margin-top:3px;
+  font-family:'JetBrains Mono',monospace;letter-spacing:.01em;
+}
+.sheet-head{
+  padding:14px 18px 10px;
+  border-bottom:1px solid var(--b);
+  background:linear-gradient(to bottom,rgba(45,212,191,.03),transparent);
+}
+.sheet-body{padding:10px 18px 4px}
+.detail-row{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:9px 0;border-bottom:1px solid var(--b);gap:12px;
+}
+.detail-row:last-child{border-bottom:none}
+.detail-lbl{
+  font-size:11px;color:var(--t3);font-weight:500;
+  white-space:nowrap;flex-shrink:0;
+}
+.detail-val{
+  font-size:12px;font-weight:600;text-align:right;
+  color:var(--t);min-width:0;word-break:break-word;
+}
+.detail-val.mono{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:-.01em;
+}
+.sheet-actions{
+  padding:8px 18px 0;display:flex;flex-direction:column;gap:7px;
+}
+.sheet-btn{
+  width:100%;padding:13px;border:none;
+  border-radius:var(--r);
+  font-size:14px;font-weight:700;
+  font-family:'Inter',sans-serif;
+  cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:8px;
+  letter-spacing:.005em;transition:all .15s;
+}
+.sheet-btn:active{transform:scale(.97)}
+.sheet-btn.primary{
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  color:var(--t-inv);
+  box-shadow:0 3px 14px rgba(45,212,191,.25), var(--acc-glow);
+}
+.sheet-btn.primary:active{box-shadow:none}
+.sheet-btn.secondary{
+  background:var(--s2);color:var(--t2);
+  border:1px solid var(--b);
+}
+.sheet-btn .material-icons{font-size:17px}
+
+/* ══════════════════════════════════════════════════
+   CFG SHEET — fine settings UI
+══════════════════════════════════════════════════ */
+.cfg-lbl{
+  font-size:9px;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.09em;
+  display:block;margin:13px 0 5px;
+}
+.cfg-input{
+  width:100%;background:var(--s2);
+  border:1px solid var(--b);border-radius:var(--rs);
+  padding:10px 12px;font-size:11px;color:var(--t);
+  font-family:'JetBrains Mono',monospace;
+  outline:none;transition:border-color .15s,box-shadow .15s;letter-spacing:.01em;
+}
+.cfg-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(45,212,191,.12)}
+.gh-panel{
+  background:var(--s2);border:1px solid var(--b);
+  border-radius:var(--rs);padding:12px;margin-top:10px;display:none;
+}
+.save-btn{
+  width:100%;padding:13px;margin-top:16px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  color:var(--t-inv);border:none;border-radius:var(--r);
+  font-size:14px;font-weight:700;font-family:'Inter',sans-serif;
+  cursor:pointer;letter-spacing:.01em;
+  box-shadow:0 3px 14px rgba(45,212,191,.25);transition:all .15s;
+}
+.save-btn:active{transform:scale(.97);box-shadow:none}
+.preset-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.preset-btn{
+  flex:1;padding:9px;background:var(--s2);color:var(--t2);
+  border:1px solid var(--b);border-radius:var(--rs);
+  font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;
+}
+.preset-btn:active{background:var(--s3)}
+/* ══════════════════════════════════════════════════
+   TIRE / ACCESSORY MODAL — mobile sheet
+══════════════════════════════════════════════════ */
+.tsheet-tabs{display:flex;border-bottom:1px solid var(--b);background:var(--s0)}
+.tsheet-tab{
+  flex:1;padding:10px 4px;font-size:10px;font-weight:700;
+  color:var(--t3);background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .15s;
+  text-transform:uppercase;letter-spacing:.05em;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+}
+.tsheet-tab .material-icons{font-size:14px}
+.tsheet-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tsheet-body{padding:12px 16px 6px;max-height:50vh;overflow-y:auto}
+.tsheet-vpicker{display:flex;flex-direction:column;gap:6px;padding-bottom:6px}
+.tsheet-vitem{
+  text-align:left;background:var(--s2);border:1px solid var(--b);
+  border-radius:var(--rs);padding:10px 13px;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:12px;color:var(--t);
+  transition:background .12s;display:flex;align-items:center;gap:8px;
+}
+.tsheet-vitem:active{background:var(--s3)}
+.tsheet-vitem .vplate{
+  font-family:'JetBrains Mono',monospace;font-weight:700;
+  color:var(--c-blu);font-size:11px;flex-shrink:0;
+}
+.tcard-m{
+  background:var(--s2);border:1px solid var(--b);border-radius:var(--rs);
+  padding:10px 12px;margin-bottom:8px;
+}
+.tcard-m-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.tcard-m-badge{
+  font-size:9px;font-weight:700;background:var(--c-blu);color:#000;
+  border-radius:4px;padding:2px 7px;flex:1;
+}
+.tcard-m-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px}
+.tcard-m-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.tcard-m-row.three{grid-template-columns:1fr 1fr 1fr}
+.tcard-m label{font-size:9px;color:var(--t3);display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.tcard-m input,.tcard-m select{
+  width:100%;background:var(--s1);border:1px solid var(--b);border-radius:6px;
+  padding:7px 9px;font-size:11px;color:var(--t);font-family:'Inter',sans-serif;outline:none;
+}
+.tcard-m input:focus,.tcard-m select:focus{border-color:var(--acc)}
+.tadd-btn{
+  width:100%;padding:10px;background:var(--accl);color:var(--acc);
+  border:1px dashed var(--acc);border-radius:var(--rs);
+  font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;
+}
+.acc-row-m{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.acc-row-m select{flex:1.2}
+.acc-row-m input{flex:1.8}
+.acc-row-m button{
+  width:28px;height:28px;flex-shrink:0;background:var(--s1);border:1px solid var(--b);
+  border-radius:6px;color:var(--t3);display:flex;align-items:center;justify-content:center;
+}
+.tno-data{font-size:11px;color:var(--t3);text-align:center;padding:14px 0}
+
+/* ══════════════════════════════════════════════════
+   EMPTY STATE + UTILS + FINE DESIGN MARKER
+══════════════════════════════════════════════════ */
+/* fine-design v2.0 */
+.empty{padding:52px 24px;text-align:center;color:var(--t3)}
+.empty .material-icons{
+  font-size:38px;margin-bottom:12px;display:block;
+  color:var(--s4);
+}
+.empty p{font-size:12px;line-height:1.7;color:var(--t3)}
+
+/* Divider */
+.divider{height:1px;background:var(--b);margin:8px 0}
+
+/* Section header */
+.section-hd{
+  font-size:10px;font-weight:700;color:var(--t3);
+  text-transform:uppercase;letter-spacing:.09em;
+  padding:10px 14px 4px;
+}
+</style>
+</head>
+<body>
+
+<!-- TOP APP BAR -->
+<div class="top-app-bar">
+  <div class="brand">
+    <div class="brand-title">Fleet Calendar</div>
+    <div class="brand-sub">Retiro CERRITO CAR</div>
+  </div>
+  <span class="topbar-date" id="todayLbl"></span>
+  <div class="src-dots">
+    <span class="src-dot" id="dot-pque" title="Parque"></span>
+    <span class="src-dot" id="dot-res"  title="Reservas"></span>
+    <span class="src-dot" id="dot-tel"  title="Telemática"></span>
+  </div>
+  <button class="icon-btn" onclick="openTireSheet(null)" title="Neumáticos y accesorios"><span class="material-icons">tire_repair</span></button>
+  <button class="icon-btn" onclick="openCfg()"><span class="material-icons">settings</span></button>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+  <div class="kpi-cell"><div class="kpi-n" id="st-total">—</div><div class="kpi-l">Flota</div></div>
+  <div class="kpi-cell"><div class="kpi-n" id="st-active" style="color:#69F0AE">—</div><div class="kpi-l">Activas</div></div>
+  <div class="kpi-cell"><div class="kpi-n" id="st-avail">—</div><div class="kpi-l">Libres</div></div>
+  <div class="kpi-cell"><div class="kpi-n" id="st-maint">—</div><div class="kpi-l">Service</div></div>
+</div>
+
+<!-- VIEW TABS -->
+<div class="view-tabs">
+  <button class="vtab active" id="vtab-month"  onclick="switchView('month')">
+    <span class="material-icons">calendar_month</span>Mes
+  </button>
+  <button class="vtab" id="vtab-week"  onclick="switchView('week')">
+    <span class="material-icons">view_week</span>Semana
+  </button>
+  <button class="vtab" id="vtab-day"   onclick="switchView('day')">
+    <span class="material-icons">today</span>Día
+  </button>
+  <button class="vtab" id="vtab-list"  onclick="switchView('list')">
+    <span class="material-icons">directions_car</span>Flota
+  </button>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area" id="scrollArea">
+  <div class="month-nav" id="monthNav">
+    <span class="month-title" id="monthTitle"></span>
+    <div class="mnav-btns">
+      <button class="today-chip" onclick="goToday()">HOY</button>
+      <button class="mnav-btn" onclick="navigate(-1)"><span class="material-icons">chevron_left</span></button>
+      <button class="mnav-btn" onclick="navigate(1)"><span class="material-icons">chevron_right</span></button>
+    </div>
+  </div>
+  <div id="viewContent"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn" onclick="fabAction()">
+  <span class="material-icons">assignment</span>
+</button>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" id="nav-cal"   onclick="navSelect('cal');switchView('month')">
+    <span class="material-icons">calendar_today</span>Calendario
+  </button>
+  <button class="nav-item" id="nav-fleet" onclick="navSelect('fleet');switchView('list')">
+    <span class="material-icons">directions_car</span>Flota
+  </button>
+  <button class="nav-item" id="nav-day"   onclick="navSelect('day');switchView('day')">
+    <span class="material-icons">today</span>Hoy
+  </button>
+  <button class="nav-item" id="nav-cfg"   onclick="openCfg()">
+    <span class="material-icons">settings</span>Config
+  </button>
+</div>
+
+<!-- RESERVATION DETAIL SHEET -->
+<div class="sheet-overlay" id="resSheet" onclick="closeSheet('resSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title" id="sh-title">—</div>
+      <div class="sheet-sub"  id="sh-sub">—</div>
+    </div>
+    <div class="sheet-body" id="sh-body"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn primary" id="sh-checklist" onclick="launchChecklistFromSheet()">
+        <span class="material-icons">assignment_turned_in</span> Abrir Check List
+      </button>
+      <button class="sheet-btn secondary" onclick="closeSheet('resSheet')">
+        <span class="material-icons">close</span> Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY SHEET (from month tap) -->
+<div class="sheet-overlay" id="daySheet" onclick="closeSheet('daySheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title" id="ds-title">—</div>
+    </div>
+    <div class="sheet-body" id="ds-body"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn secondary" onclick="switchView('day');closeSheet('daySheet')">
+        <span class="material-icons">today</span> Ver vista de día
+      </button>
+      <button class="sheet-btn secondary" onclick="closeSheet('daySheet')">
+        <span class="material-icons">close</span> Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG SHEET -->
+<!-- ── TIRE / ACCESSORY SHEET ── -->
+<div class="sheet-overlay" id="tireSheet" onclick="closeSheet('tireSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title" id="tireSheetTitle">Neumáticos y accesorios</div>
+      <div class="sheet-sub" id="tireSheetSub"></div>
+    </div>
+    <div class="tsheet-tabs" id="tireSheetTabs" style="display:none">
+      <button class="tsheet-tab active" id="ttab-tires" onclick="switchTireSheetTab('tires')">
+        <span class="material-icons">tire_repair</span>Neumáticos
+      </button>
+      <button class="tsheet-tab" id="ttab-acc" onclick="switchTireSheetTab('acc')">
+        <span class="material-icons">build</span>Accesorios
+      </button>
+    </div>
+    <div class="tsheet-body" id="tireSheetBody"></div>
+    <div class="sheet-actions" id="tireSheetActions" style="display:none">
+      <button class="sheet-btn primary" onclick="saveTireSheetData()">
+        <span class="material-icons">save</span> Guardar
+      </button>
+      <button class="sheet-btn secondary" onclick="closeSheet('tireSheet')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="cfgSheet" onclick="closeSheet('cfgSheet')">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag-handle"></div>
+    <div class="sheet-head">
+      <div class="sheet-title">Fuentes de datos</div>
+      <div class="sheet-sub">Rutas de archivos .txt en el servidor o GitHub</div>
+    </div>
+    <div style="padding:4px 18px 0">
+      <span class="cfg-lbl"><span class="src-dot" id="cdot-pque" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Parque</span>
+      <input class="cfg-input" id="cfgPque" placeholder="./Pque.txt">
+      <span class="cfg-lbl"><span class="src-dot" id="cdot-res" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Reservas</span>
+      <input class="cfg-input" id="cfgRes"  placeholder="./scraped_data.txt">
+      <span class="cfg-lbl"><span class="src-dot" id="cdot-tel" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Telemática</span>
+      <input class="cfg-input" id="cfgTel"  placeholder="./TelemGts_data.txt">
+
+      <div class="gh-panel" id="ghPanel">
+        <span class="cfg-lbl" style="margin-top:0">URL base del repo GitHub</span>
+        <input class="cfg-input" id="ghUrl" placeholder="https://github.com/usuario/repo/tree/main/datos/">
+        <button onclick="applyGithubUrl()" style="margin-top:8px;padding:8px 14px;background:var(--accl);color:var(--acc);border:1px solid var(--acc);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Aplicar</button>
+      </div>
+
+      <span class="cfg-lbl">Webhook n8n — sync neumáticos</span>
+      <input class="cfg-input" id="cfgN8nWebhook" placeholder="https://tu-n8n.com/webhook/fleet-tires-sync">
+      <div id="cst-n8n" style="font-size:10px;margin-top:3px;min-height:14px"></div>
+      <div class="preset-btns">
+        <button class="preset-btn" onclick="toggleGhPanel()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </button>
+        <button class="preset-btn" onclick="resetLocal()">
+          <span class="material-icons" style="font-size:14px">storage</span> Local
+        </button>
+      </div>
+
+      <button class="save-btn" onclick="saveCfgAndReload()">
+        <span class="material-icons" style="font-size:16px;vertical-align:middle;margin-right:4px">save</span>
+        Guardar y recargar
+      </button>
+
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// GLOBALS
+// ═══════════════════════════════════════════════════════════════════════
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth(), vDay = TODAY.getDate();
+let curView = 'month';
+let ST = {pque:null, res:null, tel:null};
+let sheetRes = null;
+
+/* ── XSS PROTECTION ── */
+function esc(s){
+  if(s==null) return '—';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DOW_L  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DOW_S  = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
+
+document.getElementById('todayLbl').textContent =
+  TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+
+// ═══════════════════════════════════════════════════════════════════════
+// PARSERS
+// ═══════════════════════════════════════════════════════════════════════
+function parsePque(txt){
+  return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
+    const cols=line.split('\t');
+    const main=cols[0].trim().split(/\s+/);
+    return {id:main[0], plate:main[main.length-1], model:main.slice(1,-1).join(' '),
+      bodyType:cols[1]?cols[1].trim():'', tankCap:cols[2]?parseInt(cols[2].trim())||0:0};
+  });
+}
+function parseRes(txt){
+  return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
+    const p=line.split('\t'); if(p.length<7) return null;
+    const [code,renter,vehicle,,,startS,endS,status]=p;
+    const plate=vehicle.trim().split(' ').pop();
+    return {code:code.trim(), renter:renter.trim(), vehicle:vehicle.trim(), plate,
+      start:parseD(startS.trim()), end:parseD(endS.trim()),
+      startTime:fmtTime(startS.trim()), endTime:fmtTime(endS.trim()),
+      status:(status||'').trim()};
+  }).filter(x=>x&&x.start&&x.end);
+}
+function parseTel(txt){
+  const m={};
+  txt.trim().split('\n').filter(l=>l.trim()).forEach(line=>{
+    const p=line.split('\t'); if(p.length<6) return;
+    const plate=p[4].trim().split(' ').pop();
+    m[plate]={id:p[0].trim(),coords:p[1].trim(),km:p[2].trim(),fuel:p[3].trim(),loc:p[5].trim()};
+  });
+  return m;
+}
+function parseD(str){
+  const mo={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const m=str.match(/(\d+):(\d+)\s+(AM|PM)\s+(\w+)\s+(\d+),\s+(\d+)/);
+  if(!m) return null;
+  let [,h,min,ap,mon,day,yr]=m;
+  h=parseInt(h); if(ap==='PM'&&h!==12) h+=12; if(ap==='AM'&&h===12) h=0;
+  return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
+}
+function fmtTime(str){
+  const m=str.match(/(\d+):(\d+)\s+(AM|PM)/);
+  if(!m) return '';
+  let [,h,min,ap]=m; h=parseInt(h);
+  if(ap==='PM'&&h!==12) h+=12; if(ap==='AM'&&h===12) h=0;
+  return String(h).padStart(2,'0')+':'+min;
+}
+function fmtDate(d){
+  if(!d) return '—';
+  // handle both Date objects and ISO strings (from JSON serialization)
+  const dt = (d instanceof Date) ? d : new Date(d);
+  if(isNaN(dt.getTime())) return String(d);
+  return dt.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// FILE INPUTS
+// ═══════════════════════════════════════════════════════════════════════
+// ── CARGA MANUAL DESACTIVADA ── (solo autoload desde servidor/GitHub)
+
+// ═══════════════════════════════════════════════════════════════════════
+// AUTOLOAD / CONFIG
+// ═══════════════════════════════════════════════════════════════════════
+const CFG_KEY='fleetcal_datasrc';
+const CFG_DEF={pque:'./Pque.txt',res:'./scraped_data.txt',tel:'./TelemGts_data.txt',
+  tiresAcc:'./fleet_tires_acc.json'
+};
+function getCfg(){try{return Object.assign({},CFG_DEF,JSON.parse(localStorage.getItem(CFG_KEY)||'{}'));}catch(e){return{...CFG_DEF};}}
+function setCfg(c){try{localStorage.setItem(CFG_KEY,JSON.stringify(c));}catch(e){}}
+function setDot(k,s){
+  ['dot-'+k,'cdot-'+k].forEach(id=>{const el=document.getElementById(id);if(el)el.className='src-dot '+s;});
+}
+const WORKER_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+  ? 'http://localhost:8787'
+  : 'https://fleet.fleetpromt.workers.dev'; // ← REEMPLAZAR al deployar
+
+async function fetchTxt(fileName){
+  const r = await fetch(`${WORKER_URL}/data/txt?file=${encodeURIComponent(fileName)}`, {
+    credentials: 'include', cache: 'no-store',
+  });
+  if (r.status === 401) { window.location.replace('./index.html'); return ''; }
+  if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+  return r.text();
+}
+
+// ── dummy to consume old body ──
+
+async function autoloadFiles(){
+  const cfg=getCfg();
+  const KEYS=[
+    {key:'pque',path:CFG_DEF.pque,parser:parsePque},
+    {key:'res', path:cfg.res, parser:parseRes},
+    {key:'tel', path:cfg.tel, parser:parseTel},
+  ];
+  setDot('pque','loading'); setDot('res','loading'); setDot('tel','loading');
+  await Promise.all(KEYS.map(async ({key,path,parser})=>{
+    try{ST[key]=parser(await fetchTxt(path)); setDot(key,'ok');}
+    catch(e){setDot(key,'err'); console.warn('autoload',key,e.message);}
+  }));
+  await loadTiresAccFromRemote();
+  tryRender();
+}
+function openCfg(){
+  const cfg=getCfg();
+  document.getElementById('cfgPque').value=cfg.pque;
+  document.getElementById('cfgRes').value=cfg.res;
+  document.getElementById('cfgTel').value=cfg.tel;
+  const whEl=document.getElementById('cfgN8nWebhook');
+  if(whEl) whEl.value=cfg.n8nWebhook||'';
+  ['pque','res','tel'].forEach(k=>{
+    const s=document.getElementById('dot-'+k);
+    const d=document.getElementById('cdot-'+k);
+    if(s&&d) d.className=s.className;
+  });
+  document.getElementById('ghPanel').style.display='none';
+  openSheet('cfgSheet');
+}
+function saveCfgAndReload(){
+  const whEl=document.getElementById('cfgN8nWebhook');
+  setCfg({
+    pque:       document.getElementById('cfgPque').value.trim()||CFG_DEF.pque,
+    res:        document.getElementById('cfgRes').value.trim() ||CFG_DEF.res,
+    tel:        document.getElementById('cfgTel').value.trim() ||CFG_DEF.tel,
+    n8nWebhook: whEl?whEl.value.trim():'',
+  });
+  closeSheet('cfgSheet');
+  ST={pque:null,res:null,tel:null};
+  autoloadFiles();
+}
+function resetLocal(){
+  document.getElementById('cfgPque').value=CFG_DEF.pque;
+  document.getElementById('cfgRes').value=CFG_DEF.res;
+  document.getElementById('cfgTel').value=CFG_DEF.tel;
+  document.getElementById('ghPanel').style.display='none';
+}
+function toggleGhPanel(){
+  const p=document.getElementById('ghPanel');
+  p.style.display=p.style.display==='none'?'block':'none';
+  if(p.style.display==='block') document.getElementById('ghUrl').focus();
+}
+function applyGithubUrl(){
+  let base=document.getElementById('ghUrl').value.trim();
+  if(!base) return;
+  if(!base.endsWith('/')) base+='/';
+  base=base.replace('https://github.com/','https://raw.githubusercontent.com/').replace('/blob/','/').replace('/tree/','/');
+  document.getElementById('cfgPque').value=base+'Pque.txt';
+  document.getElementById('cfgRes').value =base+'scraped_data.txt';
+  document.getElementById('cfgTel').value =base+'TelemGts_data.txt';
+  document.getElementById('ghPanel').style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// EMBEDDED DATA
+// ═══════════════════════════════════════════════════════════════════════
+(function(){
+  ST.pque=parsePque(`18723 Toyota Corolla HV AT AI239SV\tSEDAN\t43
+10914 Toyota SW4 4x4 7A AT AG269JN\tSUV\t80
+11131 Toyota Etios SD AT AG350QD\tHATCHBACK\t45
+11182 Toyota ETIOS HB A/T AG350QF\tHATCHBACK\t45
+11181 Toyota ETIOS HB A/T AG350QE\tHATCHBACK\t45
+12469 Toyota Yaris HB AT AG500BY\tHATCHBACK\t42
+12684 Toyota Yaris HB AT AG708YK\tHATCHBACK\t42
+12685 Toyota Yaris HB AT AG708YJ\tHATCHBACK\t42
+12877 Toyota Corolla Cross HV AT AG765WS\tSUV2\t36
+13131 Toyota Hilux 4x4 DC AT AG838JY\tPICKUP\t80`);
+  ST.res=parseRes([
+    'yevw52d\tService\tToyota Corolla HV AT AG192XC\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent',
+    'l8mz66g\tNicolas Dominguez\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t12:00 PM  May 27, 2026\t11:00 AM  Jun 30, 2026\tCurrent',
+    'ymzn137\tTeresa Perkins\tToyota Yaris HB AT AG708YK\tRetiro\t--\t4:00 PM  May 29, 2026\t10:00 AM  Jun 16, 2026\tCurrent',
+    'lr181ez\tCUSTOMER SERVICE 21\tToyota Yaris HB AT AG500BY\tRetiro\t--\t4:45 PM  Jun 1, 2026\t6:00 PM  Jun 12, 2026\tCurrent',
+    'kvx36xo\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t9:00 AM  Jun 8, 2026\t9:00 AM  Jun 16, 2026\tCurrent',
+    'k33zx7m\tNicolas Mammone\tToyota Yaris HB AT AG708YJ\tRetiro\t--\t3:00 PM  Jun 8, 2026\t4:00 PM  Jun 13, 2026\tCurrent',
+    'lwq3dem\tSolange Molina\tToyota ETIOS HB A/T AG350QF\tRetiro\t--\t1:00 PM  Jun 12, 2026\t6:00 PM  Jun 16, 2026\tNew',
+    'lwq369e\tGustavo Maquince\tToyota ETIOS HB A/T AG350QE\tRetiro\t--\t6:00 PM  Jun 12, 2026\t6:00 PM  Jun 16, 2026\tNew',
+    'l8mj55g\tService\tToyota Yaris HB AT AG500BY\tRetiro\t--\t9:20 AM  Jun 15, 2026\t1:20 PM  Jun 19, 2026\tNew',
+    'kgdxj1q\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t2:00 PM  Jul 13, 2026\t2:00 PM  Jul 20, 2026\tNew',
+    'y7dozog\tMarcos Dormal\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t6:00 PM  Jul 17, 2026\t9:00 AM  Jul 27, 2026\tNew'
+  ].join('\n'));
+  ST.tel=parseTel([
+    '10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED',
+    '11131\t-34.61351, -58.373844\t73,106\t40\tToyota Etios SD AT AG350QD\tPERU',
+    '11182\t-34.613323, -58.374226\t57,335\t38\tToyota ETIOS HB A/T AG350QF\tPERU',
+    '11181\t-34.613499, -58.373867\t75,900\t40\tToyota ETIOS HB A/T AG350QE\tPERU',
+    '12469\t-34.9007, -57.955624\t60,642\t24\tToyota Yaris HB AT AG500BY\tBOOKED',
+    '12684\t-34.593182, -58.43074\t62,840\t19\tToyota Yaris HB AT AG708YK\tBOOKED',
+    '12685\t-32.695877, -63.442169\t57,514\t38\tToyota Yaris HB AT AG708YJ\tBOOKED',
+    '12877\t-34.597813, -58.380341\t32,284\t-\tToyota Corolla Cross HV AT AG765WS\tBOOKED'
+  ].join('\n'));
+  // ── AUTH CHECK ──────────────────────────────────────────────
+  (async () => {
+    try {
+      const r = await fetch(`${WORKER_URL}/auth/me`, { credentials: 'include' });
+      if (r.status === 401) { window.location.replace('./index.html'); return; }
+      const me = await r.json();
+      const el = document.querySelector('.brand-sub');
+      if (el) el.textContent = me.name;
+    } catch(e) { console.warn('Auth check failed:', e.message); }
+  })();
+  autoloadFiles();
+})();
+
+// ═══════════════════════════════════════════════════════════════════════
+// STORAGE HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+const MAINT_KEY='fleetcal_maint_';
+const TIRE_KEY ='fleetcal_tires_';
+const ACC_KEY  ='fleetcal_acc_';
+function getMaintHistory(p){try{const r=localStorage.getItem(MAINT_KEY+p);return r?JSON.parse(r):[];}catch(e){return[];}}
+function getTireData(p)   {try{const r=localStorage.getItem(TIRE_KEY+p); return r?JSON.parse(r):[];}catch(e){return[];}}
+function getAccData(p)    {try{const r=localStorage.getItem(ACC_KEY+p);  return r?JSON.parse(r):[];}catch(e){return[];}}
+function saveTireDataStore(p,d){ try{ localStorage.setItem(TIRE_KEY+p, JSON.stringify(d)); }catch(e){} }
+function saveAccDataStore(p,d) { try{ localStorage.setItem(ACC_KEY+p,  JSON.stringify(d)); }catch(e){} }
+function getTireNumbers(p) { return getTireData(p).filter(t=>t.numero).map(t=>t.numero); }
+
+/* ── TIRE/ACC CROSS-DEVICE SYNC ── */
+async function loadTiresAccFromRemote() {
+  if (!ST.pque || !ST.pque.length) return;
+  try {
+    await Promise.all(ST.pque.map(async veh => {
+      const r = await fetch(`${WORKER_URL}/data/tires?plate=${encodeURIComponent(veh.plate)}`, {
+        credentials: 'include', cache: 'no-store',
+      });
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data.tires)       saveTireDataStore(veh.plate, data.tires);
+      if (data.accessories) saveAccDataStore(veh.plate,  data.accessories);
+    }));
+    console.log('[sync] tires loaded from Supabase');
+  } catch(e) { console.warn('[sync] tires load failed —', e.message); }
+}
+
+function exportTiresAccJSON() {
+  const result = {};
+  const plates = ST.pque ? ST.pque.map(v => v.plate) : [];
+  plates.forEach(plate => {
+    const tires = getTireData(plate);
+    const acc   = getAccData(plate);
+    if (tires.length || acc.length) result[plate] = { tires, acc };
+  });
+  return JSON.stringify(result, null, 2);
+}
+
+async function pushTiresAccToRemote() {
+  if (!tireSheetPlate) return false;
+  try {
+    const r = await fetch(`${WORKER_URL}/data/tires`, {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plate:       tireSheetPlate,
+        tires:       getTireData(tireSheetPlate),
+        accessories: getAccData(tireSheetPlate),
+      }),
+    });
+    if (!r.ok) throw new Error(r.status);
+    return true;
+  } catch(e) { console.warn('[sync] push failed —', e.message); return false; }
+}
+
+function showSyncToast(msg, isErr) {
+  let t = document.getElementById('syncToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'syncToast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+      'background:var(--s1);border:1px solid var(--bs);border-radius:8px;' +
+      'padding:8px 16px;font-size:12px;font-weight:600;z-index:9999;' +
+      'box-shadow:0 4px 16px rgba(0,0,0,.4);transition:opacity .3s;white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.color   = isErr ? '#f87171' : 'var(--acc)';
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
+
+function maintAlertInfo(kmStr, plate){
+  if(!kmStr||kmStr==='-') return null;
+  const km=parseInt(kmStr.replace(/[.,]/g,''));
+  if(isNaN(km)) return null;
+  const next=Math.ceil((km+1)/10000)*10000;
+  const rem=next-km;
+  if(rem<=2000){
+    if(getMaintHistory(plate).some(h=>h.clearedMultiple===next)) return null;
+    return {km,nextMultiple:next,remaining:rem};
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// RES UTILS
+// ═══════════════════════════════════════════════════════════════════════
+function resOnDate(res, d){
+  const dt=new Date(d); dt.setHours(0,0,0,0);
+  const s=new Date(res.start); s.setHours(0,0,0,0);
+  const e=new Date(res.end);   e.setHours(0,0,0,0);
+  return dt>=s && dt<=e;
+}
+function resColor(res){
+  if(res.renter==='Service') return {c:'var(--c-svc)',cl:'var(--cl-svc)'};
+  if(res.status==='Current') return {c:'var(--c-ok)', cl:'var(--cl-ok)'};
+  const s=new Date(res.start); s.setHours(0,0,0,0);
+  if(s>TODAY) return {c:'var(--c-fut)',cl:'var(--cl-fut)'};
+  return {c:'var(--c-new)',cl:'var(--cl-new)'};
+}
+function resBadgeLabel(res){
+  if(res.renter==='Service') return 'Service';
+  if(res.status==='Current') return 'Activa';
+  const s=new Date(res.start); s.setHours(0,0,0,0);
+  if(s>TODAY) return 'Futura';
+  return 'Nueva';
+}
+function transferAlert(plate){
+  const TOMORROW=new Date(TODAY); TOMORROW.setDate(TOMORROW.getDate()+1);
+  const tel=ST.tel?ST.tel[plate]:null;
+  if(!tel||tel.loc!=='PERU') return false;
+  return (ST.res||[]).some(r=>{
+    if(r.plate!==plate||!r.start) return false;
+    const s=new Date(r.start); s.setHours(0,0,0,0);
+    return s.getTime()===TOMORROW.getTime();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════════════════
+function tryRender(){
+  if(!ST.pque||!ST.res) return;
+  updateStats(); renderView();
+}
+function updateStats(){
+  const tot=ST.pque.length;
+  const act=ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY).length;
+  const plates=new Set(ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY).map(r=>r.plate));
+  const avl=ST.pque.filter(v=>!plates.has(v.plate)).length;
+  let ma=0;
+  ST.pque.forEach(v=>{
+    const t=ST.tel?ST.tel[v.plate]:null;
+    if(t&&maintAlertInfo(t.km,v.plate)) ma++;
+  });
+  document.getElementById('st-total').textContent=tot;
+  document.getElementById('st-active').textContent=act;
+  document.getElementById('st-avail').textContent=avl;
+  document.getElementById('st-maint').textContent=ma;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// VIEW SWITCHING
+// ═══════════════════════════════════════════════════════════════════════
+function switchView(v){
+  curView=v;
+  ['month','week','day','list'].forEach(x=>{
+    const el=document.getElementById('vtab-'+x);
+    if(el) el.classList.toggle('active',x===v);
+  });
+  const mn=document.getElementById('monthNav');
+  if(mn) mn.style.display=v==='list'?'none':'flex';
+  // FAB: show on day view when there are reservations
+  document.getElementById('fabBtn').classList.remove('show');
+  renderView();
+}
+function navigate(d){
+  if(curView==='month'){
+    vMonth+=d; if(vMonth>11){vMonth=0;vYear++;} if(vMonth<0){vMonth=11;vYear--;}
+  } else if(curView==='week'){
+    const dt=new Date(vYear,vMonth,vDay); dt.setDate(dt.getDate()+d*7);
+    vYear=dt.getFullYear(); vMonth=dt.getMonth(); vDay=dt.getDate();
+  } else {
+    const dt=new Date(vYear,vMonth,vDay); dt.setDate(dt.getDate()+d);
+    vYear=dt.getFullYear(); vMonth=dt.getMonth(); vDay=dt.getDate();
+  }
+  renderView();
+}
+function goToday(){vYear=TODAY.getFullYear();vMonth=TODAY.getMonth();vDay=TODAY.getDate();renderView();}
+function renderView(){
+  if(curView==='month')     renderMonth();
+  else if(curView==='week') renderWeek();
+  else if(curView==='day')  renderDay();
+  else                      renderList();
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MONTH VIEW
+// ═══════════════════════════════════════════════════════════════════════
+function renderMonth(){
+  document.getElementById('monthTitle').textContent=MONTHS[vMonth]+' '+vYear;
+  const firstDow = new Date(vYear,vMonth,1).getDay();
+  const daysInMo = new Date(vYear,vMonth+1,0).getDate();
+  const prevDays  = new Date(vYear,vMonth,0).getDate();
+
+  let cells=[];
+  // prev month padding
+  for(let i=0;i<firstDow;i++){
+    cells.push(`<div class="cal-day other"><div class="day-num">${prevDays-firstDow+i+1}</div></div>`);
+  }
+  // current month
+  for(let day=1;day<=daysInMo;day++){
+    const date=new Date(vYear,vMonth,day);
+    const dow=date.getDay();
+    const isToday=date.getTime()===TODAY.getTime();
+    const isWk=dow===0||dow===6;
+    const allRes=(ST.res||[]).filter(r=>resOnDate(r,date));
+    // Build up to 3 pips
+    const pips=allRes.slice(0,3).map(r=>{
+      const{c}=resColor(r);
+      return `<span class="pip" style="background:${c}"></span>`;
+    }).join('');
+    const more=allRes.length>3?`<span class="day-more">+${allRes.length-3}</span>`:'';
+    cells.push(`<div class="cal-day${isToday?' today':''}${isWk?' weekend':''}" onclick="openDaySheet(${vYear},${vMonth},${day})">
+      <div class="day-num">${day}</div>
+      <div class="day-pips">${pips}</div>
+      ${more}
+    </div>`);
+  }
+  // next month padding
+  const total=cells.length;
+  const remainder=(7-total%7)%7;
+  for(let i=1;i<=remainder;i++){
+    cells.push(`<div class="cal-day other"><div class="day-num">${i}</div></div>`);
+  }
+
+  document.getElementById('viewContent').innerHTML=`
+    <div class="month-wrap">
+      <div class="dow-row">${DOW_S.map(d=>`<div class="dow-lbl">${d}</div>`).join('')}</div>
+      <div class="cal-grid">${cells.join('')}</div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DAY SHEET (from month)
+// ═══════════════════════════════════════════════════════════════════════
+function openDaySheet(y,m,d){
+  vYear=y; vMonth=m; vDay=d;
+  const date=new Date(y,m,d);
+  document.getElementById('ds-title').textContent=
+    DOW_L[date.getDay()]+' '+d+' de '+MONTHS[m]+' '+y;
+  const allRes=(ST.res||[]).filter(r=>resOnDate(r,date));
+  let body='';
+  if(!allRes.length){
+    body='<div class="no-res" style="padding:16px 0">Sin reservas este día</div>';
+  } else {
+    allRes.forEach(res=>{
+      const{c,cl}=resColor(res);
+      const enc=encodeURIComponent(JSON.stringify(res));
+      body+=`<div class="res-row" style="background:${cl}" data-enc="${enc}" data-close-day="1">
+        <div class="res-stripe" style="background:${c}"></div>
+        <div class="res-info">
+          <div class="res-name">${esc(res.renter)}</div>
+          <div class="res-dates">${res.plate} · ${res.startTime}→${res.endTime}</div>
+        </div>
+        <span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(res)}</span>
+      </div>`;
+    });
+  }
+  document.getElementById('ds-body').innerHTML=body;
+  openSheet('daySheet');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// WEEK VIEW  (FIX: events span correctly, no broken onclick)
+// ═══════════════════════════════════════════════════════════════════════
+function renderWeek(){
+  const cur=new Date(vYear,vMonth,vDay);
+  const dow=cur.getDay();
+  const mon=new Date(cur);
+  mon.setDate(cur.getDate()-(dow===0?6:dow-1));
+  document.getElementById('monthTitle').textContent=
+    MONTHS[mon.getMonth()]+' '+mon.getFullYear();
+
+  const days=[];
+  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);days.push(d);}
+
+  const HOURS=[7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
+
+  // header
+  let head='<div class="week-head"><div></div>';
+  days.forEach(d=>{
+    const isT=d.getTime()===TODAY.getTime();
+    head+=`<div class="wh-col${isT?' today':''}">
+      <div class="wh-dow">${DOW_S[d.getDay()]}</div>
+      <div class="wh-num">${d.getDate()}</div>
+    </div>`;
+  });
+  head+='</div>';
+
+  // body — one row per hour, 7 columns
+  let body='<div class="week-body">';
+  HOURS.forEach(h=>{
+    body+=`<div class="h-lbl">${String(h).padStart(2,'0')}</div>`;
+    days.forEach((d,di)=>{
+      const isT=d.getTime()===TODAY.getTime();
+      // find reservations that START at this hour on this day
+      const events=(ST.res||[]).filter(r=>{
+        if(!resOnDate(r,d)) return false;
+        const sh=r.start?r.start.getHours():0;
+        return sh===h;
+      });
+      let evHTML='';
+      events.forEach(res=>{
+        const{c,cl}=resColor(res);
+        const enc=encodeURIComponent(JSON.stringify(res));
+        evHTML+=`<div class="w-event" style="background:${cl};color:${c};border-left:2px solid ${c}"
+          data-enc="${enc}">${esc(res.renter).slice(0,8)}</div>`;
+      });
+      body+=`<div class="w-slot${isT?' today-col':''}">${evHTML}</div>`;
+    });
+  });
+  body+='</div>';
+
+  document.getElementById('viewContent').innerHTML=
+    `<div class="week-wrap">${head}${body}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// DAY VIEW
+// ═══════════════════════════════════════════════════════════════════════
+function renderDay(){
+  const date=new Date(vYear,vMonth,vDay);
+  document.getElementById('monthTitle').textContent=
+    DOW_L[date.getDay()]+', '+vDay+' '+MONTHS[vMonth]+' '+vYear;
+
+  if(!ST.pque){
+    document.getElementById('viewContent').innerHTML=
+      '<div class="empty"><span class="material-icons">folder_open</span><p>Cargá los archivos .txt para ver los datos</p></div>';
+    return;
+  }
+
+  let html='<div class="day-wrap">';
+  ST.pque.forEach(veh=>{
+    const tel=ST.tel?ST.tel[veh.plate]:null;
+    const vRes=(ST.res||[]).filter(r=>r.plate===veh.plate&&resOnDate(r,date));
+    const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
+    const trans=transferAlert(veh.plate);
+
+    // fuel
+    let fuelPct=0, fuelColor='var(--c-ok)', fuelLabel='—';
+    if(tel&&tel.fuel&&tel.fuel!=='-'){
+      const lit=parseInt(tel.fuel)||0;
+      fuelPct=veh.tankCap>0?Math.min(100,Math.round(lit/veh.tankCap*100)):lit;
+      fuelLabel=veh.tankCap>0?`${lit}L/${veh.tankCap}L`:`${lit}L`;
+      if(fuelPct<=25) fuelColor='var(--c-err)';
+      else if(fuelPct<=50) fuelColor='var(--c-svc)';
+    }
+
+    // reservations
+    let resList='';
+    if(vRes.length){
+      vRes.forEach(res=>{
+        const{c,cl}=resColor(res);
+        const enc=encodeURIComponent(JSON.stringify(res));
+        resList+=`<div class="res-row" style="background:${cl}" data-enc="${enc}">
+          <div class="res-stripe" style="background:${c}"></div>
+          <div class="res-info">
+            <div class="res-name">${esc(res.renter)}</div>
+            <div class="res-dates">${fmtDate(res.start)} ${res.startTime} → ${fmtDate(res.end)} ${res.endTime}</div>
+          </div>
+          <span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(res)}</span>
+          <button class="cta-btn" data-enc="${enc}" data-cta="1">
+            <span class="material-icons">assignment_turned_in</span>
+          </button>
+        </div>`;
+      });
+    } else {
+      resList='<div class="no-res">Sin reservas</div>';
+    }
+
+    html+=`<div class="veh-card">
+      <div class="veh-head">
+        <div style="flex:1;min-width:0">
+          <div class="veh-model">${esc(veh.model)}</div>
+          <div class="badge-row">
+            <span class="plate-chip">${veh.plate}</span>
+            ${tel?`<span style="font-size:9px;color:var(--t3)">${esc(tel.loc)}</span>`:''}
+            ${alert?`<span class="badge badge-maint"><span class="material-icons" style="font-size:10px">warning</span> Service</span>`:''}
+            ${trans?`<span class="badge badge-transfer"><span class="material-icons" style="font-size:10px">local_shipping</span> Traslado</span>`:''}
+          </div>
+        </div>
+        ${tel&&tel.fuel&&tel.fuel!=='-'?`<div class="fuel-row">
+          <div class="fbar"><div class="fbar-f" style="width:${fuelPct}%;background:${fuelColor}"></div></div>
+          <span class="fuel-txt" style="color:${fuelColor}">${fuelLabel}</span>
+        </div>`:''}
+      </div>
+      <div class="veh-body">${resList}</div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('viewContent').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// FLEET LIST
+// ═══════════════════════════════════════════════════════════════════════
+function renderList(){
+  if(!ST.pque){
+    document.getElementById('viewContent').innerHTML=
+      '<div class="empty"><span class="material-icons">folder_open</span><p>Cargá los archivos .txt para ver la flota</p></div>';
+    return;
+  }
+  let html='<div class="fleet-wrap" style="padding-top:12px">';
+  ST.pque.forEach(veh=>{
+    const tel=ST.tel?ST.tel[veh.plate]:null;
+    const activeRes=(ST.res||[]).filter(r=>r.plate===veh.plate&&r.start<=TODAY&&r.end>=TODAY);
+    const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
+    const trans=transferAlert(veh.plate);
+    let stC='var(--t3)',stB='var(--s2)',stL='Libre';
+    if(activeRes.length){stC='var(--c-ok)';stB='var(--cl-ok)';stL='Activa';}
+    if(alert){stC='var(--c-err)';stB='var(--cl-err)';stL='Service';}
+    const vdata={plate:veh.plate,model:veh.model,bodyType:veh.bodyType,tankCap:veh.tankCap};
+    const enc=encodeURIComponent(JSON.stringify(vdata));
+    html+=`<div class="fl-item" onclick="openVehicleSheet('${enc}')">
+      <div class="fl-avatar"><span class="material-icons">directions_car</span></div>
+      <div class="fl-info">
+        <div class="fl-model">${esc(veh.model)}</div>
+        <div class="fl-sub">
+          <span class="plate-chip" style="font-size:9px">${veh.plate}</span>
+          ${tel?`<span>${esc(tel.loc)}</span>`:''}
+          ${tel&&tel.km?`<span>${tel.km} km</span>`:''}
+          ${trans?`<span style="color:#FFD740">⚡ traslado</span>`:''}
+        </div>
+      </div>
+      <div>
+        <span class="fl-status" style="color:${stC};background:${stB}">${stL}</span>
+        ${activeRes.length?`<div style="font-size:9px;color:var(--t3);margin-top:3px;text-align:right">${activeRes[0].renter.slice(0,12)}</div>`:''}
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('viewContent').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// SHEETS
+// ═══════════════════════════════════════════════════════════════════════
+function openSheet(id){document.getElementById(id).classList.add('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');}
+
+// FIX: all res data passed via encodeURIComponent to avoid HTML attr quote issues
+function openResSheetEnc(enc){
+  try{
+    const res=JSON.parse(decodeURIComponent(enc));
+    openResSheet(res);
+  }catch(e){console.error('openResSheetEnc',e);}
+}
+function openResSheet(res){
+  sheetRes=res;
+  const{c,cl}=resColor(res);
+  document.getElementById('sh-title').textContent=esc(res.renter);
+  document.getElementById('sh-sub').textContent=res.plate+' · #'+res.code;
+  const veh=ST.pque?ST.pque.find(v=>v.plate===res.plate):null;
+  const tel=ST.tel?ST.tel[res.plate]:null;
+  let fuelLine='';
+  if(tel&&tel.fuel&&tel.fuel!=='-'&&veh){
+    fuelLine=`<div class="detail-row"><span class="detail-lbl">Combustible</span>
+      <span class="detail-val">${tel.fuel}L / ${veh.tankCap}L</span></div>`;
+  }
+  document.getElementById('sh-body').innerHTML=`
+    <div class="detail-row">
+      <span class="detail-lbl">Estado</span>
+      <span class="detail-val"><span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(res)}</span></span>
+    </div>
+    <div class="detail-row"><span class="detail-lbl">Vehículo</span><span class="detail-val">${res.vehicle}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Retiro</span><span class="detail-val mono">${fmtDate(res.start)}  ${res.startTime||''}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Entrega</span><span class="detail-val mono">${fmtDate(res.end)}  ${res.endTime||''}</span></div>
+    ${tel?`<div class="detail-row"><span class="detail-lbl">Km</span><span class="detail-val mono">${tel.km} km</span></div>`:''}
+    ${tel?`<div class="detail-row"><span class="detail-lbl">Ubicación</span><span class="detail-val">${esc(tel.loc)}</span></div>`:''}
+    ${fuelLine}
+    <div class="detail-row"><span class="detail-lbl">Código</span><span class="detail-val mono">${res.code}</span></div>`;
+  const btn = document.getElementById('sh-checklist');
+  btn.style.display = 'flex';
+  btn.innerHTML = '<span class="material-icons">assignment_turned_in</span> Abrir Check List';
+  btn.onclick = launchChecklistFromSheet;
+  openSheet('resSheet');
+}
+
+function openVehicleSheet(enc){
+  try{
+    const v=JSON.parse(decodeURIComponent(enc));
+    const tel=ST.tel?ST.tel[v.plate]:null;
+    const vRes=(ST.res||[]).filter(r=>r.plate===v.plate);
+    const activeRes=vRes.filter(r=>r.start<=TODAY&&r.end>=TODAY);
+    sheetRes=null;
+    document.getElementById('sh-title').textContent=esc(v.model);
+    document.getElementById('sh-sub').textContent=v.plate+(v.bodyType?' · '+v.bodyType:'');
+    let body=`
+      ${tel?`<div class="detail-row"><span class="detail-lbl">Km</span><span class="detail-val mono">${tel.km}</span></div>`:''}
+      ${tel?`<div class="detail-row"><span class="detail-lbl">Ubicación</span><span class="detail-val">${esc(tel.loc)}</span></div>`:''}
+      ${tel&&tel.fuel&&tel.fuel!=='-'?`<div class="detail-row"><span class="detail-lbl">Combustible</span><span class="detail-val">${tel.fuel}L / ${v.tankCap}L</span></div>`:''}
+      <div class="detail-row"><span class="detail-lbl">Tanque</span><span class="detail-val">${v.tankCap}L</span></div>
+      <div class="detail-row"><span class="detail-lbl">Reservas activas</span><span class="detail-val">${activeRes.length}</span></div>`;
+    if(vRes.length){
+      body+=`<div style="margin-top:10px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Próximas reservas</div>`;
+      vRes.slice(0,3).forEach(r=>{
+        const{c,cl}=resColor(r);
+        const enc2=encodeURIComponent(JSON.stringify(r));
+        body+=`<div style="background:${cl};border-radius:8px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px;cursor:pointer"
+          data-enc2="${enc2}">
+          <div style="width:3px;align-self:stretch;background:${c};border-radius:2px;flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600">${esc(r.renter)}</div>
+            <div style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:2px">${fmtDate(r.start)} → ${fmtDate(r.end)}</div>
+          </div>
+          <span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(r)}</span>
+        </div>`;
+      });
+    }
+    document.getElementById('sh-body').innerHTML=body;
+    // Repurpose primary action button to open tire/accessory management for this vehicle
+    const btn = document.getElementById('sh-checklist');
+    btn.style.display = 'flex';
+    btn.innerHTML = '<span class="material-icons">tire_repair</span> Neumáticos y accesorios';
+    btn.onclick = function() { closeSheet('resSheet'); setTimeout(()=>openTireSheet(v.plate), 150); };
+    openSheet('resSheet');
+  }catch(e){console.error('openVehicleSheet',e);}
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHECKLIST LAUNCH
+// ═══════════════════════════════════════════════════════════════════════
+function launchChecklistFromSheet(){
+  if(!sheetRes) return;
+  const res=sheetRes;
+  const veh=ST.pque?ST.pque.find(v=>v.plate===res.plate):null;
+  const tel=ST.tel?ST.tel[res.plate]:null;
+  const payload={
+    plate:     res.plate,
+    resid:     res.code,
+    renter:    res.renter,
+    startDate: fmtDate(res.start),
+    startTime: res.startTime,
+    endDate:   fmtDate(res.end),
+    endTime:   res.endTime,
+    km:        tel?tel.km:'—',
+    tankCap:   veh?veh.tankCap:0,
+    bodyType:  veh?veh.bodyType:'HATCHBACK',
+    tires:     getTireData(res.plate),
+    tireNums:  getTireData(res.plate).filter(t=>t.numero).map(t=>t.numero),
+    accesorios:getAccData(res.plate),
+  };
+  localStorage.setItem('fleetcal_checklist_data',JSON.stringify(payload));
+  closeSheet('resSheet');
+  window.open('checklist_mobile.html','_blank');
+}
+function fabAction(){launchChecklistFromSheet();}
+
+// ═══════════════════════════════════════════════════════════════════════
+// NAV SELECT
+// ═══════════════════════════════════════════════════════════════════════
+function navSelect(t){
+  ['cal','fleet','day','cfg'].forEach(x=>{
+    document.getElementById('nav-'+x)?.classList.toggle('active',x===t);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// TIRE / ACCESSORY SHEET — mobile management UI
+// Uses SAME localStorage keys as fleet_calendar (fleetcal_tires_* / fleetcal_acc_*)
+// so data loaded here appears in fleet_calendar and vice versa.
+// ═══════════════════════════════════════════════════════════════════════
+const TIRE_POSITIONS_M = [
+  'Delantera Izq','Delantera Der','Trasera Izq','Trasera Der',
+  'Trasera Int Izq','Trasera Int Der','Auxilio/Repuesto',
+  'Eje medio Izq','Eje medio Der'
+];
+const ACC_TYPES_M = [
+  'Matafuego','Balizas','Botiquín','Chaleco','Crique',
+  'Llave de rueda','Cable de arranque','Triángulo','Linterna','Otro'
+];
+
+let tireSheetPlate = null;
+let tireSheetTab   = 'tires';
+let tireWorkM = [];
+let accWorkM  = [];
+
+window.openTireSheet = function(plate) {
+  if (!plate) {
+    // show vehicle picker
+    if (!ST.pque || !ST.pque.length) { alert('Cargá primero los datos de la flota'); return; }
+    tireSheetPlate = null;
+    document.getElementById('tireSheetTitle').textContent = 'Seleccioná un vehículo';
+    document.getElementById('tireSheetSub').textContent = 'Elegí para gestionar neumáticos y accesorios';
+    document.getElementById('tireSheetTabs').style.display = 'none';
+    document.getElementById('tireSheetActions').style.display = 'none';
+    const body = document.getElementById('tireSheetBody');
+    body.innerHTML = '<div class="tsheet-vpicker">' + ST.pque.map(v =>
+      `<button class="tsheet-vitem" onclick="openTireSheet('${v.plate}')">
+        <span class="vplate">${esc(v.plate)}</span>
+        <span>${esc(v.model)}</span>
+      </button>`
+    ).join('') + '</div>';
+    openSheet('tireSheet');
+    return;
+  }
+
+  tireSheetPlate = plate;
+  const veh = ST.pque ? ST.pque.find(v => v.plate === plate) : null;
+  document.getElementById('tireSheetTitle').textContent = 'Neumáticos · ' + plate;
+  document.getElementById('tireSheetSub').textContent = veh ? veh.model : '';
+  document.getElementById('tireSheetTabs').style.display = 'flex';
+  document.getElementById('tireSheetActions').style.display = 'flex';
+  switchTireSheetTab('tires');
+  openSheet('tireSheet');
+};
+
+window.switchTireSheetTab = function(tab) {
+  tireSheetTab = tab;
+  document.getElementById('ttab-tires').classList.toggle('active', tab === 'tires');
+  document.getElementById('ttab-acc').classList.toggle('active',   tab === 'acc');
+  if (tab === 'tires') renderTireSheetTires();
+  else renderTireSheetAcc();
+};
+
+function renderTireSheetTires() {
+  tireWorkM = JSON.parse(JSON.stringify(getTireData(tireSheetPlate)));
+  rebuildTireSheetTires();
+}
+
+function rebuildTireSheetTires() {
+  const body = document.getElementById('tireSheetBody');
+  let html = '';
+  if (!tireWorkM.length) {
+    html += '<div class="tno-data">Sin neumáticos registrados</div>';
+  } else {
+    tireWorkM.forEach((t, i) => { html += buildTireCardM(t, i); });
+  }
+  html += '<button class="tadd-btn" onclick="addTireCardM()"><span class="material-icons" style="font-size:14px">add</span> Agregar neumático</button>';
+  body.innerHTML = html;
+}
+
+function buildTireCardM(t, i) {
+  const posOpts = TIRE_POSITIONS_M.map(p => `<option value="${p}" ${t.posicion===p?'selected':''}>${p}</option>`).join('');
+  return `<div class="tcard-m" id="tcm-${i}">
+    <div class="tcard-m-head">
+      <span class="tcard-m-badge">${esc(t.posicion || 'Sin posición')}</span>
+      <button class="tcard-m-del" onclick="removeTireCardM(${i})"><span class="material-icons" style="font-size:16px">delete</span></button>
+    </div>
+    <div class="tcard-m-row">
+      <div><label>Posición</label>
+        <select onchange="updateTireFieldM(${i},'posicion',this.value)">${posOpts}</select></div>
+      <div><label>Número / ID</label>
+        <input type="text" placeholder="TI-001" value="${esc(t.numero||'')}" onchange="updateTireFieldM(${i},'numero',this.value)"></div>
+    </div>
+    <div class="tcard-m-row three">
+      <div><label>Marca</label>
+        <input type="text" placeholder="Michelin" value="${esc(t.marca||'')}" onchange="updateTireFieldM(${i},'marca',this.value)"></div>
+      <div><label>Rodado</label>
+        <input type="text" placeholder="205/55R16" value="${esc(t.rodado||'')}" onchange="updateTireFieldM(${i},'rodado',this.value)"></div>
+      <div><label>DOT</label>
+        <input type="text" placeholder="2823" value="${esc(t.dot||'')}" onchange="updateTireFieldM(${i},'dot',this.value)"></div>
+    </div>
+    <div class="tcard-m-row">
+      <div><label>Fecha montaje</label>
+        <input type="date" value="${t.fecha||''}" onchange="updateTireFieldM(${i},'fecha',this.value)"></div>
+      <div><label>Km al montar</label>
+        <input type="text" placeholder="70.000" value="${esc(t.km||'')}" onchange="updateTireFieldM(${i},'km',this.value)"></div>
+    </div>
+  </div>`;
+}
+
+window.updateTireFieldM = function(i, field, val) {
+  if (tireWorkM[i]) tireWorkM[i][field] = val;
+  if (field === 'posicion') {
+    const badge = document.querySelector('#tcm-' + i + ' .tcard-m-badge');
+    if (badge) badge.textContent = val;
+  }
+};
+window.addTireCardM = function() {
+  tireWorkM.push({posicion:'',numero:'',marca:'',rodado:'',dot:'',fecha:'',km:''});
+  rebuildTireSheetTires();
+};
+window.removeTireCardM = function(i) {
+  tireWorkM.splice(i, 1);
+  rebuildTireSheetTires();
+};
+
+function renderTireSheetAcc() {
+  accWorkM = JSON.parse(JSON.stringify(getAccData(tireSheetPlate)));
+  rebuildTireSheetAcc();
+}
+function rebuildTireSheetAcc() {
+  const body = document.getElementById('tireSheetBody');
+  let html = '';
+  if (!accWorkM.length) {
+    html += '<div class="tno-data">Sin accesorios registrados</div>';
+  } else {
+    accWorkM.forEach((a, i) => {
+      const typeOpts = ACC_TYPES_M.map(t => `<option value="${t}" ${a.tipo===t?'selected':''}>${t}</option>`).join('');
+      html += `<div class="acc-row-m">
+        <select onchange="updateAccFieldM(${i},'tipo',this.value)"><option value="">— Tipo —</option>${typeOpts}</select>
+        <input type="text" placeholder="Número/desc" value="${esc(a.numero||'')}" onchange="updateAccFieldM(${i},'numero',this.value)">
+        <button onclick="removeAccRowM(${i})"><span class="material-icons" style="font-size:15px">close</span></button>
+      </div>`;
+    });
+  }
+  html += '<button class="tadd-btn" onclick="addAccRowM()"><span class="material-icons" style="font-size:14px">add</span> Agregar accesorio</button>';
+  body.innerHTML = html;
+}
+window.updateAccFieldM = function(i, field, val) { if (accWorkM[i]) accWorkM[i][field] = val; };
+window.addAccRowM = function() { accWorkM.push({tipo:'',numero:''}); rebuildTireSheetAcc(); };
+window.removeAccRowM = function(i) { accWorkM.splice(i, 1); rebuildTireSheetAcc(); };
+
+window.saveTireSheetData = function() {
+  if (!tireSheetPlate) { alert('No hay vehículo seleccionado'); return; }
+  saveTireDataStore(tireSheetPlate, tireWorkM);
+  saveAccDataStore(tireSheetPlate, accWorkM);
+  closeSheet('tireSheet');
+  renderView();
+  pushTiresAccToRemote().then(ok => {
+    if (ok) showSyncToast('✅ Sincronizado con GitHub');
+    else    showSyncToast('📱 Guardado localmente');
+  });
+};
+
+// ═══════════════════════════════════════════════════════════════════════
+// SWIPE NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════
+// ── EVENT DELEGATION — all res row / event clicks ──
+document.addEventListener('click', function(e) {
+  // CTA button (clipboard icon) → launch checklist DIRECTLY
+  const cta = e.target.closest('[data-cta]');
+  if (cta) {
+    e.stopPropagation();
+    const enc = cta.dataset.enc;
+    if (enc) {
+      try {
+        const res = JSON.parse(decodeURIComponent(enc));
+        sheetRes = res;            // set sheetRes so launchChecklistFromSheet works
+        launchChecklistFromSheet();
+      } catch(err) { console.error('cta launch error', err); }
+    }
+    return;
+  }
+  // res-row tap → open detail sheet
+  const row = e.target.closest('[data-enc]');
+  if (row && !row.dataset.cta) {
+    const enc = row.dataset.enc;
+    if (enc) {
+      if (row.dataset.closeDay) closeSheet('daySheet');
+      openResSheetEnc(enc);
+    }
+    return;
+  }
+  // vehicle sheet upcoming row
+  const row2 = e.target.closest('[data-enc2]');
+  if (row2) {
+    closeSheet('resSheet');
+    setTimeout(()=>openResSheetEnc(row2.dataset.enc2), 100);
+  }
+});
+
+let tsX=0;
+document.addEventListener('touchstart',e=>{tsX=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(document.querySelector('.sheet-overlay.open')) return;
+  const dx=e.changedTouches[0].clientX-tsX;
+  if(Math.abs(dx)>65) navigate(dx>0?-1:1);
+},{passive:true});
+
+// ═══════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════
+renderView();
+</script>
+</body>
+</html>

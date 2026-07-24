@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://api.github.com;">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet Calendar — Retiro CERRITO CAR</title>
+<style>
+  body{margin:0;font-family:'Inter',system-ui,sans-serif;background:#0d0f14;
+    color:#e8eaf0;display:flex;align-items:center;justify-content:center;
+    min-height:100vh;flex-direction:column;gap:12px;text-align:center;padding:20px}
+  .spinner{width:36px;height:36px;border:3px solid rgba(20,184,166,.2);
+    border-top-color:#14b8a6;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  p{font-size:12px;color:#4e5a6e;margin:0}
+  a{color:#14b8a6;font-size:12px}
+</style>
+</head>
+<body>
+<div class="spinner"></div>
+<p id="msg">Detectando dispositivo…</p>
+<p style="margin-top:8px"><a id="fallback" href="fleet_calendar.html">Acceder manualmente</a></p>
+<script>
+(function(){
+  var ua = navigator.userAgent || '';
+  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua)
+    || (window.innerWidth <= 768);
+
+  if(isMobile){
+    document.getElementById('msg').textContent = 'Abriendo versión móvil…';
+    document.getElementById('fallback').href = 'fleet_mobile.html';
+    window.location.replace('fleet_mobile.html');
+  } else {
+    document.getElementById('msg').textContent = 'Abriendo versión escritorio…';
+    window.location.replace('fleet_calendar.html');
+  }
+})();
+</script>
+</body>
+</html>
