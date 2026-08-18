@@ -1270,23 +1270,25 @@ window.applyLocalPreset=function(){
   });
 };
 
-window.applyGithubUrl=function(){
-  let base=document.getElementById('ghBaseUrl').value.trim();
-  if(!base){alert('https://github.com/'); return;} //Ingresá la URL base del repo
-  if(!base.endsWith('/')) base+='/';
-  base=base
-    .replace('https://github.com/','https://raw.githubusercontent.com/')
-    .replace('/blob/','/').replace('/tree/','/');
-  document.getElementById('cfgPque').value=base+'Pque.txt';
-  document.getElementById('cfgRes').value =base+'scraped_data.txt';
-  document.getElementById('cfgTel').value =base+'TelemGts_data.txt';
-  const p=document.getElementById('ghPresetPanel');
-  if(p) p.style.display='none';
-  ['pque','res','tel'].forEach(k=>{
-    document.getElementById('cst-'+k).innerHTML=
-      '<span style="color:var(--text3);font-size:10px">Ruta GitHub aplicada — Guardá para activar</span>';
+window.applyGithubUrl = function() {
+  // Ahora usamos la URL base de tu Cloudflare Worker de forma segura
+  // Reemplaza con la variable global WORKER_URL que ya tienes definida para el login
+  const workerBase = `${WORKER_URL}/data/txt?file=`;
+
+  // Asignamos los endpoints seguros del Worker a tus inputs de configuración
+  document.getElementById('cfgPque').value = workerBase + 'Pque.txt';
+  document.getElementById('cfgRes').value  = workerBase + 'scraped_data.txt';
+  document.getElementById('cfgTel').value  = workerBase + 'TelemGts_data.txt';
+  
+  const p = document.getElementById('ghPresetPanel');
+  if(p) p.style.display = 'none';
+  
+  ['pque','res','tel'].forEach(k => {
+    document.getElementById('cst-' + k).innerHTML =
+      '<span style="color:var(--text3);font-size:10px">Proxy seguro de Worker aplicado — Guardá para activar</span>';
   });
 };
+
 
 // ── EMBEDDED DATA ──
 // ── AUTH CHECK — verificar sesión activa al cargar ──────────────────────────
