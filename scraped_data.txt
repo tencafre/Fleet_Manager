@@ -4,7 +4,5 @@ k53xm82	Mariano Marinoni	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	3:00 
 Current						
 y6242m0	Rodolfo Eisenacht	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	10:00 AM  Aug 11, 2026	12:00 PM  Aug 18, 2026
 Current						
-lr1347z	Agustin Pongolini	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	5:00 PM  Aug 14, 2026	10:00 AM  Aug 19, 2026
-Current						
 kzqvgd8	Mauro Romano	Toyota ETIOS HB A/T AG350QE	Retiro CERRITO CAR	--	2:00 PM  Aug 20, 2026	2:00 PM  Aug 21, 2026
 New						
