@@ -1063,7 +1063,7 @@ const CFG_DEFAULTS = {
 // Producción:        https://fleet-worker.TU-USUARIO.workers.dev
 const WORKER_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'http://localhost:8787'
-  : 'https://fleet-worker.TU-USUARIO.workers.dev'; // ← REEMPLAZAR al deployar
+  : 'https://fleet.fleetpromt.workers.dev/'; // ← REEMPLAZAR al deployar
 
 function getCfg(){
   try{ return Object.assign({}, CFG_DEFAULTS, JSON.parse(localStorage.getItem(CFG_KEY)||'{}')); }
@@ -1272,7 +1272,7 @@ window.applyLocalPreset=function(){
 
 window.applyGithubUrl=function(){
   let base=document.getElementById('ghBaseUrl').value.trim();
-  if(!base){alert('Ingresá la URL base del repo'); return;}
+  if(!base){alert('https://github.com/tencafre/Fleet_Manager/'); return;} //Ingresá la URL base del repo
   if(!base.endsWith('/')) base+='/';
   base=base
     .replace('https://github.com/','https://raw.githubusercontent.com/')
