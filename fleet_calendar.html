@@ -1168,30 +1168,40 @@ async function pushTiresAccToRemote() {
 function autoloadFiles() {
   console.log("Iniciando carga automática de datos desde CDN...");
 
+  // 1. GENERAMOS LAS RUTAS REALES DEL CDN CON ANTI-CACHÉ
+  const tokenBuster = Date.now();
+  const cdnRaiz = "https://jsdelivr.net";
 
-   // ── INYECCIÓN ENFORZADA: Corrección directa de las URLs rotas hardcodeadas ──
-  const token = Date.now();
-  const base = "https://jsdelivr.net";
-  // Estas líneas pisan cualquier variable vieja que use tu código abajo
-  var urlPque = `${base}Pque.txt?v=${token}`;
-  var urlRes  = `${base}scraped_data.txt?v=${token}`;
-  var urlTel  = `${base}TelemGts_data.txt?v=${token}`;
-  // 1. CARGAR PARQUE AUTOMOTOR (Línea 1185)
-  // Reemplazamos cualquier texto fijo por window.URL_PARQUE
-  fetch(window.URL_PARQUE)
+  const rPque = `${cdnRaiz}Pque.txt?v=${tokenBuster}`;
+  const rTel  = `${cdnRaiz}TelemGts_data.txt?v=${tokenBuster}`;
+  const rRes  = `${cdnRaiz}scraped_data.txt?v=${tokenBuster}`;
+
+  // 2. INYECTAMOS LAS RUTAS EN LOS INPUTS ORIGINALES DEL DASHBOARD
+  // Esto elimina el "undefined" de raíz haciendo que todo tu código original funcione
+  if (document.getElementById('cfgPque')) document.getElementById('cfgPque').value = rPque;
+  if (document.getElementById('cfgTel'))  document.getElementById('cfgTel').value  = rTel;
+  if (document.getElementById('cfgRes'))  document.getElementById('cfgRes').value  = rRes;
+
+  // 3. SE EJECUTAN LOS FETCH ORIGINALES USANDO LOS VALORES RECIÉN INYECTADOS
+  const urlPque = document.getElementById('cfgPque')?.value || rPque;
+  const urlTel  = document.getElementById('cfgTel')?.value  || rTel;
+  const urlRes  = document.getElementById('cfgRes')?.value  || rRes;
+
+  // --- EJECUCIÓN DE FETCH BLINDADOS (Líneas 1181, 1194, 1206) ---
+  fetch(urlPque)
     .then(res => {
       if (!res.ok) throw new Error("Error en CDN Parque");
       return res.text();
     })
     .then(data => {
-      if (typeof procesarParque === "function") procesarParque(data); 
-      else if (typeof renderParque === "function") renderParque(data);
+      if (typeof procesarParque === "function") {
+        procesarParque(data);
+        console.log("¡Éxito! Parque automotor renderizado en el Dashboard.");
+      }
     })
     .catch(err => console.error("Fallo al cargar Parque:", err));
 
-  // 2. CARGAR TELEMETRÍA (Línea 1199)
-  // Reemplazamos por window.URL_TELEMETRIA
-  fetch(window.URL_TELEMETRIA)
+  fetch(urlTel)
     .then(res => {
       if (!res.ok) throw new Error("Error en CDN Telemetría");
       return res.text();
@@ -1201,9 +1211,7 @@ function autoloadFiles() {
     })
     .catch(err => console.error("Fallo al cargar Telemetría:", err));
 
-  // 3. CARGAR SCRAPED DATA (Línea 1207)
-  // Reemplazamos por window.URL_SCRAPED
-  fetch(window.URL_SCRAPED)
+  fetch(urlRes)
     .then(res => {
       if (!res.ok) throw new Error("Error en CDN Scraped");
       return res.text();
@@ -1213,6 +1221,7 @@ function autoloadFiles() {
     })
     .catch(err => console.error("Fallo al cargar Scraped:", err));
 }
+
 
 // Asegúrate de que al final de tu script (línea 1346) la llamada sea idéntica:
 // Esto solucionará el "autoloadFiles is not defined"
