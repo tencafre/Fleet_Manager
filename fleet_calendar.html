@@ -1175,37 +1175,38 @@ async function pushTiresAccToRemote() {
 function autoloadFiles() {
   console.log("Iniciando carga automática de datos desde CDN...");
 
-  // Usamos de forma obligatoria las variables window que inyectamos antes
-  if (!window.URL_PARQUE) {
-    console.error("Las rutas globales no están listas.");
-    return;
-  }
-
-  // 1. CARGAR PARQUE AUTOMOTOR
+  // 1. CARGAR PARQUE AUTOMOTOR (Línea 1185)
+  // Reemplazamos cualquier texto fijo por window.URL_PARQUE
   fetch(window.URL_PARQUE)
     .then(res => {
       if (!res.ok) throw new Error("Error en CDN Parque");
       return res.text();
     })
     .then(data => {
-      // Aquí llama a tu función original que procesa el texto de Pque.txt
       if (typeof procesarParque === "function") procesarParque(data); 
       else if (typeof renderParque === "function") renderParque(data);
-      console.log("Parque automotor renderizado.");
     })
     .catch(err => console.error("Fallo al cargar Parque:", err));
 
-  // 2. CARGAR TELEMETRÍA
+  // 2. CARGAR TELEMETRÍA (Línea 1199)
+  // Reemplazamos por window.URL_TELEMETRIA
   fetch(window.URL_TELEMETRIA)
-    .then(res => res.text())
+    .then(res => {
+      if (!res.ok) throw new Error("Error en CDN Telemetría");
+      return res.text();
+    })
     .then(data => {
       if (typeof procesarTelemetria === "function") procesarTelemetria(data);
     })
     .catch(err => console.error("Fallo al cargar Telemetría:", err));
 
-  // 3. CARGAR SCRAPED DATA
+  // 3. CARGAR SCRAPED DATA (Línea 1207)
+  // Reemplazamos por window.URL_SCRAPED
   fetch(window.URL_SCRAPED)
-    .then(res => res.text())
+    .then(res => {
+      if (!res.ok) throw new Error("Error en CDN Scraped");
+      return res.text();
+    })
     .then(data => {
       if (typeof procesarScraped === "function") procesarScraped(data);
     })
