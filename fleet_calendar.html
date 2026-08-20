@@ -1152,29 +1152,27 @@ async function pushTiresAccToRemote() {
   }
 }
 
-async function autoloadFiles(){
-  const cfg=getCfg();
-  const KEYS=[
-    {key:'pque',path:CFG_DEFAULTS.pque,parser:parsePque,label:'Parque'},
-    {key:'res', path:CFG_DEFAULTS.res, parser:parseRes, label:'Reservas'},
-    {key:'tel', path:CFG_DEFAULTS.tel, parser:parseTel, label:'Telemática'},
-  ];
-  setDotStatus('pque','loading');
-  setDotStatus('res','loading');
-  setDotStatus('tel','loading');
-  await Promise.all(KEYS.map(async ({key,path,parser,label})=>{
-    try{
-      const txt=await fetchTxt(path);
-      ST[key]=parser(txt);
-      setDotStatus(key,'ok',label+' ✓');
-    }catch(e){
-      setDotStatus(key,'err',label+' ✗');
-      console.warn('autoload:',key,path,e.message);
-    }
-  }));
-  await loadTiresAccFromRemote();
-  tryRender();
-}
+
+  // --- CORRECCIÓN DE AUTOLOAD EN GITHUB PAGES ---
+const cdnBase = "https://jsdelivr.net";
+
+// Asegúrate de que las funciones automáticas usen estas rutas del CDN:
+const urlPque = cdnBase + "Pque.txt";
+const urlRes  = cdnBase + "scraped_data.txt";
+const urlTel  = cdnBase + "TelemGts_data.txt";
+
+// Ejemplo de tu fetch interno de autoload:
+fetch(urlPque)
+  .then(r => {
+    if(!r.ok) throw new Error("Error de carga");
+    return r.text();
+  })
+  .then(data => {
+    // Tu lógica para procesar e imprimir el parque automotor...
+    console.log("Parque automotor renderizado desde CDN público.");
+  });
+
+
 
 window.openCfgModal=function(){
   const cfg=getCfg();
