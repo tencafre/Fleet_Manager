@@ -1277,7 +1277,7 @@ window.applyLocalPreset=function(){
 // ── CAMBIO DIRECTO EN EL JAVASCRIPT DE GITHUB PAGES ──
 
 // 1. Definimos la base del CDN público directo (Evita el bucle 530 del Worker) [2026-08-20]
-const cdnBase = "https://jsdelivr.net";
+cdnBase = "https://jsdelivr.net";
 
 // 2. Cambia tus variables de fetch para que apunten directamente aquí:
 const URL_PARQUE     = `${cdnBase} + Pque.txt`;
