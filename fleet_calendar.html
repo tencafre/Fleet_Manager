@@ -2,31 +2,31 @@
 <html lang="es">
 <head>
  <script>
-  // ── INTERCEPTOR ABSOLUTO DE CACHÉ Y URLs ROTAS (CORREGIDO) ──
+  // ── REPARACIÓN COMPLETA DEL INTERCEPTOR GLOBAL DE COPIADO ──
   (function() {
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
       let url = args[0];
       
       if (typeof url === 'string' && url.includes('jsdelivr.net')) {
-        // Si la URL no contiene la ruta completa del repositorio, la reparamos a la fuerza
+        // Si detectamos que la URL no contiene la ruta completa del repositorio, la reparamos
         if (!url.includes('/gh/tencafre/')) {
           const token = Date.now();
           
-          // Detectamos qué archivo se está intentando pedir
-          let archivo = "Pque.txt";
-          if (url.includes("scraped_data") || url.includes("res")) archivo = "scraped_data.txt";
-          if (url.includes("TelemGts_data") || url.includes("tel")) archivo = "TelemGts_data.txt";
+          let archivoReal = "Pque.txt";
+          if (url.includes("scraped_data") || url.includes("res")) archivoReal = "scraped_data.txt";
+          if (url.includes("TelemGts_data") || url.includes("tel")) archivoReal = "TelemGts_data.txt";
           
-          // CORRECCIÓN CRÍTICA: Uso estricto de comillas invertidas y formato ${archivo} con subdominio cdn.
-          args[0] = `https://jsdelivr.net{archivo}?v=${token}`;
-          console.log(`-> [Parche Maestro] URL corregida con éxito: ${args[0]}`);
+          // CORRECCIÓN CLAVE: Usamos comillas invertidas y el subdominio 'cdn.' correcto
+          args[0] = `https://jsdelivr.net{archivoReal}?v=${token}`;
+          console.log(`-> [Parche Maestro] URL reescrita de forma exitosa: ${args[0]}`);
         }
       }
       return originalFetch.apply(this, args);
     };
   })();
 </script>
+
 
 
 <meta charset="UTF-8">
@@ -1193,7 +1193,7 @@ async function pushTiresAccToRemote() {
 
 <!-- REEMPLAZO ABSOLUTO, LIMPIO Y DEFINITIVO DE CARGA AUTOMÁTICA -->
 
-function cargarDatosFlota() {
+function sincronizarFlotaCDN() {
   console.log("Iniciando carga automática de datos desde CDN...");
 
   const tokenBuster = Date.now();
@@ -1411,7 +1411,7 @@ window.applyLocalPreset=function(){
   tryRender();
   // then try to load fresh data from server/github (overwrites if reachable)
   
-cargarDatosFlota();
+sincronizarFlotaCDN();
 })();
 
 // ── NAV ──
