@@ -1160,9 +1160,9 @@ async function pushTiresAccToRemote() {
 const cdnRutas = "https://jsdelivr.net";
 
 // 2. Concatenamos las rutas limpias usando comillas invertidas de forma correcta
-const URL_PARQUE     = `${cdnRutas}Pque.txt`;
-const URL_SCRAPED    = `${cdnRutas}scraped_data.txt`;
-const URL_TELEMETRIA = `${cdnRutas}TelemGts_data.txt`;
+const URL_PARQUE     = `${cdnRutas} + Pque.txt`;
+const URL_SCRAPED    = `${cdnRutas} + scraped_data.txt`;
+const URL_TELEMETRIA = `${cdnRutas} + TelemGts_data.txt`;
 
 // 3. Modifica tus funciones de fetch (línea 1166) para que llamen estrictamente a estas variables:
 // Ejemplo:
