@@ -1160,14 +1160,6 @@ async function pushTiresAccToRemote() {
  
     // Usamos nombres de variables únicos dentro de un entorno aislado (función autoejecutable)
     // para que jamás choquen con otras constantes globales de tu frontend
-    const cdnRutasFinal = "https://jsdelivr.net";
-    const noCacheToken = Date.now();
-
-    window.URL_PARQUE     = `${cdnRutasFinal}Pque.txt?v=${noCacheToken}`;
-    window.URL_SCRAPED    = `${cdnRutasFinal}scraped_data.txt?v=${noCacheToken}`;
-    window.URL_TELEMETRIA = `${cdnRutasFinal}TelemGts_data.txt?v=${noCacheToken}`;
-
-    console.log("Rutas de datos del CDN mapeadas de forma global y segura.");
 
 
 // ── REEMPLAZA TU FUNCIÓN DE AUTOLOAD VIEJA POR ESTA VERSIÓN REPARADA ──
@@ -1175,6 +1167,14 @@ async function pushTiresAccToRemote() {
 function autoloadFiles() {
   console.log("Iniciando carga automática de datos desde CDN...");
 
+
+   // ── INYECCIÓN ENFORZADA: Corrección directa de las URLs rotas hardcodeadas ──
+  const token = Date.now();
+  const base = "https://jsdelivr.net";
+  // Estas líneas pisan cualquier variable vieja que use tu código abajo
+  var urlPque = `${base}Pque.txt?v=${token}`;
+  var urlRes  = `${base}scraped_data.txt?v=${token}`;
+  var urlTel  = `${base}TelemGts_data.txt?v=${token}`;
   // 1. CARGAR PARQUE AUTOMOTOR (Línea 1185)
   // Reemplazamos cualquier texto fijo por window.URL_PARQUE
   fetch(window.URL_PARQUE)
