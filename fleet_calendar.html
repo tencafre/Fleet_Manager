@@ -1279,21 +1279,6 @@ window.applyLocalPreset=function(){
 
 // ── CAMBIO DIRECTO EN EL JAVASCRIPT DE GITHUB PAGES ──
 
-// 1. Definimos la base del CDN público directo (Evita el bucle 530 del Worker) [2026-08-20]
-cdnBase = "https://jsdelivr.net";
-
-// 2. Cambia tus variables de fetch para que apunten directamente aquí:
-const URL_PARQUE     = `${cdnBase} + Pque.txt`;
-const URL_SCRAPED    = `${cdnBase} + scraped_data.txt`;
-const URL_TELEMETRIA = `${cdnBase} + TelemGts_data.txt`;
-
-// Ejemplo de cómo debe quedar tu fetch automático:
-fetch(URL_PARQUE)
-  .then(res => res.text())
-  .then(data => {
-    // Tu lógica original para pintar los vehículos en el Dashboard...
-    console.log("Parque automotor cargado con éxito desde el CDN");
-  });
 
 
 
