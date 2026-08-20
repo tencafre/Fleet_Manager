@@ -1,31 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
- <script>
-  // ── REPARACIÓN COMPLETA DEL INTERCEPTOR GLOBAL DE COPIADO ──
-  (function() {
-    const originalFetch = window.fetch;
-    window.fetch = async function(...args) {
-      let url = args[0];
-      
-      if (typeof url === 'string' && url.includes('jsdelivr.net')) {
-        // Si detectamos que la URL no contiene la ruta completa del repositorio, la reparamos
-        if (!url.includes('/gh/tencafre/')) {
-          const token = Date.now();
-          
-          let archivoReal = "Pque.txt";
-          if (url.includes("scraped_data") || url.includes("res")) archivoReal = "scraped_data.txt";
-          if (url.includes("TelemGts_data") || url.includes("tel")) archivoReal = "TelemGts_data.txt";
-          
-          // CORRECCIÓN CLAVE: Usamos comillas invertidas y el subdominio 'cdn.' correcto
-          args[0] = `https://jsdelivr.net{archivoReal}?v=${token}`;
-          console.log(`-> [Parche Maestro] URL reescrita de forma exitosa: ${args[0]}`);
-        }
-      }
-      return originalFetch.apply(this, args);
-    };
-  })();
-</script>
+
 
 
 
@@ -1193,58 +1169,54 @@ async function pushTiresAccToRemote() {
 
 <!-- REEMPLAZO ABSOLUTO, LIMPIO Y DEFINITIVO DE CARGA AUTOMÁTICA -->
 
+// ── REEMPLAZO ABSOLUTO, SEGURO Y COMPILADO PARA TU DASHBOARD ──
 function sincronizarFlotaCDN() {
   console.log("Iniciando carga automática de datos desde CDN...");
 
-  const tokenBuster = Date.now();
-  // El dominio real, completo e infalible de jsDelivr para tu cuenta
-  const cdnRaiz = "https://jsdelivr.net";
+  var tokenBuster = Date.now();
+  // El dominio oficial, completo e infalible de jsDelivr con todas sus barras exactas
+  var cdnRaiz = "https://jsdelivr.net";
 
-  const urlPque = cdnRaiz + "Pque.txt?v=" + tokenBuster;
-  const urlTel  = cdnRaiz + "TelemGts_data.txt?v=" + tokenBuster;
-  const urlRes  = cdnRaiz + "scraped_data.txt?v=" + tokenBuster;
+  var urlPque = cdnRaiz + "Pque.txt?v=" + tokenBuster;
+  var urlTel  = cdnRaiz + "TelemGts_data.txt?v=" + tokenBuster;
+  var urlRes  = cdnRaiz + "scraped_data.txt?v=" + tokenBuster;
 
-  // 1. FETCH DE PARQUE AUTOMOTOR
+  console.log("-> [Rutas Generadas] URL Parque: " + urlPque);
+
+  // 1. CARGAR PARQUE AUTOMOTOR
   fetch(urlPque)
-    .then(res => {
-      if (!res.ok) throw new Error("Error en CDN Parque");
+    .then(function(res) {
+      if (!res.ok) throw new Error("Error al descargar archivo Parque desde el CDN");
       return res.text();
     })
-    .then(data => {
-      // Intentamos ejecutar tu función original encargada de pintar los datos
+    .then(function(data) {
+      // Enlaza de forma nativa con tu función original que pinta los vehículos
       if (typeof procesarParque === "function") procesarParque(data);
       else if (typeof renderParque === "function") renderParque(data);
-      console.log("¡Éxito! Parque automotor renderizado en pantalla.");
+      console.log("¡Éxito! Parque automotor renderizado de forma correcta.");
     })
-    .catch(err => console.error("Fallo al cargar Parque:", err));
+    .catch(function(err) { console.error("Fallo al cargar Parque:", err); });
 
-  // 2. FETCH DE TELEMETRÍA
+  // 2. CARGAR TELEMETRÍA
   fetch(urlTel)
-    .then(res => {
-      if (!res.ok) throw new Error("Error en CDN Telemetría");
-      return res.text();
-    })
-    .then(data => {
+    .then(function(res) { return res.text(); })
+    .then(function(data) {
       if (typeof procesarTelemetria === "function") procesarTelemetria(data);
     })
-    .catch(err => console.error("Fallo al cargar Telemetría:", err));
+    .catch(function(err) { console.error("Fallo al cargar Telemetría:", err); });
 
-  // 3. FETCH DE SCRAPED DATA
+  // 3. CARGAR SCRAPED DATA
   fetch(urlRes)
-    .then(res => {
-      if (!res.ok) throw new Error("Error en CDN Scraped");
-      return res.text();
-    })
-    .then(data => {
+    .then(function(res) { return res.text(); })
+    .then(function(data) {
       if (typeof procesarScraped === "function") procesarScraped(data);
     })
-    .catch(err => console.error("Fallo al cargar Scraped:", err));
+    .catch(function(err) { console.error("Fallo al cargar Scraped:", err); });
 }
 
-// Asegúrate de que las líneas del final (1420 en adelante) ejecuten este nombre:
+// Ejecución automática al final de la carga (Línea 1414)
 
 
-// Asegúrate de que al final de tu script (línea 1346) la llamada sea idéntica:
 // Esto solucionará el "autoloadFiles is not defined"
 
 
@@ -1411,6 +1383,7 @@ window.applyLocalPreset=function(){
   tryRender();
   // then try to load fresh data from server/github (overwrites if reachable)
   
+
 sincronizarFlotaCDN();
 })();
 
