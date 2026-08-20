@@ -1157,7 +1157,7 @@ async function pushTiresAccToRemote() {
 // ── REEMPLAZO COMPLETO DE VARIABLES DE CARGA (A partir de línea 1160 / 1280) ──
 
 
-  (function autoloadFiles() {
+ 
     // Usamos nombres de variables únicos dentro de un entorno aislado (función autoejecutable)
     // para que jamás choquen con otras constantes globales de tu frontend
     const cdnRutasFinal = "https://jsdelivr.net";
@@ -1168,19 +1168,53 @@ async function pushTiresAccToRemote() {
     window.URL_TELEMETRIA = `${cdnRutasFinal}TelemGts_data.txt?v=${noCacheToken}`;
 
     console.log("Rutas de datos del CDN mapeadas de forma global y segura.");
-  })();
 
-// 3. Modifica tus funciones de fetch (línea 1166) para que llamen estrictamente a estas variables:
-// Ejemplo:
-fetch(URL_PARQUE)
-  .then(res => {
-    if (!res.ok) throw new Error("No se pudo obtener el Parque Automotor");
-    return res.text();
-  })
-  .then(data => {
-    // Tu lógica para pintar los vehículos...
-    console.log("Parque automotor cargado con éxito.");
-  });
+
+// ── REEMPLAZA TU FUNCIÓN DE AUTOLOAD VIEJA POR ESTA VERSIÓN REPARADA ──
+
+function autoloadFiles() {
+  console.log("Iniciando carga automática de datos desde CDN...");
+
+  // Usamos de forma obligatoria las variables window que inyectamos antes
+  if (!window.URL_PARQUE) {
+    console.error("Las rutas globales no están listas.");
+    return;
+  }
+
+  // 1. CARGAR PARQUE AUTOMOTOR
+  fetch(window.URL_PARQUE)
+    .then(res => {
+      if (!res.ok) throw new Error("Error en CDN Parque");
+      return res.text();
+    })
+    .then(data => {
+      // Aquí llama a tu función original que procesa el texto de Pque.txt
+      if (typeof procesarParque === "function") procesarParque(data); 
+      else if (typeof renderParque === "function") renderParque(data);
+      console.log("Parque automotor renderizado.");
+    })
+    .catch(err => console.error("Fallo al cargar Parque:", err));
+
+  // 2. CARGAR TELEMETRÍA
+  fetch(window.URL_TELEMETRIA)
+    .then(res => res.text())
+    .then(data => {
+      if (typeof procesarTelemetria === "function") procesarTelemetria(data);
+    })
+    .catch(err => console.error("Fallo al cargar Telemetría:", err));
+
+  // 3. CARGAR SCRAPED DATA
+  fetch(window.URL_SCRAPED)
+    .then(res => res.text())
+    .then(data => {
+      if (typeof procesarScraped === "function") procesarScraped(data);
+    })
+    .catch(err => console.error("Fallo al cargar Scraped:", err));
+}
+
+// Asegúrate de que al final de tu script (línea 1346) la llamada sea idéntica:
+// Esto solucionará el "autoloadFiles is not defined"
+
 
 
 window.openCfgModal=function(){
