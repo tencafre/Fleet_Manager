@@ -1165,7 +1165,7 @@ async function pushTiresAccToRemote() {
 
 // ── REEMPLAZA TU FUNCIÓN DE AUTOLOAD VIEJA POR ESTA VERSIÓN REPARADA ──
 
-function autoloadFiles() {
+function cargarDatosFlota() {
   console.log("Iniciando carga automática de datos desde CDN...");
 
   // 1. GENERAMOS LAS RUTAS REALES DEL CDN CON ANTI-CACHÉ (CORREGIDO DE RAÍZ)
@@ -1391,7 +1391,7 @@ window.applyLocalPreset=function(){
   // render immediately with embedded data
   tryRender();
   // then try to load fresh data from server/github (overwrites if reachable)
-  autoloadFiles();
+  cargarDatosFlota();
 })();
 
 // ── NAV ──
