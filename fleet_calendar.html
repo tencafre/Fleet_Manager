@@ -1156,13 +1156,15 @@ async function pushTiresAccToRemote() {
 
 // ── REEMPLAZO COMPLETO DE VARIABLES DE CARGA (A partir de línea 1160 / 1280) ──
 
-// 1. Usamos un nombre único para evitar el error "Assignment to constant variable"
-const cdnRutas = "https://jsdelivr.net";
+// CORRECCIÓN DE SINTAXIS DE RUTAS EN EL FRONTEND
+function auotoloadFiles()  
+const cdnBase = "https://jsdelivr.net";
+const noCache = Date.now();
 
-// 2. Concatenamos las rutas limpias usando comillas invertidas de forma correcta
-const URL_PARQUE     = `${cdnRutas} + Pque.txt`;
-const URL_SCRAPED    = `${cdnRutas} + scraped_data.txt`;
-const URL_TELEMETRIA = `${cdnRutas} + TelemGts_data.txt`;
+// Usá comillas invertidas ` y el formato ${} para inyectar variables sin errores
+const URL_PARQUE     = `${cdnBase}Pque.txt?v=${noCache}`;
+const URL_SCRAPED    = `${cdnBase}scraped_data.txt?v=${noCache}`;
+const URL_TELEMETRIA = `${cdnBase}TelemGts_data.txt?v=${noCache}`;
 
 // 3. Modifica tus funciones de fetch (línea 1166) para que llamen estrictamente a estas variables:
 // Ejemplo:
