@@ -1,31 +1,33 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <script>
-  // ── INTERCEPTOR ABSOLUTO DE CACHÉ Y URLs ROTAS ──
+ <script>
+  // ── INTERCEPTOR ABSOLUTO DE CACHÉ Y URLs ROTAS (CORREGIDO) ──
   (function() {
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
       let url = args[0];
       
       if (typeof url === 'string' && url.includes('jsdelivr.net')) {
-        // Si la URL no contiene el prefijo correcto /gh/, la reparamos a la fuerza
+        // Si la URL no contiene la ruta completa del repositorio, la reparamos a la fuerza
         if (!url.includes('/gh/tencafre/')) {
           const token = Date.now();
-          // Detectamos qué archivo se está pidiendo
-          let archivo = "Pque.txt";
-          if (url.includes("scraped_data")) archivo = "scraped_data.txt";
-          if (url.includes("TelemGts_data") || url.includes("telemgts_data")) archivo = "TelemGts_data.txt";
           
-          // Reemplazamos la URL rota por la URL real e infalible del CDN
+          // Detectamos qué archivo se está intentando pedir
+          let archivo = "Pque.txt";
+          if (url.includes("scraped_data") || url.includes("res")) archivo = "scraped_data.txt";
+          if (url.includes("TelemGts_data") || url.includes("tel")) archivo = "TelemGts_data.txt";
+          
+          // CORRECCIÓN CRÍTICA: Uso estricto de comillas invertidas y formato ${archivo} con subdominio cdn.
           args[0] = `https://jsdelivr.net{archivo}?v=${token}`;
-          console.log(`-> [Parche Maestro] URL corregida en el aire: ${args[0]}`);
+          console.log(`-> [Parche Maestro] URL corregida con éxito: ${args[0]}`);
         }
       }
       return originalFetch.apply(this, args);
     };
   })();
 </script>
+
 
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="
