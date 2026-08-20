@@ -1270,24 +1270,24 @@ window.applyLocalPreset=function(){
   });
 };
 
-window.applyGithubUrl = function() {
-  // Al ser un repositorio público, el navegador descarga los .txt directamente del CDN sin pasar por el Worker
-  // Esto evita el bucle DNS (error 530) de Cloudflare de forma definitiva
-  const cdnBase = "https://jsdelivr.net";
+// ── CAMBIO DIRECTO EN EL JAVASCRIPT DE GITHUB PAGES ──
 
-  // Asignamos las rutas directas del CDN a tus inputs
-  document.getElementById('cfgPque').value = cdnBase + 'Pque.txt';
-  document.getElementById('cfgRes').value  = cdnBase + 'scraped_data.txt';
-  document.getElementById('cfgTel').value  = cdnBase + 'TelemGts_data.txt';
-  
-  const p = document.getElementById('ghPresetPanel');
-  if(p) p.style.display = 'none';
-  
-  ['pque','res','tel'].forEach(k => {
-    document.getElementById('cst-' + k).innerHTML =
-      '<span style="color:var(--text3);font-size:10px">CDN Directo de Datos aplicado — Guardá para activar</span>';
+// 1. Definimos la base del CDN público directo (Evita el bucle 530 del Worker) [2026-08-20]
+const cdnBase = "https://jsdelivr.net";
+
+// 2. Cambia tus variables de fetch para que apunten directamente aquí:
+const URL_PARQUE     = cdnBase + "Pque.txt";
+const URL_SCRAPED    = cdnBase + "scraped_data.txt";
+const URL_TELEMETRIA = cdnBase + "TelemGts_data.txt";
+
+// Ejemplo de cómo debe quedar tu fetch automático:
+fetch(URL_PARQUE)
+  .then(res => res.text())
+  .then(data => {
+    // Tu lógica original para pintar los vehículos en el Dashboard...
+    console.log("Parque automotor cargado con éxito desde el CDN");
   });
-};
+
 
 
 // ── EMBEDDED DATA ──
