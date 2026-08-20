@@ -1156,15 +1156,19 @@ async function pushTiresAccToRemote() {
 
 // ── REEMPLAZO COMPLETO DE VARIABLES DE CARGA (A partir de línea 1160 / 1280) ──
 
-// CORRECCIÓN DE SINTAXIS DE RUTAS EN EL FRONTEND
-function auotoloadFiles()  
-const cdnBase = "https://jsdelivr.net";
-const noCache = Date.now();
 
-// Usá comillas invertidas ` y el formato ${} para inyectar variables sin errores
-const URL_PARQUE     = `${cdnBase}Pque.txt?v=${noCache}`;
-const URL_SCRAPED    = `${cdnBase}scraped_data.txt?v=${noCache}`;
-const URL_TELEMETRIA = `${cdnBase}TelemGts_data.txt?v=${noCache}`;
+  (function() {
+    // Usamos nombres de variables únicos dentro de un entorno aislado (función autoejecutable)
+    // para que jamás choquen con otras constantes globales de tu frontend
+    const cdnRutasFinal = "https://jsdelivr.net";
+    const noCacheToken = Date.now();
+
+    window.URL_PARQUE     = `${cdnRutasFinal}Pque.txt?v=${noCacheToken}`;
+    window.URL_SCRAPED    = `${cdnRutasFinal}scraped_data.txt?v=${noCacheToken}`;
+    window.URL_TELEMETRIA = `${cdnRutasFinal}TelemGts_data.txt?v=${noCacheToken}`;
+
+    console.log("Rutas de datos del CDN mapeadas de forma global y segura.");
+  })();
 
 // 3. Modifica tus funciones de fetch (línea 1166) para que llamen estrictamente a estas variables:
 // Ejemplo:
