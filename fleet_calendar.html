@@ -1552,27 +1552,39 @@ function getTireNumbers(plate){
 }
 
 /* ── MODAL OPEN / CLOSE ── */
+/* ── MODAL OPEN / CLOSE (CORREGIDO ORDEN DEL DOM) ── */
 window.openTireModal = function(plate, modelName){
   tireModalPlate = plate;
   tireModalModel = modelName;
+  
   if(!plate){
     buildVehiclePicker(); return;
   }
+
+  // 1. PRIMERO HACEMOS VISIBLE EL MODAL EN EL DOM
+  document.getElementById('tireModalOverlay').style.display = 'flex';
   document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
   document.getElementById('tireModalSub').textContent   = modelName || '';
+  
+  // Aseguramos que las pestañas muestren el panel correcto
   switchTireTab('tires');
+  
+  // 2. AHORA SÍ EJECUTAMOS EL RENDER (El contenedor #tireCards ya existe y es visible)
   renderTireCards(plate);
   renderAccRows(plate);
-  document.getElementById('tireModalOverlay').style.display='flex';
 };
 
 function buildVehiclePicker(){
   if(!ST.pque||!ST.pque.length){ alert('Cargá primero el archivo Parque.txt'); return; }
+  
+  // 1. HACEMOS VISIBLE EL MODAL PRIMERO
+  document.getElementById('tireModalOverlay').style.display = 'flex';
   document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
   document.getElementById('tireModalSub').textContent   = 'Elegí un vehículo para gestionar neumáticos y accesorios';
+  
   const panel = document.getElementById('panelTires');
   panel.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px">' +
-    ST.pque.map(v=>`<button onclick="selectVehicleForTires('${v.plate}','${v.model.replace(/'/g,"\'")}','${v.bodyType||''}')"
+    ST.pque.map(v=>`<button onclick="selectVehicleForTires('${v.plate}','${v.model.replace(/'/g,"\\'")}')"
       style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:7px;
       padding:9px 13px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);transition:background .12s"
       onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface2)'">
@@ -1580,18 +1592,33 @@ function buildVehiclePicker(){
       <span style="color:var(--text2);margin-left:8px">${v.model}</span>
     </button>`).join('') +
   '</div>';
+  
   document.getElementById('tabTires').classList.add('active');
   document.getElementById('tabAcc').classList.remove('active');
-  document.getElementById('panelAcc').style.display='none';
-  document.getElementById('tireModalOverlay').style.display='flex';
+  document.getElementById('panelAcc').style.display = 'none';
 }
 
 window.selectVehicleForTires = function(plate, model){
   tireModalPlate = plate;
   tireModalModel = model;
+  
+  // 1. RECONSTRUIR EL CONTENEDOR HTML NATIVO DEL PANEL
+  // Como buildVehiclePicker() borró el div '#tireCards' al inyectar los botones,
+  // debemos restaurar la estructura original antes de llamar al render.
+  const panel = document.getElementById('panelTires');
+  panel.innerHTML = `
+    <div id="tireCards"></div>
+    <button class="add-tire-btn" onclick="addTireCard()">
+      <i class="ti ti-plus" style="font-size:11px"></i> Agregar neumático
+    </button>
+  `;
+
   document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
   document.getElementById('tireModalSub').textContent   = model;
+  
   switchTireTab('tires');
+  
+  // 2. RENDERIZAR AHORA QUE EL CONTENEDOR FUE RESTAURADO EN EL DOM
   renderTireCards(plate);
   renderAccRows(plate);
 };
