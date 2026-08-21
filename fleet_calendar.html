@@ -1183,37 +1183,52 @@ function sincronizarFlotaCDN() {
 
   console.log("-> [Rutas Generadas] URL Parque: " + urlPque);
 
-  // 1. CARGAR PARQUE AUTOMOTOR
+   // 1. CARGAR RESERVAS (scraped_data.txt)
+  fetch(urlRes)
+    .then(function(res) {
+      if (!res.ok) throw new Error("Error al descargar reservas");
+      return res.text(); // Obtenemos el texto plano tabulado (\t)
+    })
+    .then(function(data) {
+      // Usamos tu función parseRes para procesar el archivo del servidor
+      ST.res = parseRes(data); 
+      console.log("¡Éxito! Reservas actualizadas desde el CDN:", ST.res.length);
+      
+      // Forzamos el redibujado inmediato del calendario con los datos nuevos
+      if (typeof tryRender === "function") tryRender(); 
+    })
+    .catch(function(err) { console.error("Fallo al cargar Reservas:", err); });
+
+  // 2. CARGAR PARQUE AUTOMOTOR (Pque.txt)
   fetch(urlPque)
     .then(function(res) {
-      if (!res.ok) throw new Error("Error al descargar archivo Parque desde el CDN");
+      if (!res.ok) throw new Error("Error al descargar Parque");
       return res.text();
     })
     .then(function(data) {
-      // Enlaza de forma nativa con tu función original que pinta los vehículos
-      if (typeof procesarParque === "function") procesarParque(data);
-      else if (typeof renderParque === "function") renderParque(data);
-      console.log("¡Éxito! Parque automotor renderizado de forma correcta.");
+      if (typeof parsePque === "function") {
+        ST.pque = parsePque(data);
+        console.log("¡Éxito! Parque actualizado desde el CDN:", ST.pque.length);
+        if (typeof tryRender === "function") tryRender();
+      }
     })
     .catch(function(err) { console.error("Fallo al cargar Parque:", err); });
 
-  // 2. CARGAR TELEMETRÍA
+  // 3. CARGAR TELEMETRÍA (TelemGts_data.txt)
   fetch(urlTel)
-    .then(function(res) { return res.text(); })
+    .then(function(res) {
+      if (!res.ok) throw new Error("Error al descargar Telemetría");
+      return res.text();
+    })
     .then(function(data) {
-      if (typeof procesarTelemetria === "function") procesarTelemetria(data);
+      if (typeof parseTel === "function") {
+        ST.tel = parseTel(data);
+        console.log("¡Éxito! Telemetría actualizada desde el CDN.");
+        if (typeof tryRender === "function") tryRender();
+      }
     })
     .catch(function(err) { console.error("Fallo al cargar Telemetría:", err); });
-
-  // 3. CARGAR SCRAPED DATA
-  fetch(urlRes)
-    .then(function(res) { return res.text(); })
-    .then(function(data) {
-      if (typeof procesarScraped === "function") procesarScraped(data);
-    })
-    .catch(function(err) { console.error("Fallo al cargar Scraped:", err); });
 }
-
 // Ejecución automática al final de la carga (Línea 1414)
 
 
