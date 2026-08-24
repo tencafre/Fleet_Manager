@@ -956,46 +956,55 @@ window.closeModal = function(e){
 };
 
 /* ── REFRESCO DE TELEMETRÍA EN VIVO CON MODAL ABIERTO ── */
+/* ── REFRESCO DE TELEMETRÍA EN VIVO CON MODAL ABIERTO (ORDENADO Y BLINDADO) ── */
 function refreshOpenMapTelemetry() {
-  // 1. Control de seguridad: Si el mapa no está inicializado o el modal está cerrado, no hacemos nada
+  // 1. Control de seguridad inicial obligatorio
   const overlay = document.getElementById('mapOverlay');
   if (!_mapInitialized || !_leafletMap || !overlay || !overlay.classList.contains('open')) {
     return; 
   }
 
-  // Usamos la variable global de la patente que tu modal ya retiene en memoria: tireModalPlate o la que uses.
-  // Al revisar tu función openVehMap veo que no almacena la patente en una variable global.
-  // Vamos a forzar a que openVehMap guardar la patente activa agregando una línea o leyéndola del título.
+  // 2. Recuperamos la patente activa leyendo el encabezado del modal original
   const titleText = document.getElementById('mapTitle').textContent || "";
   const plate = titleText.replace('Ubicación · ', '').trim();
 
+  // Validamos que existan datos cargados en el estado global para esa patente
   if (!plate || !ST.tel || !ST.tel[plate]) return;
 
   const tel = ST.tel[plate];
   const veh = ST.pque ? ST.pque.find(v => v.plate === plate) : null;
   if (!tel.coords || tel.coords === '-') return;
 
+  // 3. Parseo numérico seguro de coordenadas extraídas de TelemGts_data.txt
   const parts = tel.coords.split(',').map(s => parseFloat(s.trim()));
   if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
   
-  const lat = parts[0], lng = parts[1];
-  console.log(`-> [Telemetría CDN] Actualizando pin en vivo para ${plate}: ${lat}, ${lng}`);
+  const lat = parts[0];
+  const lng = parts[1];
 
-  // Actualizamos el subtítulo del modal con los nuevos kilómetros y estado frescos del CDN
+  console.log(`-> [Telemetría CDN] Actualizando en vivo: ${plate} a las coordenadas ${lat}, ${lng}`);
+
+  // 4. CÁLCULO DINÁMICO DE CAPACIDAD DE COMBUSTIBLE (Hilux/SW4 = 80L, Etios/Yaris = 45L)
+  const maxFuel = (veh && (veh.model.includes('Hilux') || veh.model.includes('SW4'))) ? '80' : '45';
+
+  // 5. ACTUALIZACIÓN DINÁMICA DE TEXTOS EN EL ENCABEZADO DEL MODAL
   document.getElementById('mapSub').textContent =
     (veh ? veh.model + ' · ' : '') + tel.km + ' km · ' + tel.loc;
-  document.getElementById('mapCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    
+  // Inyectamos el combustible real formateado ej: 71L / 80L
+  document.getElementById('mapCoords').textContent = 
+    `Combustible: ${tel.fuel}L / ${maxFuel}L | Coordenadas: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 
-  // Movemos el mapa suavemente hacia la nueva coordenada procesada
+  // 6. CONTROL Y REDIBUJADO DEL MARCADOR EN EL MAPA DE LEAFLET
   _leafletMap.setView([lat, lng], _leafletMap.getZoom());
 
-  // Si ya existía el marcador viejo, lo removemos para evitar duplicados en la pantalla
+  // Si existía un marcador previo, lo removemos para evitar duplicación visual
   if (_leafletMarker) { 
     _leafletMap.removeLayer(_leafletMarker); 
     _leafletMarker = null; 
   }
 
-  // Recreamos el ícono personalizado con el color correspondiente al nuevo estado
+  // Asignamos colores según el estado de la locación
   const color = tel.loc === 'BOOKED' ? '#1e40af' :
                 tel.loc === 'PERU'   ? '#d97706' : '#166534';
                 
@@ -1009,12 +1018,12 @@ function refreshOpenMapTelemetry() {
       box-shadow:0 2px 8px rgba(0,0,0,.35);
       display:flex;align-items:center;justify-content:center;
     "><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>`,
-    iconSize:[32, 32],
-    iconAnchor:[16, 32],
-    popupAnchor:[0, -36]
+    iconSize:,
+    iconAnchor:,
+    popupAnchor: [0, -36]
   });
 
-  // Inyectamos el nuevo marcador actualizado con el botón de gestión de cubiertas integrado
+  // Re-inyectamos el pin actualizado con el botón de gestión de cubiertas integrado
   _leafletMarker = L.marker([lat, lng], { icon })
     .addTo(_leafletMap)
     .bindPopup(`
@@ -1022,7 +1031,7 @@ function refreshOpenMapTelemetry() {
         <div style="font-weight:700;font-size:13px;margin-bottom:4px">${esc(plate)}</div>
         <div style="font-size:11px;color:#555;margin-bottom:6px">${veh ? esc(veh.model) : ''}</div>
         <div style="font-size:11px"><b>Km:</b> ${esc(tel.km)}</div>
-        <div style="font-size:11px"><b>Combustible:</b> ${esc(tel.fuel)} L</div>
+        <div style="font-size:11px"><b>Combustible:</b> ${esc(tel.fuel)} L / ${maxFuel}L</div>
         <div style="font-size:11px"><b>Estado:</b>
           <span style="font-weight:600;color:${color}">${esc(tel.loc)}</span>
         </div>
@@ -1039,6 +1048,7 @@ function refreshOpenMapTelemetry() {
 
   _leafletMap.invalidateSize({ animate: false });
 }
+
   
 // show tire button in topbar after data loads
 
@@ -1485,6 +1495,7 @@ window.applyLocalPreset=function(){
     '12684\t-34.593182, -58.43074\t62,840\t19\tToyota Yaris HB AT AG708YK\tBOOKED',
     '12685\t-32.695877, -63.442169\t57,514\t38\tToyota Yaris HB AT AG708YJ\tBOOKED',
     '12877\t-34.597813, -58.380341\t32,284\t-\tToyota Corolla Cross HV AT AG765WS\tBOOKED'
+     '13131\t-34.593182, -58.43074\t59,250\t71\tToyota Hilux 4x4 DC AT AG838JY\tPERU'
   ].join('\n'));
   // render immediately with embedded data
   tryRender();
