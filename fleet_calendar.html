@@ -1137,7 +1137,6 @@ function exportTiresAccJSON() {
 }
 
 async function pushTiresAccToRemote() {
-  // Guardar neumáticos y accesorios del vehículo actual en Supabase vía Worker
   if (!tireModalPlate) return false;
   try {
     const r = await fetch(`${WORKER_URL}/data/tires`, {
@@ -1150,7 +1149,14 @@ async function pushTiresAccToRemote() {
         accessories: getAccData(tireModalPlate),
       }),
     });
-    if (!r.ok) throw new Error(r.status);
+    
+    // ── DIAGNÓSTICO: Si da error, leemos el texto que devuelve tu Worker ──
+    if (!r.ok) {
+      const errorData = await r.json().catch(() => ({ error: "Error desconocido sin JSON" }));
+      console.error("-> [DEBUG POST 400] El Worker respondió:", errorData);
+      throw new Error(`Status ${r.status}: ${errorData.error || 'Sin mensaje'}`);
+    }
+    
     return true;
   } catch(e) {
     console.warn('[sync] push tires failed —', e.message);
