@@ -1508,6 +1508,10 @@ let _leafletMarker  = null;
 let _mapInitialized = false;
 
 window.openVehMap = function(plate) {
+// LÍNEA NUEVA: Guardamos de forma global la patente activa en el mapa
+  window.currentMapPlate = plate; 
+
+  
   const tel = ST.tel ? ST.tel[plate] : null;
   const veh = ST.pque ? ST.pque.find(v => v.plate === plate) : null;
   if (!tel || !tel.coords || tel.coords === '-') {
