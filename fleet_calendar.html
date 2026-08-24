@@ -954,6 +954,92 @@ window.closeModal = function(e){
   document.getElementById('modalOverlay').style.display = 'none';
   modalPlate = null;
 };
+
+/* ── REFRESCO DE TELEMETRÍA EN VIVO CON MODAL ABIERTO ── */
+function refreshOpenMapTelemetry() {
+  // 1. Control de seguridad: Si el mapa no está inicializado o el modal está cerrado, no hacemos nada
+  const overlay = document.getElementById('mapOverlay');
+  if (!_mapInitialized || !_leafletMap || !overlay || !overlay.classList.contains('open')) {
+    return; 
+  }
+
+  // Usamos la variable global de la patente que tu modal ya retiene en memoria: tireModalPlate o la que uses.
+  // Al revisar tu función openVehMap veo que no almacena la patente en una variable global.
+  // Vamos a forzar a que openVehMap guardar la patente activa agregando una línea o leyéndola del título.
+  const titleText = document.getElementById('mapTitle').textContent || "";
+  const plate = titleText.replace('Ubicación · ', '').trim();
+
+  if (!plate || !ST.tel || !ST.tel[plate]) return;
+
+  const tel = ST.tel[plate];
+  const veh = ST.pque ? ST.pque.find(v => v.plate === plate) : null;
+  if (!tel.coords || tel.coords === '-') return;
+
+  const parts = tel.coords.split(',').map(s => parseFloat(s.trim()));
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+  
+  const lat = parts[0], lng = parts[1];
+  console.log(`-> [Telemetría CDN] Actualizando pin en vivo para ${plate}: ${lat}, ${lng}`);
+
+  // Actualizamos el subtítulo del modal con los nuevos kilómetros y estado frescos del CDN
+  document.getElementById('mapSub').textContent =
+    (veh ? veh.model + ' · ' : '') + tel.km + ' km · ' + tel.loc;
+  document.getElementById('mapCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+
+  // Movemos el mapa suavemente hacia la nueva coordenada procesada
+  _leafletMap.setView([lat, lng], _leafletMap.getZoom());
+
+  // Si ya existía el marcador viejo, lo removemos para evitar duplicados en la pantalla
+  if (_leafletMarker) { 
+    _leafletMap.removeLayer(_leafletMarker); 
+    _leafletMarker = null; 
+  }
+
+  // Recreamos el ícono personalizado con el color correspondiente al nuevo estado
+  const color = tel.loc === 'BOOKED' ? '#1e40af' :
+                tel.loc === 'PERU'   ? '#d97706' : '#166534';
+                
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      background:${color};color:#fff;border-radius:50% 50% 50% 0;
+      width:32px;height:32px;
+      transform:rotate(-45deg);
+      border:2px solid #fff;
+      box-shadow:0 2px 8px rgba(0,0,0,.35);
+      display:flex;align-items:center;justify-content:center;
+    "><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>`,
+    iconSize:,
+    iconAnchor:,
+    popupAnchor:[0, -36],
+  });
+
+  // Inyectamos el nuevo marcador actualizado con el botón de gestión de cubiertas integrado
+  _leafletMarker = L.marker([lat, lng], { icon })
+    .addTo(_leafletMap)
+    .bindPopup(`
+      <div style="font-family:system-ui;min-width:160px;padding:2px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px">${esc(plate)}</div>
+        <div style="font-size:11px;color:#555;margin-bottom:6px">${veh ? esc(veh.model) : ''}</div>
+        <div style="font-size:11px"><b>Km:</b> ${esc(tel.km)}</div>
+        <div style="font-size:11px"><b>Combustible:</b> ${esc(tel.fuel)} L</div>
+        <div style="font-size:11px"><b>Estado:</b>
+          <span style="font-weight:600;color:${color}">${esc(tel.loc)}</span>
+        </div>
+        <div style="font-size:10px;color:#999;margin-top:4px;border-bottom:1px solid #eee;padding-bottom:6px;">
+          ${lat.toFixed(5)}, ${lng.toFixed(5)}
+        </div>
+        <button onclick="openTireModal('${esc(plate)}')" 
+                style="margin-top:8px;width:100%;background:#2d2d35;color:#f5f5f7;border:1px solid #3a3a43;padding:5px;border-radius:5px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:500;"
+                onmouseover="this.style.background='#3a3a43'" onmouseout="this.style.background='#2d2d35'">
+          <i class="ti ti-tire" style="font-size:11px;"></i> Gestionar Cubiertas
+        </button>
+      </div>
+    `, { maxWidth: 220 });
+
+  _leafletMap.invalidateSize({ animate: false });
+}
+  
 // show tire button in topbar after data loads
 
 // allow close button
@@ -1910,20 +1996,25 @@ window.openChecklist = function(el) {
 };
 
 function tryRender(){
-  // 1. Control de seguridad: Frenar si falta algún archivo crítico
+  // 1. Control de seguridad: Frenar si falta algún archivo crítico del CDN
   if(!ST.pque || !ST.res || !ST.tel) return;
   
   // 2. Redibujar estadísticas y grilla del calendario originales
   updateStats(); 
   renderCal();
   
-  // 3. ── INYECCIÓN MAESTRA: Forzar el redibujado de los pines en Leaflet ──
-  // Reemplaza 'renderTelemetryMarkers' por el nombre exacto de la función 
-  // que recorre tu mapa de Leaflet y dibuja los L.marker()
-  if (typeof renderTelemetryMarkers === "function") {
-    renderTelemetryMarkers();
-  } else if (typeof updateMapMarkers === "function") {
-    updateMapMarkers(); // Usa el nombre real que tenga tu función de mapa
+  // 3. ── ACTUALIZACIÓN DE TELEMETRÍA EN VIVO ──
+  // Verificamos si el modal de mapas está abierto actualmente en pantalla
+  const mapOverlay = document.getElementById('mapOverlay');
+  const isMapOpen = mapOverlay && mapOverlay.classList.contains('open');
+
+  // Si el modal está abierto y tenemos guardada la patente activa, refrescamos el pin
+  if (isMapOpen && window.currentMapPlate) {
+    console.log("-> [Telemetría CDN] Refrescando posición en vivo para: " + window.currentMapPlate);
+    
+    // Ejecutamos tu función nativa pasándole la patente. 
+    // Como ya inicializó el mapa, saltará directo al bloque de actualización e invalidateSize.
+    window.openVehMap(window.currentMapPlate); 
   }
 }
 
