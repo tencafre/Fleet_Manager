@@ -1910,9 +1910,23 @@ window.openChecklist = function(el) {
 };
 
 function tryRender(){
-  if(!ST.pque||!ST.res||!ST.tel) return;
-  updateStats(); renderCal();
+  // 1. Control de seguridad: Frenar si falta algún archivo crítico
+  if(!ST.pque || !ST.res || !ST.tel) return;
+  
+  // 2. Redibujar estadísticas y grilla del calendario originales
+  updateStats(); 
+  renderCal();
+  
+  // 3. ── INYECCIÓN MAESTRA: Forzar el redibujado de los pines en Leaflet ──
+  // Reemplaza 'renderTelemetryMarkers' por el nombre exacto de la función 
+  // que recorre tu mapa de Leaflet y dibuja los L.marker()
+  if (typeof renderTelemetryMarkers === "function") {
+    renderTelemetryMarkers();
+  } else if (typeof updateMapMarkers === "function") {
+    updateMapMarkers(); // Usa el nombre real que tenga tu función de mapa
+  }
 }
+
 
 function updateStats(){
   const total=ST.pque.length;
