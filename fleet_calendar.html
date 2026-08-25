@@ -1281,8 +1281,8 @@ function sincronizarFlotaCDN() {
 
   var urlPque = cdnRaiz + "Pque.txt?v=" + tokenBuster;
   //var urlTel  = cdnRaiz + "TelemGts_data.txt?v=" + tokenBuster;
-  var urlRes  = cdnRaiz + "scraped_data.txt?v=" + tokenBuster;
-
+  //var urlRes  = cdnRaiz + "scraped_data.txt?v=" + tokenBuster;
+  var urlRes = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/scraped_data.txt?v=" + tokenBuster;
   // 2. ── CURA DEFINITIVA PARA LA CACHÉ DE TELEMETRÍA CADA 1 HORA ──
   // Cambiamos '@main/' por el token dinámico directamente en la estructura de jsDelivr.
   // Esto obliga al CDN a ir a buscar físicamente el archivo recién subido a GitHub.
