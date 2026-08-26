@@ -295,6 +295,26 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:0.5px solid #eee">
     <div class="bottom-note"><b>RECORDÁ</b> finalizar la reserva · Evitá cobros indebidos</div>
+    <!-- Botón interactivo de exportación A4 -->
+    <button onclick="exportarRemitoPDF()" class="btn-pdf-export" style="
+      background: var(--c-booked, #007aff);
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      transition: opacity 0.15s;
+    " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+      <i class="ti ti-download" style="font-size:13px"></i> Descargar Remito de Inspección PDF
+    </button>
+
     <button class="print-btn" onclick="window.print()">Imprimir</button>
   </div>
 
