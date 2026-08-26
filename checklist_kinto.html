@@ -425,6 +425,8 @@ function addDmg(e, n) {
   const id = Date.now() + Math.random();
   damages[n].push({id, x, y, type: mode});
   renderDmg(n);
+  if (typeof saveDamages === 'function' && currentPlate) {
+    saveDamages(currentPlate);
 }
 
 function renderDmg(n) {
