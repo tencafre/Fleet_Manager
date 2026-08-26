@@ -427,8 +427,8 @@ function addDmg(e, n) {
   renderDmg(n);
   if (typeof saveDamages === 'function' && currentPlate) {
     saveDamages(currentPlate);
+  }
 }
-
 function renderDmg(n) {
   const g = document.getElementById('dmg-'+n);
   const ns = 'http://www.w3.org/2000/svg';
