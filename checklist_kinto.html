@@ -488,53 +488,56 @@ var DMG_PREFIX = 'fleetcal_dmg_';
 async function saveDamages(plate) {
   if (!plate) return;
   try {
-    // 1. Guardado de respaldo local original
     var all = [].concat(damages[1], damages[2], damages[3]);
     localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
     
     console.log("-> [Sync] Sincronizando nuevos daños con Supabase para: " + plate);
 
-    // 2. Filtrar únicamente los daños nuevos que no se hayan subido a la base de datos
-    // Asumimos que los daños subidos exitosamente guardarán su UUID en d.id
+    // Filtramos los que no tienen ID (los nuevos)
     var dañosNuevos = all.filter(function(d) { return !d.id; });
+    console.log("-> [Sync] Cantidad de daños nuevos detectados para subir:", dañosNuevos.length);
 
-    // Recorremos y enviamos cada golpe nuevo al Worker
     for (var i = 0; i < dañosNuevos.length; i++) {
       var d = dañosNuevos[i];
       
-      try {
-        const res = await fetch(`${WORKER_URL}/data/damages`, {
-          method: 'POST',
-          credentials: 'include', // Adjunta la cookie fleet_sid para verifySession()
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            plate:        plate,
-            view_num:     parseInt(d.view || d.view_num || 1, 10), // Vista 1, 2 o 3
-            x:            parseFloat(d.x),
-            y:            parseFloat(d.y),
-            type:         d.type || "Golpe",
-            notes:        d.notes || d.desc || null,
-            checklist_id: null // Vincula un ID de inspección si lo requieres
-          })
-        });
+      // DIAGNÓSTICO DE VARIABLES: Verificamos qué valores estamos enviando
+      console.log(`-> [Enviando Daño ${i}] Vista: ${d.view || n}, X: ${d.x}, Y: ${d.y}, Tipo: ${d.type}`);
 
+      const res = await fetch(`${WORKER_URL}/data/damages`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plate:        plate,
+          view_num:     parseInt(d.view || 1, 10), // Forzamos entero
+          x:            parseFloat(d.x),
+          y:            parseFloat(d.y),
+          type:         d.type || "Golpe",
+          notes:        d.notes || d.desc || null,
+          checklist_id: null
+        })
+      });
+
+      // CAPTURA DE RESPUESTA CRUDA
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(`-> [ERROR WORKER ${res.status}] El backend o Supabase rechazó el daño:`, errorText);
+      } else {
         const reply = await res.json();
-        
-        if (res.ok && reply.status === 'ok') {
-          // ÉXITO: Guardamos el ID/UUID real devuelto por Supabase en tu objeto local
-          d.id = reply.data.id; 
-          console.log(`✓ Daño guardado en Supabase (ID: ${d.id})`);
+        if (reply.status === 'ok') {
+          d.id = reply.data.id; // Asignamos el UUID de Supabase
+          console.log(`✓ ¡Guardado con éxito! ID asignado: ${d.id}`);
+        } else {
+          console.warn("-> [Aviso Worker] La respuesta no fue 'ok':", reply);
         }
-      } catch (err) {
-        console.error("Fallo al subir golpe individual:", err);
       }
     }
 
-    // Volvemos a actualizar el localStorage para que retenga los IDs recién creados
+    // Guardamos la lista con los IDs actualizados en localStorage
     localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
 
   } catch(e) {
-    console.error("Error en saveDamages:", e);
+    console.error("-> [Fallo Fatal JS] Error en la ejecución de saveDamages:", e);
   }
 }
 async function loadDamages(plate) {
