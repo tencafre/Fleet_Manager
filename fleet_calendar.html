@@ -1663,6 +1663,70 @@ function saveAccDataStore(plate,data){
 function getTireNumbers(plate){
   return getTireData(plate).filter(t=>t.numero).map(t=>t.numero);
 }
+//PROCESO DE DAÑOS//
+  // ── FUNCIÓN: ENVIAR NUEVO GOLPE MARCADO A SUPABASE ──
+async function pushNewDamageToRemote(x, y, viewNum, type, notes = "") {
+  if (!tireModalPlate) { // Asumiendo que usas la variable global de la patente activa
+    alert("Selecciona un vehículo primero.");
+    return null;
+  }
+
+  console.log(`-> [Sync] Registrando daño en vista ${viewNum} para ${tireModalPlate}...`);
+
+  try {
+    const res = await fetch(`${WORKER_URL}/data/damages`, {
+      method: 'POST',
+      credentials: 'include', // Envía la cookie 'fleet_sid' para validar en verifySession()
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plate:        tireModalPlate,
+        view_num:     parseInt(viewNum, 10),
+        x:            parseFloat(x),
+        y:            parseFloat(y),
+        type:         type, // Ej: "Rayón", "Abolladura"
+        notes:        notes,
+        checklist_id: null  // Vincula un ID de checklist si lo manejas
+      })
+    });
+
+    const reply = await res.json();
+
+    if (!res.ok) {
+      throw new Error(reply.error || "Fallo desconocido en el servidor");
+    }
+
+    console.log("¡Daño guardado con éxito en Supabase!", reply.data);
+    return reply.data; // Devuelve el registro guardado con su ID/UUID generado por Supabase
+
+  } catch (error) {
+    console.error("[Sync] Error al empujar daño:", error.message);
+    alert("No se pudo guardar el daño: " + error.message);
+    return null;
+  }
+}
+
+// ── FUNCIÓN: MARCAR DAÑO REPARADO (PATCH /data/damages/:id) ──
+async function markDamageAsRepairedRemote(damageId, repairNotes = "") {
+  console.log(`-> [Sync] Marcando daño ${damageId} como reparado...`);
+
+  try {
+    const res = await fetch(`${WORKER_URL}/data/damages/${damageId}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: repairNotes })
+    });
+
+    const reply = await res.json();
+    if (!res.ok) throw new Error(reply.error || "Error al actualizar");
+
+    console.log("Daño marcado como reparado.");
+    return true;
+  } catch (error) {
+    console.error("Fallo al reparar daño:", error.message);
+    return false;
+  }
+}
 
 /* ── MODAL OPEN / CLOSE ── */
 /* ── MODAL OPEN / CLOSE (CORREGIDO ORDEN DEL DOM) ── */
