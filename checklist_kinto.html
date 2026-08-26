@@ -725,7 +725,7 @@ function buildTireTable(tires, accs) {
   
   let y = 15;
 
-  // ── ENCABEZADO PRINCIPAL (Color #1e293b Gris azulado oscuro corporativo) ──
+  // ── ENCABEZADO PRINCIPAL (Gris azulado oscuro corporativo) ──
   doc.setFillColor(30, 41, 59);
   doc.rect(15, y, 180, 18, "F");
   
@@ -768,7 +768,7 @@ function buildTireTable(tires, accs) {
   // ── BLOQUE 2: CONTROL DE NEUMÁTICOS ──
   doc.setFont("Helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("2. ESTADO DE LOS NEUMÁTICOS (REGISTRO SUPABASE)", 15, y);
+  doc.text("2. ESTADO DE LOS NEUMÁNECUATICOS (REGISTRO SUPABASE)", 15, y);
   y += 4;
 
   if (cubiertas.length === 0) {
@@ -830,7 +830,7 @@ function buildTireTable(tires, accs) {
       margin: { left: 15, right: 15 },
       theme: "striped",
       styles: { fontSize: 8.5, cellPadding: 2.5 },
-      headStyles: { fillColor: "#d97706", textColor: "#ffffff", fontStyle: "bold" }, // Tono ámbar/naranja para alertas
+      headStyles: { fillColor: "#d97706", textColor: "#ffffff", fontStyle: "bold" }, // Encabezado de alerta naranja
       head: [["Ítem", "Vista del Camión", "Tipo de Daño", "Observaciones / Notas", "Ubicación Relativa"]],
       body: filasDaños
     });
@@ -857,7 +857,6 @@ function buildTireTable(tires, accs) {
   doc.save(nombreArchivo);
   console.log(`-> [PDF] Remito descargado con éxito: ${nombreArchivo}`);
 }
-
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
 window.addEventListener('load', () => {
