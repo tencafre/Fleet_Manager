@@ -486,24 +486,35 @@ function setVars(data) {
 /* ─── DAMAGE PERSISTENCE ─── */
 // currentPlate and damages declared in STATE block above
 var DMG_PREFIX = 'fleetcal_dmg_';
-
 async function saveDamages(plate) {
   if (!plate) return;
   try {
-    var all = [].concat(damages[1], damages[2], damages[3]);
+    // CORRECCIÓN DE ÁMBITO: Leemos explícitamente el objeto global de la ventana (window.damages)
+    // Esto evita que choque con cualquier variable local y garantiza que el conteo de más de 0
+    var datosVistas = window.damages || damages;
+    
+    var all = [].concat(datosVistas[1] || [], datosVistas[2] || [], datosVistas[3] || []);
     localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
     
     console.log("-> [Sync] Sincronizando nuevos daños con Supabase para: " + plate);
 
-    // Filtramos los que no tienen ID (los nuevos)
+    // Filtramos los que no tienen un ID asignado por Supabase
     var dañosNuevos = all.filter(function(d) { return !d.id; });
     console.log("-> [Sync] Cantidad de daños nuevos detectados para subir:", dañosNuevos.length);
 
     for (var i = 0; i < dañosNuevos.length; i++) {
       var d = dañosNuevos[i];
       
-      // DIAGNÓSTICO DE VARIABLES: Verificamos qué valores estamos enviando
-      console.log(`-> [Enviando Daño ${i}] Vista: ${d.view || n}, X: ${d.x}, Y: ${d.y}, Tipo: ${d.type}`);
+      // Intentamos recuperar el número de vista de forma forzada si no se guardó en el push
+      var vistaReal = d.view;
+      if (!vistaReal) {
+        if ((datosVistas[1] || []).includes(d)) vistaReal = 1;
+        else if ((datosVistas[2] || []).includes(d)) vistaReal = 2;
+        else if ((datosVistas[3] || []).includes(d)) vistaReal = 3;
+        else vistaReal = 1; // Valor por defecto de contingencia
+      }
+
+      console.log(`-> [Enviando Daño ${i}] Vista: ${vistaReal}, X: ${d.x}, Y: ${d.y}`);
 
       const res = await fetch(`${WORKER_URL}/data/damages`, {
         method: 'POST',
@@ -511,7 +522,7 @@ async function saveDamages(plate) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plate:        plate,
-          view_num:     parseInt(d.view || 1, 10), // Forzamos entero
+          view_num:     parseInt(vistaReal, 10),
           x:            parseFloat(d.x),
           y:            parseFloat(d.y),
           type:         d.type || "Golpe",
@@ -520,28 +531,26 @@ async function saveDamages(plate) {
         })
       });
 
-      // CAPTURA DE RESPUESTA CRUDA
       if (!res.ok) {
         const errorText = await res.text();
         console.error(`-> [ERROR WORKER ${res.status}] El backend o Supabase rechazó el daño:`, errorText);
       } else {
         const reply = await res.json();
         if (reply.status === 'ok') {
-          d.id = reply.data.id; // Asignamos el UUID de Supabase
-          console.log(`✓ ¡Guardado con éxito! ID asignado: ${d.id}`);
-        } else {
-          console.warn("-> [Aviso Worker] La respuesta no fue 'ok':", reply);
+          d.id = reply.data.id; // Le inyectamos el UUID real recién creado en la base de datos
+          console.log(`✓ ¡Guardado con éxito en Supabase! ID asignado: ${d.id}`);
         }
       }
     }
 
-    // Guardamos la lista con los IDs actualizados en localStorage
+    // Volvemos a actualizar el respaldo de LocalStorage con el nuevo UUID asignado
     localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
 
   } catch(e) {
     console.error("-> [Fallo Fatal JS] Error en la ejecución de saveDamages:", e);
   }
 }
+
 async function loadDamages(plate) {
   if (!plate) return;
   try {
