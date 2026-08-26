@@ -471,22 +471,119 @@ function setVars(data) {
 // currentPlate and damages declared in STATE block above
 var DMG_PREFIX = 'fleetcal_dmg_';
 
-function saveDamages(plate) {
+async function saveDamages(plate) {
   if (!plate) return;
   try {
-    var all = [].concat(damages[1],damages[2],damages[3]);
+    // 1. Guardado de respaldo local original
+    var all = [].concat(damages[1], damages[2], damages[3]);
     localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
-  } catch(e) {}
+    
+    console.log("-> [Sync] Sincronizando nuevos daños con Supabase para: " + plate);
+
+    // 2. Filtrar únicamente los daños nuevos que no se hayan subido a la base de datos
+    // Asumimos que los daños subidos exitosamente guardarán su UUID en d.id
+    var dañosNuevos = all.filter(function(d) { return !d.id; });
+
+    // Recorremos y enviamos cada golpe nuevo al Worker
+    for (var i = 0; i < dañosNuevos.length; i++) {
+      var d = dañosNuevos[i];
+      
+      try {
+        const res = await fetch(`${WORKER_URL}/data/damages`, {
+          method: 'POST',
+          credentials: 'include', // Adjunta la cookie fleet_sid para verifySession()
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plate:        plate,
+            view_num:     parseInt(d.view || d.view_num || 1, 10), // Vista 1, 2 o 3
+            x:            parseFloat(d.x),
+            y:            parseFloat(d.y),
+            type:         d.type || "Golpe",
+            notes:        d.notes || d.desc || null,
+            checklist_id: null // Vincula un ID de inspección si lo requieres
+          })
+        });
+
+        const reply = await res.json();
+        
+        if (res.ok && reply.status === 'ok') {
+          // ÉXITO: Guardamos el ID/UUID real devuelto por Supabase en tu objeto local
+          d.id = reply.data.id; 
+          console.log(`✓ Daño guardado en Supabase (ID: ${d.id})`);
+        }
+      } catch (err) {
+        console.error("Fallo al subir golpe individual:", err);
+      }
+    }
+
+    // Volvemos a actualizar el localStorage para que retenga los IDs recién creados
+    localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
+
+  } catch(e) {
+    console.error("Error en saveDamages:", e);
+  }
 }
-function loadDamages(plate) {
+async function loadDamages(plate) {
   if (!plate) return;
   try {
-    var raw = localStorage.getItem(DMG_PREFIX + plate);
-    var saved = raw ? JSON.parse(raw) : [];
-    damages[1]=[]; damages[2]=[]; damages[3]=[];
-    saved.forEach(function(d){ if(damages[d.view]) damages[d.view].push(d); });
+    // 1. Intentar descargar primero los datos reales desde Supabase vía Worker
+    console.log("-> [Sync] Descargando registro de daños desde Supabase para: " + plate);
+    
+    // Reseteamos los arrays locales antes de la carga
+    damages[1] = []; damages[2] = []; damages[3] = [];
+
+    var saved = [];
+    var usadoNube = false;
+
+    try {
+      const res = await fetch(`${WORKER_URL}/data/damages?plate=${encodeURIComponent(plate)}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (res.ok) {
+        var dbData = await res.json();
+        // Mapeamos los nombres de columna de tu tabla fleet_damages al formato de tu frontend
+        saved = dbData.map(function(d) {
+          return {
+            id:       d.id, // Guardamos el UUID para saber que ya está en la nube
+            view:     d.view_num || 1,
+            x:        d.x,
+            y:        d.y,
+            type:     d.type,
+            notes:    d.notes,
+            status:   d.status // 'activo' o 'reparado'
+          };
+        });
+        usadoNube = true;
+        console.log(`-> [Sync] Se descargaron ${saved.length} daños válidos desde la nube.`);
+      }
+    } catch (err) {
+      console.warn("Worker inaccesible o sin sesión. Usando plan de contingencia LocalStorage...");
+    }
+
+    // 2. PLAN DE CONTINGENCIA: Si la nube falló, leemos el LocalStorage tradicional
+    if (!usadoNube) {
+      var raw = localStorage.getItem(DMG_PREFIX + plate);
+      saved = raw ? JSON.parse(raw) : [];
+    }
+
+    // 3. DISTRIBUIR LOS DAÑOS EN LAS 3 VISTAS DEL CAMIÓN
+    saved.forEach(function(d) {
+      // Opcional: Si quieres ignorar visualmente los daños que ya fueron reparados, descomenta la línea de abajo:
+      // if (d.status === 'reparado') return;
+
+      if (damages[d.view]) {
+        damages[d.view].push(d);
+      }
+    });
+
+    // 4. Redibujar el gráfico con los puntos inyectados
     if (typeof renderAll === 'function') renderAll();
-  } catch(e) {}
+
+  } catch(e) {
+    console.error("Error en loadDamages:", e);
+  }
 }
 
 /* ─── BODY TYPE → VEHICLE IMAGE KEY MAP ─── */
