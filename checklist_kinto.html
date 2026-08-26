@@ -706,35 +706,27 @@ function buildTireTable(tires, accs) {
   return html;
 }
 //modulo A4//
-  async function exportarRemitoPDF() {
+ async function exportarRemitoPDF() {
   console.log("-> [PDF] Compilando datos para la generación del remito...");
   
-  if (!currentPlate) {
+  if (typeof currentPlate === "undefined" || !currentPlate) {
     alert("Por favor, selecciona una patente antes de exportar el remito.");
     return;
   }
 
-  // Desestructuramos el módulo nativo de jsPDF
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   
-  // 1. OBTENCIÓN DE DATOS DEL ESTADO GLOBAL (Fiel a tus parsers)
   const veh = ST.pque ? ST.pque.find(v => v.plate === currentPlate) : null;
   const tel = ST.tel ? ST.tel[currentPlate] : null;
   
-  // Agrupamos todos los daños vigentes cargados desde Supabase
   const todosLosDaños = [].concat(damages[1] || [], damages[2] || [], damages[3] || []);
   const cubiertas = typeof tireWorkingCopy !== "undefined" ? tireWorkingCopy : [];
-
-  // 2. CONFIGURACIÓN ESTÉTICA (Look Corporativo Fleet Manager)
-  const azulCorporativo =; // #1e293b
-  const grisBorde =;
   
-  // Margen base e inicio de Y
   let y = 15;
 
-  // ── ENCABEZADO PRINCIPAL ──
-  doc.setFillColor(...azulCorporativo);
+  // ── ENCABEZADO PRINCIPAL (Color #1e293b Gris azulado oscuro corporativo) ──
+  doc.setFillColor(30, 41, 59);
   doc.rect(15, y, 180, 18, "F");
   
   doc.setTextColor(255, 255, 255);
@@ -762,13 +754,13 @@ function buildTireTable(tires, accs) {
     startY: y,
     margin: { left: 15, right: 15 },
     theme: "plain",
-    styles: { fontSize: 9, cellPadding: 3, lineColor: grisBorde, lineWidth: 0.1 },
-    headStyles: { fillColor:, textColor:, fontStyle: "bold" },
+    styles: { fontSize: 9, cellPadding: 3, lineColor: "#d1d5db", lineWidth: 0.1 },
+    headStyles: { fillColor: "#1e293b", textColor: "#ffffff", fontStyle: "bold" },
     body: [
       ["Patente Dom.:", currentPlate, "Fecha / Hora:", fechaInspeccion],
       ["Modelo Vehículo:", veh ? veh.model : "No especificado", "Kilometraje:", tel ? tel.km + " km" : "Sin telemetría"],
       ["Categoría:", veh ? veh.bodyType : "-", "Nivel Combustible:", tel ? tel.fuel + " %" : "-"],
-      ["Estado Operativo:", tel ? tel.loc : "OK", "Inspector Auditor:", typeof nombreOperador !== "undefined" ? nombreOperador : "Sistema"]
+      ["Estado Operativo:", tel ? tel.loc : "OK", "Inspector Auditor:", typeof ST.user !== "undefined" && ST.user ? ST.user.name : "Sistema"]
     ]
   });
   y = doc.lastAutoTable.finalY + 12;
@@ -801,7 +793,7 @@ function buildTireTable(tires, accs) {
       margin: { left: 15, right: 15 },
       theme: "striped",
       styles: { fontSize: 8, cellPadding: 2.5 },
-      headStyles: { fillColor: azulCorporativo, textColor:, fontStyle: "bold" },
+      headStyles: { fillColor: "#1e293b", textColor: "#ffffff", fontStyle: "bold" },
       head: [["Posición", "ID / Número", "Marca", "Rodado", "DOT", "Montaje", "Km Montado"]],
       body: filasTires
     });
@@ -818,7 +810,7 @@ function buildTireTable(tires, accs) {
   if (todosLosDaños.length === 0) {
     doc.setFont("Helvetica", "italic");
     doc.setFontSize(9);
-    doc.setTextColor(34, 139, 34); // Verde éxito
+    doc.setTextColor(34, 139, 34); 
     doc.text("✓ Vehículo limpio: No se detectaron daños ni rayones visuales en la carrocería.", 18, y);
     y += 12;
   } else {
@@ -838,37 +830,32 @@ function buildTireTable(tires, accs) {
       margin: { left: 15, right: 15 },
       theme: "striped",
       styles: { fontSize: 8.5, cellPadding: 2.5 },
-      headStyles: { fillColor:, textColor:, fontStyle: "bold" }, // Tono de alerta naranja/rojo
+      headStyles: { fillColor: "#d97706", textColor: "#ffffff", fontStyle: "bold" }, // Tono ámbar/naranja para alertas
       head: [["Ítem", "Vista del Camión", "Tipo de Daño", "Observaciones / Notas", "Ubicación Relativa"]],
       body: filasDaños
     });
     y = doc.lastAutoTable.finalY + 16;
   }
 
-  // ── BLOQUE 4: PANEL DE FIRMAS RECEPTORAS ──
-  // Si nos quedamos con poco espacio al fondo, creamos una página nueva automática
+  // Control de salto de página para firmas
   if (y > 240) {
     doc.addPage();
     y = 25;
   }
 
-  doc.setLineDash([1, 1], 0);
+  // Líneas de firmas receptoras
   doc.setDrawColor(150, 150, 150);
-  
-  // Línea Firma Operador
   doc.line(25, y + 20, 85, y + 20);
   doc.setFontSize(8.5);
   doc.setFont("Helvetica", "normal");
   doc.text("Firma Conductor / Cliente", 40, y + 24);
 
-  // Línea Firma Inspector
   doc.line(125, y + 20, 185, y + 20);
   doc.text("Firma Inspector Responsable", 140, y + 24);
   
-  // Guardado definitivo directo en el dispositivo del cliente
   const nombreArchivo = `Remito_${currentPlate}_${Date.now()}.pdf`;
   doc.save(nombreArchivo);
-  console.log(`-> [PDF] Remito descargado con éxito bajo el nombre: ${nombreArchivo}`);
+  console.log(`-> [PDF] Remito descargado con éxito: ${nombreArchivo}`);
 }
 
 
