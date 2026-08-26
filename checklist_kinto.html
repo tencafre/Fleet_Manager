@@ -489,36 +489,44 @@ var DMG_PREFIX = 'fleetcal_dmg_';
 async function saveDamages(plate) {
   if (!plate) return;
   try {
-    // CORRECCIÓN DE ÁMBITO: Leemos explícitamente el objeto global de la ventana (window.damages)
-    // Esto evita que choque con cualquier variable local y garantiza que el conteo de más de 0
+    // 1. EXTRAER LOS DAÑOS RESPETANDO TU ESTRUCTURA INTERNA DE VISTAS (1, 2, 3)
     var datosVistas = window.damages || damages;
     
-    var all = [].concat(datosVistas[1] || [], datosVistas[2] || [], datosVistas[3] || []);
+    var arrayV1 = datosVistas[1] || [];
+    var arrayV2 = datosVistas[2] || [];
+    var arrayV3 = datosVistas[3] || [];
+
+    // Ahora sí unificamos los arrays de las 3 vistas en una lista plana legítima
+    var all = [].concat(arrayV1, arrayV2, arrayV3);
+    
+    // Guardamos la copia de respaldo local
     localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
     
     console.log("-> [Sync] Sincronizando nuevos daños con Supabase para: " + plate);
 
-    // Filtramos los que no tienen un ID asignado por Supabase
-    var dañosNuevos = all.filter(function(d) { return !d.id; });
+    // 2. FILTRAR ÚNICAMENTE LOS DAÑOS QUE NO TENGAN UUID DE SUPABASE
+    var dañosNuevos = all.filter(function(d) { return d && !d.id_nube; });
     console.log("-> [Sync] Cantidad de daños nuevos detectados para subir:", dañosNuevos.length);
 
     for (var i = 0; i < dañosNuevos.length; i++) {
       var d = dañosNuevos[i];
-      
-      // Intentamos recuperar el número de vista de forma forzada si no se guardó en el push
+      if (!d) continue;
+
+      // Detectamos a qué vista pertenece físicamente este objeto de daño
       var vistaReal = d.view;
       if (!vistaReal) {
-        if ((datosVistas[1] || []).includes(d)) vistaReal = 1;
-        else if ((datosVistas[2] || []).includes(d)) vistaReal = 2;
-        else if ((datosVistas[3] || []).includes(d)) vistaReal = 3;
-        else vistaReal = 1; // Valor por defecto de contingencia
+        if (arrayV1.includes(d)) vistaReal = 1;
+        else if (arrayV2.includes(d)) vistaReal = 2;
+        else if (arrayV3.includes(d)) vistaReal = 3;
+        else vistaReal = 1; // Valor por defecto ante contingencias
       }
 
-      console.log(`-> [Enviando Daño ${i}] Vista: ${vistaReal}, X: ${d.x}, Y: ${d.y}`);
+      console.log(`-> [Enviando Daño ${i}] Vista: ${vistaReal}, X: ${d.x}, Y: ${d.y}, Tipo: ${d.type}`);
 
+      // DISPARADOR DE PETICIÓN HACIA EL WORKER (POST /data/damages)
       const res = await fetch(`${WORKER_URL}/data/damages`, {
         method: 'POST',
-        credentials: 'include',
+        credentials: 'include', // Adjunta la cookie fleet_sid para verifySession()
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plate:        plate,
@@ -537,19 +545,21 @@ async function saveDamages(plate) {
       } else {
         const reply = await res.json();
         if (reply.status === 'ok') {
-          d.id = reply.data.id; // Le inyectamos el UUID real recién creado en la base de datos
-          console.log(`✓ ¡Guardado con éxito en Supabase! ID asignado: ${d.id}`);
+          // IMPORTANTE: Le asignamos la marca id_nube para que el filter no lo vuelva a enviar
+          d.id_nube = reply.data.id; 
+          console.log(`✓ ¡Guardado con éxito en Supabase! ID Nube asignado: ${d.id_nube}`);
         }
       }
     }
 
-    // Volvemos a actualizar el respaldo de LocalStorage con el nuevo UUID asignado
+    // Volvemos a actualizar el LocalStorage con las marcas id_nube inyectadas
     localStorage.setItem(DMG_PREFIX + plate, JSON.stringify(all));
 
   } catch(e) {
     console.error("-> [Fallo Fatal JS] Error en la ejecución de saveDamages:", e);
   }
 }
+
 
 async function loadDamages(plate) {
   if (!plate) return;
@@ -569,18 +579,18 @@ async function loadDamages(plate) {
         credentials: 'include'
       });
 
+      // --- MODIFICA ESTA SECCIÓN DENTRO DE TU FUNCIÓN LOADDAMAGES() ---
       if (res.ok) {
         var dbData = await res.json();
-        // Mapeamos los nombres de columna de tu tabla fleet_damages al formato de tu frontend
         saved = dbData.map(function(d) {
           return {
-            id:       d.id, // Guardamos el UUID para saber que ya está en la nube
+            id_nube:  d.id, // Sincronizamos el nombre de la variable de control
             view:     d.view_num || 1,
             x:        d.x,
             y:        d.y,
             type:     d.type,
             notes:    d.notes,
-            status:   d.status // 'activo' o 'reparado'
+            status:   d.status
           };
         });
         usadoNube = true;
