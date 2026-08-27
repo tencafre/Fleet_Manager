@@ -6,13 +6,14 @@
 <script src="https://cloudflare.com"></script>
 
 <meta http-equiv="Content-Security-Policy" content="
-  default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
-  connect-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
-  style-src * 'unsafe-inline';
-  script-src * 'unsafe-inline' 'unsafe-eval';
-  font-src * data:;
-  img-src * data: blob:;
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloudflare.com https://unpkg.com;
+  style-src 'self' 'unsafe-inline' https://jsdelivr.net https://googleapis.com https://unpkg.com;
+  font-src 'self' data: https://gstatic.com https://jsdelivr.net;
+  connect-src 'self' https://githubusercontent.com https://github.com https://jsdelivr.net https://unpkg.com https://workers.dev;
+  img-src 'self' data: https://unpkg.com https://*.tile.openstreetmap.org;
 ">
+
   
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
