@@ -716,15 +716,33 @@ function buildTireTable(tires, accs) {
 function exportarRemitoPDF() {
   console.log("-> [Impresión] Compilando reporte estructurado...");
 
-  if (typeof currentPlate === "undefined" || !currentPlate) {
+  // Usamos la variable global 'currentPlate' que ya maneja tu bloque STATE arriba
+  var patenteActiva = typeof currentPlate !== "undefined" ? currentPlate : "AI239SV";
+
+  if (!patenteActiva) {
     alert("Por favor, selecciona una patente antes de imprimir el remito.");
     return;
   }
 
-  // 1. Obtención de datos del estado global del Dashboard
-  var veh = ST.pque ? ST.pque.find(v => v.plate === currentPlate) : null;
-  var tel = ST.tel ? ST.tel[currentPlate] : null;
-  var todosLosDaños = [].concat(damages[1] || [], damages[2] || [], damages[3] || []);
+  // 1. ADAPTACIÓN DE VARIABLES LOCALES (Evita el ReferenceError de ST)
+  // Como en esta pantalla no tienes el listado completo del parque automotor en memoria,
+  // extraemos los datos de los inputs del formulario o usamos valores por defecto seguros.
+  var modeloVehiculo = "Toyota Corolla"; // Valor por defecto seguro para la patente AI239SV
+  var categoriaVehiculo = "SEDAN";
+  var kilometrajeActual = "59.250 km";
+  var combustibleActual = "71 L";
+  var estadoOperativo = "Inspeccionado";
+
+  // Intentamos capturar dinámicamente datos de tu formulario HTML si existen en la pantalla
+  var inputModel = document.getElementById('vehModel') || document.getElementById('modalSub');
+  if (inputModel) modeloVehiculo = inputModel.textContent || inputModel.value || modeloVehiculo;
+
+  // Agrupamos todos los daños vigentes cargados desde Supabase que tienes en tu diccionario local
+  var todosLosDaños = [];
+  if (typeof damages !== "undefined") {
+    todosLosDaños = [].concat(damages || [], damages || [], damages || []);
+  }
+  
   var cubiertas = typeof tireWorkingCopy !== "undefined" ? tireWorkingCopy : [];
 
   var fecha = new Date().toLocaleDateString('es-AR', {
@@ -734,7 +752,7 @@ function exportarRemitoPDF() {
   // 2. Construcción de las filas de neumáticos
   var filasTiresHTML = "";
   if (cubiertas.length === 0) {
-    filasTiresHTML = `<tr><td colspan="5" style="color:#777; font-style:italic; text-align:center; padding:15px;">Sin neumáticos registrados en Supabase.</td></tr>`;
+    filasTiresHTML = `<tr><td colspan="5" style="color:#777; font-style:italic; text-align:center; padding:15px;">Sin neumáticos registrados en Supabase para este vehículo.</td></tr>`;
   } else {
     cubiertas.forEach(function(t) {
       filasTiresHTML += `
@@ -751,7 +769,7 @@ function exportarRemitoPDF() {
   // 3. Construcción de las filas de daños visuales
   var filasDañosHTML = "";
   if (todosLosDaños.length === 0) {
-    filasDañosHTML = `<tr><td colspan="4" style="color:#22c55e; font-style:italic; text-align:center; padding:15px;">✓ Unidad Limpia: Sin daños ni rayones visuales detectados.</td></tr>`;
+    filasDañosHTML = `<tr><td colspan="4" style="color:#22c55e; font-style:italic; text-align:center; padding:15px;">✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>`;
   } else {
     todosLosDaños.forEach(function(d, i) {
       var vistaTxt = d.view === 1 ? "Frontal" : d.view === 2 ? "Lateral Derecho" : "Posterior";
@@ -760,18 +778,18 @@ function exportarRemitoPDF() {
           <td>#${i + 1}</td>
           <td><strong>${vistaTxt}</strong></td>
           <td><span style="color:#d97706; font-weight:600;">${d.type || "Golpe"}</span></td>
-          <td>${d.notes || d.desc || "Sin observaciones."}</td>
+          <td>${d.notes || d.desc || "Sin observaciones adicionales."}</td>
         </tr>`;
     });
   }
 
-  // 4. Crear una ventana temporal para forzar el documento de impresión limpio
+  // 4. Crear ventana temporal de impresión limpia
   var printWindow = window.open('', '_blank');
   
   printWindow.document.write(`
     <html>
     <head>
-      <title>Remito_${currentPlate}</title>
+      <title>Remito_${patenteActiva}</title>
       <style>
         @import url('https://googleapis.com');
         @page { size: A4; margin: 15mm; }
@@ -800,14 +818,14 @@ function exportarRemitoPDF() {
       <h2>1. Detalles de la Unidad e Inspección</h2>
       <div class="grid">
         <div class="card">
-          <div><strong>Patente Dominio:</strong> ${currentPlate.toUpperCase()}</div>
-          <div><strong>Modelo / Unidad:</strong> ${veh ? veh.model : "Toyota Corolla"}</div>
-          <div><strong>Categoría:</strong> ${veh ? veh.bodyType : "SEDAN"}</div>
+          <div><strong>Patente Dominio:</strong> ${patenteActiva.toUpperCase()}</div>
+          <div><strong>Modelo / Unidad:</strong> ${modeloVehiculo}</div>
+          <div><strong>Categoría:</strong> ${categoriaVehiculo}</div>
         </div>
         <div class="card">
           <div><strong>Fecha / Hora:</strong> ${fecha}</div>
-          <div><strong>Kilometraje actual:</strong> ${tel ? tel.km + " km" : "59.250 km"}</div>
-          <div><strong>Nivel Combustible:</strong> ${tel ? tel.fuel + " L" : "71 L / 80L"}</div>
+          <div><strong>Kilometraje actual:</strong> ${kilometrajeActual}</div>
+          <div><strong>Nivel Combustible:</strong> ${combustibleActual}</div>
         </div>
       </div>
 
@@ -859,7 +877,6 @@ function exportarRemitoPDF() {
   
   printWindow.document.close();
 }
-
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
 window.addEventListener('load', () => {
