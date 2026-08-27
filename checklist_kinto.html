@@ -5,14 +5,16 @@
 <script src="https://cloudflare.com"></script>
 <script src="https://cloudflare.com"></script>
 
+<!-- REEMPLAZO ABSOLUTO DE LA CSP EN TU HEAD -->
 <meta http-equiv="Content-Security-Policy" content="
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloudflare.com https://unpkg.com;
-  style-src 'self' 'unsafe-inline' https://jsdelivr.net https://googleapis.com https://unpkg.com;
-  font-src 'self' data: https://gstatic.com https://jsdelivr.net;
-  connect-src 'self' https://githubusercontent.com https://github.com https://jsdelivr.net https://unpkg.com https://workers.dev;
-  img-src 'self' data: https://unpkg.com https://*.tile.openstreetmap.org;
+  default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+  connect-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+  style-src * 'unsafe-inline' https://fonts.googleapis.com;
+  script-src * 'unsafe-inline' 'unsafe-eval' https://cloudflare.com;
+  font-src * data: https://gstatic.com;
+  img-src * data: blob:;
 ">
+
 
   
 <meta charset="UTF-8">
