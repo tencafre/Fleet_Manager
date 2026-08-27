@@ -714,172 +714,180 @@ function buildTireTable(tires, accs) {
 }
 //modulo A4//
 async function exportarRemitoPDF() {
-  console.log("-> [PDF] Compilando datos para la generación del remito...");
+  console.log("-> [PDF] Compilando datos locales para la generación del remito...");
   
   if (typeof currentPlate === "undefined" || !currentPlate) {
     alert("Por favor, selecciona una patente antes de exportar el remito.");
     return;
   }
 
-  // Puntero de compatibilidad universal para UNPKG UMD
-  var jsPDFInstance = null;
-  if (window.jspdf && window.jspdf.jsPDF) {
-    jsPDFInstance = window.jspdf.jsPDF;
-  } else if (window.jsPDF) {
-    jsPDFInstance = window.jsPDF;
-  }
+  // Instanciación del constructor local inyectado
+  var jsPDFInstance = window.jsPDF || (window.jspdf ? window.jspdf.jsPDF : null);
 
-  // Si sigue dando null, disparamos el cartel preventivo
   if (!jsPDFInstance) {
-    alert("Error crítico: La librería jsPDF no pudo ser cargada debido a restricciones de red o CSP.");
+    alert("Error interno: No se pudo instanciar el motor de PDF integrado.");
     return;
   }
 
-  // Inicialización limpia
+  // Inicialización del documento A4 estándar
   var doc = new jsPDFInstance({ orientation: "portrait", unit: "mm", format: "a4" });
   
-  // ... Todo el resto de tu código que dibuja las celdas y tablas (#1e293b) sigue exactamente igual abajo ...
+  // Lectura de variables del estado global
+  var veh = ST.pque ? ST.pque.find(v => v.plate === currentPlate) : null;
+  var tel = ST.tel ? ST.tel[currentPlate] : null;
+  var todosLosDaños = [].concat(damages || [], damages || [], damages || []);
+  var cubiertas = typeof tireWorkingCopy !== "undefined" ? tireWorkingCopy : [];
 
-   
-  const veh = ST.pque ? ST.pque.find(v => v.plate === currentPlate) : null;
-  const tel = ST.tel ? ST.tel[currentPlate] : null;
-  
-  const todosLosDaños = [].concat(damages[1] || [], damages[2] || [], damages[3] || []);
-  const cubiertas = typeof tireWorkingCopy !== "undefined" ? tireWorkingCopy : [];
-  
   let y = 15;
 
-  // ── ENCABEZADO PRINCIPAL (Gris azulado oscuro corporativo) ──
-  doc.setFillColor(30, 41, 59);
+  // ════════════════════════════════════════════════════════════
+  // ── ENCABEZADO PRINCIPAL (Look Corporativo Fleet Manager) ──
+  // ════════════════════════════════════════════════════════════
+  doc.setFillColor(30, 41, 59); // Color #1e293b Gris azulado oscuro
   doc.rect(15, y, 180, 18, "F");
   
   doc.setTextColor(255, 255, 255);
   doc.setFont("Helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("FLEET MANAGER · CONTROL DE INSPECCIÓN", 20, y + 11);
-  
-  doc.setFont("Helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text("REMITO DE ENTREGA / DEVOLUCIÓN", 145, y + 11);
-  y += 26;
+  doc.setFontSize(13);
+  doc.text("FLEET MANAGER · CONTROL DE INSPECCIÓN DE FLOTA", 20, y + 11);
+  y += 28;
 
-  // ── BLOQUE 1: DATOS DE CONTROL ──
-  doc.setTextColor(50, 50, 50);
-  doc.setFontSize(10);
+  // ════════════════════════════════════════════════════════════
+  // ── SECCIÓN 1: INFORMACIÓN DEL VEHÍCULO Y INSPECCIÓN ──
+  // ════════════════════════════════════════════════════════════
+  doc.setTextColor(30, 41, 59);
   doc.setFont("Helvetica", "bold");
-  doc.text("1. INFORMACIÓN DEL VEHÍCULO Y OPERACIÓN", 15, y);
-  y += 4;
+  doc.setFontSize(10.5);
+  doc.text("1. DETALLES DE LA UNIDAD Y ESTADO OPERATIVO", 15, y);
+  
+  // Dibujamos una línea sutil divisoria
+  doc.setDrawColor(210, 214, 219);
+  doc.line(15, y + 2, 195, y + 2);
+  y += 8;
 
+  doc.setTextColor(60, 66, 87);
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(9.5);
+  
   const fechaInspeccion = new Date().toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 
-  doc.autoTable({
-    startY: y,
-    margin: { left: 15, right: 15 },
-    theme: "plain",
-    styles: { fontSize: 9, cellPadding: 3, lineColor: "#d1d5db", lineWidth: 0.1 },
-    headStyles: { fillColor: "#1e293b", textColor: "#ffffff", fontStyle: "bold" },
-    body: [
-      ["Patente Dom.:", currentPlate, "Fecha / Hora:", fechaInspeccion],
-      ["Modelo Vehículo:", veh ? veh.model : "No especificado", "Kilometraje:", tel ? tel.km + " km" : "Sin telemetría"],
-      ["Categoría:", veh ? veh.bodyType : "-", "Nivel Combustible:", tel ? tel.fuel + " %" : "-"],
-      ["Estado Operativo:", tel ? tel.loc : "OK", "Inspector Auditor:", typeof ST.user !== "undefined" && ST.user ? ST.user.name : "Sistema"]
-    ]
-  });
-  y = doc.lastAutoTable.finalY + 12;
+  // Columna Izquierda
+  doc.text(`Patente Vehículo: ${currentPlate.toUpperCase()}`, 18, y);
+  doc.text(`Modelo / Unidad: ${veh ? veh.model : "No especificado"}`, 18, y + 6);
+  doc.text(`Categoría Carrocería: ${veh ? veh.bodyType : "-"}`, 18, y + 12);
+  
+  // Columna Derecha
+  doc.text(`Fecha / Hora: ${fechaInspeccion}`, 115, y);
+  doc.text(`Kilometraje Tracker: ${tel ? tel.km + " km" : "Sin telemetría"}`, 115, y + 6);
+  doc.text(`Combustible en Tanque: ${tel ? tel.fuel : "0"} L`, 115, y + 12);
+  y += 24;
 
-  // ── BLOQUE 2: CONTROL DE NEUMÁTICOS ──
+  // ════════════════════════════════════════════════════════════
+  // ── SECCIÓN 2: CONTROL DE NEUMÁTICOS (DESDE SUPABASE) ──
+  // ════════════════════════════════════════════════════════════
+  doc.setTextColor(30, 41, 59);
   doc.setFont("Helvetica", "bold");
-  doc.setFontSize(10);
-  doc.text("2. ESTADO DE LOS NEUMÁNECUATICOS (REGISTRO SUPABASE)", 15, y);
-  y += 4;
+  doc.setFontSize(10.5);
+  doc.text("2. ESTADO DE LOS NEUMÁTICOS REGISTRADOS", 15, y);
+  doc.line(15, y + 2, 195, y + 2);
+  y += 8;
+
+  doc.setTextColor(60, 66, 87);
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(9);
 
   if (cubiertas.length === 0) {
     doc.setFont("Helvetica", "italic");
-    doc.setFontSize(9);
-    doc.setTextColor(120, 120, 120);
-    doc.text("Sin neumáticos registrados para esta patente en la base de datos.", 18, y);
+    doc.text("Sin cubiertas registradas de forma activa para este dominio en Supabase.", 18, y);
     y += 10;
   } else {
-    const filasTires = cubiertas.map(t => [
-      t.posicion || "Sin asignar",
-      t.numero || "-",
-      t.marca || "-",
-      t.rodado || "-",
-      t.dot || "-",
-      t.fecha || "-",
-      t.km ? t.km + " km" : "-"
-    ]);
+    // Encabezado de texto plano emulado
+    doc.setFont("Helvetica", "bold");
+    doc.text("Posición       ID / Número       Marca            Rodado            DOT       Kilometraje", 18, y);
+    doc.line(18, y + 1.5, 192, y + 1.5);
+    doc.setFont("Helvetica", "normal");
+    y += 7;
 
-    doc.autoTable({
-      startY: y,
-      margin: { left: 15, right: 15 },
-      theme: "striped",
-      styles: { fontSize: 8, cellPadding: 2.5 },
-      headStyles: { fillColor: "#1e293b", textColor: "#ffffff", fontStyle: "bold" },
-      head: [["Posición", "ID / Número", "Marca", "Rodado", "DOT", "Montaje", "Km Montado"]],
-      body: filasTires
+    cubiertas.forEach((t) => {
+      // Ajustamos los espacios espaciando el texto de forma manual fija
+      const pos = (t.posicion || "Sin asignar").padEnd(14, " ");
+      const num = (t.numero || "-").padEnd(18, " ");
+      const marca = (t.marca || "-").padEnd(17, " ");
+      const rodado = (t.rodado || "-").padEnd(18, " ");
+      const dot = (t.dot || "-").padEnd(10, " ");
+      const km = t.km ? t.km + " km" : "-";
+
+      doc.text(`${pos}${num}${marca}${rodado}${dot}${km}`, 18, y);
+      y += 5.5;
     });
-    y = doc.lastAutoTable.finalY + 12;
+    y += 8;
   }
 
-  // ── BLOQUE 3: REGISTRO DE DAÑOS VISUALES DE CARROCERÍA ──
+  // ════════════════════════════════════════════════════════════
+  // ── SECCIÓN 3: INFORME DE DAÑOS VISUALES ──
+  // ════════════════════════════════════════════════════════════
+  if (y > 230) { doc.addPage(); y = 20; } // Control preventivo de desborde de hoja
+
+  doc.setTextColor(30, 41, 59);
   doc.setFont("Helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10.5);
   doc.text("3. INFORME DE DAÑOS Y ABULLADURAS DETECTADAS", 15, y);
-  y += 4;
+  doc.line(15, y + 2, 195, y + 2);
+  y += 8;
+
+  doc.setTextColor(60, 66, 87);
+  doc.setFont("Helvetica", "normal");
+  doc.setFontSize(9);
 
   if (todosLosDaños.length === 0) {
-    doc.setFont("Helvetica", "italic");
-    doc.setFontSize(9);
-    doc.setTextColor(34, 139, 34); 
-    doc.text("✓ Vehículo limpio: No se detectaron daños ni rayones visuales en la carrocería.", 18, y);
-    y += 12;
+    doc.setTextColor(34, 139, 34); // Color verde para indicar éxito de inspección limpia
+    doc.setFont("Helvetica", "bold");
+    doc.text("✓ Unidad Limpia: No se registraron abulladaras ni rayones en la inspección visual.", 18, y);
+    y += 15;
   } else {
-    const filasDaños = todosLosDaños.map((d, i) => {
-      const vistaTxt = d.view === 1 ? "Frente / Frontal" : d.view === 2 ? "Lateral Derecho" : "Atrás / Posterior";
-      return [
-        `#${i + 1}`,
-        vistaTxt,
-        d.type || "Golpe / Daño",
-        d.notes || d.desc || "Sin observaciones adicionales",
-        `Coord: (${Math.round(d.x)}, ${Math.round(d.y)})`
-      ];
-    });
+    // Encabezado emulado para daños
+    doc.setFont("Helvetica", "bold");
+    doc.text("Ítem    Sección Carrocería     Tipo de Daño      Observaciones / Notas", 18, y);
+    doc.line(18, y + 1.5, 192, y + 1.5);
+    doc.setFont("Helvetica", "normal");
+    y += 7;
 
-    doc.autoTable({
-      startY: y,
-      margin: { left: 15, right: 15 },
-      theme: "striped",
-      styles: { fontSize: 8.5, cellPadding: 2.5 },
-      headStyles: { fillColor: "#d97706", textColor: "#ffffff", fontStyle: "bold" }, // Encabezado de alerta naranja
-      head: [["Ítem", "Vista del Camión", "Tipo de Daño", "Observaciones / Notas", "Ubicación Relativa"]],
-      body: filasDaños
+    todosLosDaños.forEach((d, i) => {
+      const vistaTxt = d.view === 1 ? "Frontal / Frente" : d.view === 2 ? "Lateral Derecho" : "Posterior / Atrás";
+      const itemNum = `#${i + 1}`.padEnd(8, " ");
+      const vista = vistaTxt.padEnd(23, " ");
+      const tipo = (d.type || "Golpe").padEnd(18, " ");
+      const notas = d.notes || d.desc || "Sin observaciones adicionales.";
+
+      doc.text(`${itemNum}${vista}${tipo}${notas}`, 18, y);
+      y += 5.5;
     });
-    y = doc.lastAutoTable.finalY + 16;
+    y += 12;
   }
 
-  // Control de salto de página para firmas
-  if (y > 240) {
-    doc.addPage();
-    y = 25;
-  }
+  // ════════════════════════════════════════════════════════════
+  // ── SECCIÓN 4: PANEL DE FIRMAS RECEPTORAS ──
+  // ════════════════════════════════════════════════════════════
+  if (y > 240) { doc.addPage(); y = 25; }
 
-  // Líneas de firmas receptoras
   doc.setDrawColor(150, 150, 150);
+  doc.setLineDash(, 0);
+  
+  // Línea Firma Cliente
   doc.line(25, y + 20, 85, y + 20);
   doc.setFontSize(8.5);
-  doc.setFont("Helvetica", "normal");
-  doc.text("Firma Conductor / Cliente", 40, y + 24);
+  doc.text("Firma Conductor / Cliente", 38, y + 24);
 
+  // Línea Firma Inspector
   doc.line(125, y + 20, 185, y + 20);
-  doc.text("Firma Inspector Responsable", 140, y + 24);
+  doc.text("Firma Inspector Responsable", 136, y + 24);
   
+  // Disparamos la descarga directa al disco rígido o celular
   const nombreArchivo = `Remito_${currentPlate}_${Date.now()}.pdf`;
   doc.save(nombreArchivo);
-  console.log(`-> [PDF] Remito descargado con éxito: ${nombreArchivo}`);
+  console.log(`-> [PDF] Remito nativo descargado con éxito: ${nombreArchivo}`);
 }
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
