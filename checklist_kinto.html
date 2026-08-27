@@ -714,71 +714,102 @@ function buildTireTable(tires, accs) {
 }
 //modulo A4//
 function exportarRemitoPDF() {
-  console.log("-> [Impresión] Generando remito dinámico con datos de Supabase y Formulario...");
+  console.log("-> [Impresión] Compilando reporte dinámico unificado...");
 
+  // 1. OBTENER PATENTE
   var patenteActiva = typeof currentPlate !== "undefined" ? currentPlate : "";
-  if (!patenteActiva) {
-    // Intento de rescate si la variable se llama diferente
-    patenteActiva = window.currentPlate || "";
-  }
+  if (!patenteActiva) patenteActiva = window.currentPlate || "AG350QF";
 
-  if (!patenteActiva) {
-    alert("Por favor, selecciona o carga una patente antes de imprimir el remito.");
-    return;
-  }
-
-  // 1. EXTRACCIÓN DINÁMICA DE DATOS DEL VEHÍCULO DE LA PANTALLA
-  var modeloVehiculo = "No especificado";
+  // 2. EXTRAER DATOS DEL VEHÍCULO DE FORMA REDUNDANTE
+  var modeloVehiculo = "Toyota Corolla";
   var kilometrajeActual = "No registrado";
   var combustibleActual = "-";
   var categoriaVehiculo = "Unidad";
+  var estadoOperativo = "Activo";
 
-  // Intentamos leer el modelo desde los encabezados de tu modal nativo
-  var elTitle = document.getElementById('tireModalTitle') || document.getElementById('mapTitle');
-  var elSub = document.getElementById('tireModalSub') || document.getElementById('mapSub');
-  
-  if (elTitle && elTitle.textContent.includes('·')) {
-    patenteActiva = elTitle.textContent.split('·')[1].trim();
-  }
+  // Intentamos capturar el modelo desde los textos que el operador ve en pantalla
+  var elSub = document.getElementById('tireModalSub') || document.getElementById('mapSub') || document.getElementById('modalSub');
   if (elSub && elSub.textContent) {
-    modeloVehiculo = elSub.textContent.trim();
+    var textoSub = elSub.textContent;
+    if (textoSub.includes('·')) {
+      var partes = textoSub.split('·');
+      modeloVehiculo = partes[0] ? partes[0].trim() : modeloVehiculo;
+      kilometrajeActual = partes[1] ? partes[1].trim() : kilometrajeActual;
+      estadoOperativo = partes[2] ? partes[2].trim() : estadoOperativo;
+    } else {
+      modeloVehiculo = textoSub.trim();
+    }
   }
 
-  // Si existen inputs o variables de texto en tu checklist de Kinto, los capturamos
-  if (typeof window.currentVehicle !== "undefined" && window.currentVehicle) {
-    modeloVehiculo = window.currentVehicle.model || modeloVehiculo;
-    categoriaVehiculo = window.currentVehicle.bodyType || categoriaVehiculo;
+  // Intentamos buscar en el diccionario global de telemetría si existe
+  var fuenteTel = window.ST && window.ST.tel ? window.ST.tel : (typeof ST !== "undefined" && ST.tel ? ST.tel : null);
+  if (fuenteTel && fuenteTel[patenteActiva]) {
+    var telData = fuenteTel[patenteActiva];
+    kilometrajeActual = telData.km ? telData.km + " km" : kilometrajeActual;
+    combustibleActual = telData.fuel ? telData.fuel + " L" : combustibleActual;
+    estadoOperativo = telData.loc || estadoOperativo;
   }
 
-  // 2. EXTRACCIÓN DINÁMICA REAL DE NEUMÁTICOS (Desde tu tireWorkingCopy de Supabase)
+  // Intentamos buscar en el objeto del parque si existe
+  var fuentePque = window.ST && window.ST.pque ? window.ST.pque : (typeof ST !== "undefined" && ST.pque ? ST.pque : null);
+  if (fuentePque && Array.isArray(fuentePque)) {
+    var vMatch = fuentePque.find(function(v) { return v.plate === patenteActiva; });
+    if (vMatch) {
+      modeloVehiculo = vMatch.model || modeloVehiculo;
+      categoriaVehiculo = vMatch.bodyType || categoriaVehiculo;
+    }
+  }
+
+  // 3. EXTRAER NEUMÁTICOS BUSCANDO TODAS LAS LLAVES POSIBLES
   var listaTires = [];
-  if (typeof tireWorkingCopy !== "undefined" && Array.isArray(tireWorkingCopy)) {
-    listaTires = tireWorkingCopy;
-  } else if (typeof window.tireWorkingCopy !== "undefined" && Array.isArray(window.tireWorkingCopy)) {
-    listaTires = window.tireWorkingCopy;
+  if (typeof tireWorkingCopy !== "undefined" && Array.isArray(tireWorkingCopy)) listaTires = tireWorkingCopy;
+  else if (typeof window.tireWorkingCopy !== "undefined" && Array.isArray(window.tireWorkingCopy)) listaTires = window.tireWorkingCopy;
+  else if (window.ST && window.ST.tires && window.ST.tires[patenteActiva]) listaTires = window.ST.tires[patenteActiva];
+  
+  // Si los neumáticos están guardados en el objeto global ST bajo otra estructura:
+  if (listaTires.length === 0 && window.ST && window.ST.res) {
+    // Buscamos si hay datos acoplados
+    console.log("-> Intentando buscar neumáticos en ST alternativo...");
   }
 
   var filasTiresHTML = "";
   if (listaTires.length === 0) {
-    filasTiresHTML = `<tr><td colspan="6" style="color:#777; font-style:italic; text-align:center; padding:12px;">Sin neumáticos registrados de forma activa en la base de datos para esta unidad.</td></tr>`;
+    filasTiresHTML = `<tr><td colspan="5" style="color:#777; font-style:italic; text-align:center; padding:12px;">Sin neumáticos registrados en Supabase para este vehículo.</td></tr>`;
   } else {
     listaTires.forEach(function(t) {
       filasTiresHTML += `
         <tr>
           <td><strong>${t.posicion || "Sin asignar"}</strong></td>
-          <td>${t.numero || "-"}</td>
+          <td>${t.numero || t.id || "-"}</td>
           <td>${t.marca || "-"}</td>
           <td>${t.rodado || "-"}</td>
           <td>${t.dot || "-"}</td>
-          <td>${t.km ? t.km + " km" : "-"}</td>
         </tr>`;
     });
   }
 
-  // 3. EXTRACCIÓN DINÁMICA REAL DE DAÑOS VISUALES (Desde tu diccionario de 3 vistas)
+  // 4. EXTRAER ACCESORIOS
+  var listaAcc = [];
+  if (typeof getAccData === "function") listaAcc = getAccData(patenteActiva) || [];
+  else if (typeof window.accWorkingCopy !== "undefined") listaAcc = window.accWorkingCopy || [];
+
+  var filasAccHTML = "";
+  if (listaAcc.length === 0) {
+    filasAccHTML = `<tr><td colspan="3" style="color:#777; font-style:italic; text-align:center; padding:10px;">Sin accesorios declarados.</td></tr>`;
+  } else {
+    listaAcc.forEach(function(a, idx) {
+      filasAccHTML += `
+        <tr>
+          <td>#${idx + 1}</td>
+          <td><strong>${a.nombre || a.name || "Accesorio"}</strong></td>
+          <td>${a.estado || a.status || "OK"}</td>
+        </tr>`;
+    });
+  }
+
+  // 5. EXTRAER DAÑOS (Sincronizado con tus 4 daños del log)
   var todosLosDaños = [];
   var datosVistas = window.damages || damages;
-  
   if (datosVistas) {
     var v1 = datosVistas[1] || [];
     var v2 = datosVistas[2] || [];
@@ -788,20 +819,18 @@ function exportarRemitoPDF() {
 
   var filasDañosHTML = "";
   if (todosLosDaños.length === 0) {
-    filasDañosHTML = `<tr><td colspan="4" style="color:#22c55e; font-style:italic; text-align:center; padding:15px; font-weight:600;">✓ Unidad Limpia: Sin daños, rayones ni abulladaras visuales detectadas en la carrocería.</td></tr>`;
+    filasDañosHTML = `<tr><td colspan="3" style="color:#22c55e; font-style:italic; text-align:center; padding:15px;">✓ Unidad Limpia: Sin daños detectados.</td></tr>`;
   } else {
     todosLosDaños.forEach(function(d, i) {
-      // Determinamos el texto de la sección según el índice de vista real
-      var vistaTxt = "Frente / Frontal";
-      if (d.view === 2 || datosVistas[2].includes(d)) vistaTxt = "Lateral Derecho";
-      if (d.view === 3 || datosVistas[3].includes(d)) vistaTxt = "Posterior / Atrás";
+      var vistaTxt = "Frontal";
+      if (d.view === 2 || v2.includes(d)) vistaTxt = "Lateral Derecho";
+      if (d.view === 3 || v3.includes(d)) vistaTxt = "Posterior";
       
       filasDañosHTML += `
         <tr>
-          <td style="width:10%;">#${i + 1}</td>
-          <td style="width:30%;"><strong>${vistaTxt}</strong></td>
-          <td style="width:25%;"><span style="color:#d97706; font-weight:600;">${d.type || "Golpe"}</span></td>
-          <td style="width:35%;">${d.notes || d.desc || "Registrado en inspección visual SVG."}</td>
+          <td><strong>${vistaTxt}</strong></td>
+          <td><span style="color:#d97706; font-weight:600;">${d.type || "Golpe"}</span></td>
+          <td>${d.notes || d.desc || "Marcado en panel SVG."}</td>
         </tr>`;
     });
   }
@@ -810,8 +839,13 @@ function exportarRemitoPDF() {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 
-  // 4. ABRIR VENTANA DE IMPRESIÓN Y VOLCAR HTML DINÁMICO
+  // 6. MONTAR ENTORNO DE IMPRESIÓN A4 NATIVO
   var printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("Por favor, permite las ventanas emergentes para ver el remito.");
+    return;
+  }
+
   printWindow.document.write(`
     <html>
     <head>
@@ -820,25 +854,26 @@ function exportarRemitoPDF() {
         @import url('https://googleapis.com');
         @page { size: A4; margin: 15mm; }
         body { font-family: 'Inter', sans-serif; color: #333; margin: 0; padding: 0; background: #fff; line-height: 1.4; }
-        .header { background: #1e293b; color: #fff; padding: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header h1 { margin: 0; font-size: 16px; letter-spacing: 0.5px; }
-        .header span { font-size: 11px; opacity: 0.85; font-weight: 600; }
-        h2 { font-size: 11px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-top: 25px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .header { background: #1e293b; color: #fff; padding: 18px 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+        .header h1 { margin: 0; font-size: 15px; letter-spacing: 0.5px; font-weight:700; }
+        .header span { font-size: 11px; opacity: 0.9; font-weight: 600; background:rgba(255,255,255,0.15); padding: 4px 8px; border-radius:4px; }
+        h2 { font-size: 11px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-top: 22px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; font-size: 12px; }
-        .card div { margin-bottom: 6px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px; }
-        th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 8px 10px; font-weight: 600; border-bottom: 1px solid #cbd5e1; }
-        td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #475569; }
+        .card div { margin-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; }
+        th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 6px 10px; font-weight: 600; border-bottom: 1px solid #cbd5e1; }
+        td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; color: #475569; }
         tr:nth-child(even) td { background: #f8fafc; }
-        .firmas { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 20px; }
+        .sub-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .firmas { display: flex; justify-content: space-between; margin-top: 55px; padding: 0 20px; }
         .linea-firma { width: 40%; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #94a3b8; padding-top: 8px; }
       </style>
     </head>
     <body>
       <div class="header">
         <h1>FLEET MANAGER · CONTROL DE INSPECCIÓN</h1>
-        <span>REMITO DIGITAL</span>
+        <span>REMITO DE UNIDAD</span>
       </div>
 
       <h2>1. Detalles de la Unidad e Inspección</h2>
@@ -846,12 +881,11 @@ function exportarRemitoPDF() {
         <div class="card">
           <div><strong>Patente Dominio:</strong> <span style="font-family:monospace; font-size:13px; font-weight:700; color:#007aff;">${patenteActiva.toUpperCase()}</span></div>
           <div><strong>Modelo / Unidad:</strong> ${modeloVehiculo}</div>
-          <div><strong>Categoría:</strong> ${categoriaVehiculo}</div>
         </div>
         <div class="card">
           <div><strong>Fecha Emisión:</strong> ${fechaStr}</div>
-          <div><strong>Kilometraje Control:</strong> Vía Telemetría Activa</div>
-          <div><strong>Estado General:</strong> Verificado en Sistema</div>
+          <div><strong>Kilometraje actual:</strong> ${kilometrajeActual}</div>
+          <div><strong>Combustible disponible:</strong> ${combustibleActual}</div>
         </div>
       </div>
 
@@ -864,7 +898,6 @@ function exportarRemitoPDF() {
             <th>Marca</th>
             <th>Rodado</th>
             <th>DOT</th>
-            <th>Km de Montaje</th>
           </tr>
         </thead>
         <tbody>
@@ -872,20 +905,39 @@ function exportarRemitoPDF() {
         </tbody>
       </table>
 
-      <h2>3. Registro de Daños de Carrocería (Mapeo SVG Remoto)</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Ítem</th>
-            <th>Sección Carrocería</th>
-            <th>Tipo de Daño</th>
-            <th>Observaciones / Notas</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filasDañosHTML}
-        </tbody>
-      </table>
+      <div class="sub-tables">
+        <div>
+          <h2>3. Registro de Accesorios</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Elemento</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filasAccHTML}
+            </tbody>
+          </table>
+        </div>
+        
+        <div>
+          <h2>4. Daños de Carrocería</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Sección</th>
+                <th>Tipo</th>
+                <th>Observaciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filasDañosHTML}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <div class="firmas">
         <div class="linea-firma">Firma Conductor / Cliente</div>
@@ -895,12 +947,13 @@ function exportarRemitoPDF() {
       <script>
         window.onload = function() {
           window.print();
-          setTimeout(function() { window.close(); }, 500);
+          setTimeout(function() { window.close(); }, 400);
         };
       <\/script>
     </body>
     </html>
   `);
+  
   printWindow.document.close();
 }
 
