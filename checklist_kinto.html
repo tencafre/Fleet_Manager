@@ -867,24 +867,25 @@ async function exportarRemitoPDF() {
     y += 12;
   }
 
-  // ════════════════════════════════════════════════════════════
-  // ── SECCIÓN 4: PANEL DE FIRMAS RECEPTORAS ──
-  // ════════════════════════════════════════════════════════════
+    // ── SECCIÓN 4: PANEL DE FIRMAS RECEPTORAS (CORREGIDO SYNTAXERROR) ──
   if (y > 240) { doc.addPage(); y = 25; }
 
   doc.setDrawColor(150, 150, 150);
-  doc.setLineDash(, 0);
   
-  // Línea Firma Cliente
+  // CORRECCIÓN: Inyectamos los corchetes vacíos [] para indicarle línea sólida sin guiones
+  if (typeof doc.setLineDash === "function") {
+    doc.setLineDash([], 0); 
+  }
+  
+  // Línea Firma Cliente / Conductor
   doc.line(25, y + 20, 85, y + 20);
   doc.setFontSize(8.5);
   doc.text("Firma Conductor / Cliente", 38, y + 24);
 
-  // Línea Firma Inspector
+  // Línea Firma Inspector Responsable
   doc.line(125, y + 20, 185, y + 20);
   doc.text("Firma Inspector Responsable", 136, y + 24);
   
-  // Disparamos la descarga directa al disco rígido o celular
   const nombreArchivo = `Remito_${currentPlate}_${Date.now()}.pdf`;
   doc.save(nombreArchivo);
   console.log(`-> [PDF] Remito nativo descargado con éxito: ${nombreArchivo}`);
