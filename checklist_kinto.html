@@ -5,6 +5,9 @@
   <!-- ── LIBRERÍAS DE GENERACIÓN DE REPORTE PDF (A4 CLIENTE) ── -->
 <script src="https://cloudflare.com"></script>
 <script src="https://cloudflare.com"></script>
+<!-- ── LIBRERÍAS DE REPORTE PDF VÍA UNPKG (IGNORA LOS BLOQUEOS DE CSP VIEJOS) ── -->
+<script src="https://unpkg.com"></script>
+<script src="https://unpkg.com"></script>
 
 <!-- REEMPLAZO ABSOLUTO DE LA CSP EN TU HEAD -->
 <meta http-equiv="Content-Security-Policy" content="
@@ -710,7 +713,7 @@ function buildTireTable(tires, accs) {
   return html;
 }
 //modulo A4//
- async function exportarRemitoPDF() {
+async function exportarRemitoPDF() {
   console.log("-> [PDF] Compilando datos para la generación del remito...");
   
   if (typeof currentPlate === "undefined" || !currentPlate) {
@@ -718,18 +721,24 @@ function buildTireTable(tires, accs) {
     return;
   }
 
-  //const { jsPDF } = window.jspdf;
-  //const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  // ── REEMPLAZO DE COMPATIBILIDAD EN LÍNEA 717 ──
-// Detecta automáticamente cuál de los dos formatos de inicialización expone la librería
-const jsPDFInstance = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
+  // Puntero de compatibilidad universal para UNPKG UMD
+  var jsPDFInstance = null;
+  if (window.jspdf && window.jspdf.jsPDF) {
+    jsPDFInstance = window.jspdf.jsPDF;
+  } else if (window.jsPDF) {
+    jsPDFInstance = window.jsPDF;
+  }
 
-if (!jsPDFInstance) {
-  alert("Error crítico: La librería jsPDF no pudo ser cargada debido a restricciones de red o CSP.");
-  return;
-}
+  // Si sigue dando null, disparamos el cartel preventivo
+  if (!jsPDFInstance) {
+    alert("Error crítico: La librería jsPDF no pudo ser cargada debido a restricciones de red o CSP.");
+    return;
+  }
 
-const doc = new jsPDFInstance({ orientation: "portrait", unit: "mm", format: "a4" });
+  // Inicialización limpia
+  var doc = new jsPDFInstance({ orientation: "portrait", unit: "mm", format: "a4" });
+  
+  // ... Todo el resto de tu código que dibuja las celdas y tablas (#1e293b) sigue exactamente igual abajo ...
 
    
   const veh = ST.pque ? ST.pque.find(v => v.plate === currentPlate) : null;
