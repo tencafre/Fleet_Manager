@@ -798,14 +798,20 @@ async function exportarRemitoPDF() {
     todosLosDaños = [].concat(v1, v2, v3);
   }
 
+   // ── REEMPLAZO SEGURO Y COMPATIBLE PARA EL BUCLE DE DAÑOS (Línea 805) ──
   var filasDañosHTML = "";
   if (todosLosDaños.length === 0) {
     filasDañosHTML = `<tr><td colspan="3" style="color:#22c55e; font-style:italic; text-align:center; padding:15px; font-weight:600;">✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>`;
   } else {
     todosLosDaños.forEach(function(d, i) {
+      if (!d) return; // Control de seguridad contra nulos
+
+      // LEER DIRECTAMENTE LA PROPIEDAD VISTA (1, 2 o 3) QUE YA EXISTE EN EL DAÑO
+      var vistaNum = parseInt(d.view || d.view_num || 1, 10);
+      
       var vistaTxt = "Frontal / Frente";
-      if (d.view === 2 || v2.includes(d)) vistaTxt = "Lateral Derecho";
-      if (d.view === 3 || v3.includes(d)) vistaTxt = "Posterior / Atrás";
+      if (vistaNum === 2) vistaTxt = "Lateral Derecho";
+      if (vistaNum === 3) vistaTxt = "Posterior / Atrás";
       
       filasDañosHTML += `
         <tr>
@@ -815,6 +821,7 @@ async function exportarRemitoPDF() {
         </tr>`;
     });
   }
+
 
   var fechaStr = new Date().toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
