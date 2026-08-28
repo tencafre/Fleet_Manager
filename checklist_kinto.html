@@ -714,14 +714,14 @@ function buildTireTable(tires, accs) {
 }
 //modulo A4//
 
-function exportarRemitoPDF() {
-  console.log("-> [Remito] Generando reporte estructurado alineado...");
+async function exportarRemitoPDF() {
+  console.log("-> [Remito] Iniciando compilación blindada alineada...");
 
   // 1. DETERMINAR PATENTE ACTIVA
   var patenteActiva = typeof currentPlate !== "undefined" ? currentPlate : "";
   if (!patenteActiva) patenteActiva = window.currentPlate || "AG350QF";
 
-  // 2. DICCIONARIO DE VEHÍCULOS (Fiel a tu Pque.txt)
+  // 2. DICCIONARIO INSTITUCIONAL DE VEHÍCULOS (Fiel a tu Pque.txt)
   var modeloVehiculo = "Toyota Corolla HV AT";
   var categoriaVehiculo = "SEDAN";
   var p = patenteActiva.toUpperCase().trim();
@@ -766,46 +766,53 @@ function exportarRemitoPDF() {
     "<tr><td>Crique y Llave de Rueda</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>" +
     "<tr><td>Tarjeta Verde / Seguro</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>";
 
-  // 6. EXTRAER DAÑOS CONFIRMADOS POR TU CONSOLA (4 Daños)
-  var todosLosDaños = [];
-  var datosVistas = window.damages || damages;
-  if (datosVistas) {
-    var v1 = datosVistas || [];
-    var v2 = datosVistas || [];
-    var v3 = datosVistas || [];
-    todosLosDaños = [].concat(v1, v2, v3);
-  }
-
+  // 6. EXTRAER DAÑOS DESDE WORKER EN ARRAY PLANO PURO
   var filasDañosHTML = "";
-  if (todosLosDaños.length === 0) {
-    filasDañosHTML = "<tr><td colspan='3' style='color:#16a34a; font-style:italic; text-align:center; padding:12px;'>✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>";
-  } else {
-    todosLosDaños.forEach(function(d, i) {
-      var vistaTxt = "Frontal / Frente";
-      if (d.view === 2 || v2.includes(d)) vistaTxt = "Lateral Derecho";
-      if (d.view === 3 || v3.includes(d)) vistaTxt = "Posterior / Atrás";
-      
-      filasDañosHTML += 
-        "<tr>" +
-          "<td>#" + (i + 1) + "</td>" +
-          "<td><strong>" + vistaTxt + "</strong></td>" +
-          "<td><span style='color:#d97706; font-weight:600;'>" + (d.type || "Golpe / Rayón") + "</span></td>" +
-        "</tr>";
+  try {
+    var resD = await fetch(WORKER_URL + "/data/damages?plate=" + encodeURIComponent(patenteActiva), {
+      method: "GET",
+      credentials: "include"
     });
+
+    if (resD.ok) {
+      var listaDañosNube = await resD.json();
+      if (!listaDañosNube || listaDañosNube.length === 0) {
+        filasDañosHTML = "<tr><td colspan='3' style='color:#16a34a; font-style:italic; text-align:center; padding:12px;'>✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>";
+      } else {
+        for (var i = 0; i < listaDañosNube.length; i++) {
+          var item = listaDañosNube[i];
+          var vNum = parseInt(item.view_num || item.view || 1, 10);
+          
+          var vTxt = "Frontal / Frente";
+          if (vNum === 2) vTxt = "Lateral Derecho";
+          if (vNum === 3) vTxt = "Posterior / Atrás";
+
+          filasDañosHTML += 
+            "<tr>" +
+              "<td>#" + (i + 1) + "</td>" +
+              "<td><strong>" + vTxt + "</strong></td>" +
+              "<td><span style='color:#d97706; font-weight:600;'>" + (item.type || "Golpe / Rayón") + "</span></td>" +
+            "</tr>";
+        }
+      }
+    } else {
+      throw new Error();
+    }
+  } catch (err) {
+    filasDañosHTML = "<tr><td colspan='3' style='color:#dc2626; font-style:italic; text-align:center; padding:12px;'>Error al recuperar daños activos desde Supabase.</td></tr>";
   }
 
   var fechaStr = new Date().toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 
-  // 7. ABRIR VENTANA DE IMPRESIÓN CON HOJA DE ESTILOS CSS REPARADA
+  // 7. ARMAR VENTANA AUXILIAR CON MAQUETACIÓN ESTRICTA LINEAL
   var printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert("Por favor, permite las ventanas emergentes para descargar el remito.");
     return;
   }
 
-  // Generamos el documento inyectando las variables de forma segura con plantillas nativas puras
   printWindow.document.write(`
     <html>
     <head>
@@ -822,11 +829,11 @@ function exportarRemitoPDF() {
         .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; }
         .card div { margin-bottom: 5px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
-        th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 6px 10px; font-weight: 600; border-bottom: 1px solid #cbd5e1; border-top: 1px solid #cbd5e1; }
+        th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 8px 10px; font-weight: 600; border-bottom: 1px solid #cbd5e1; border-top: 1px solid #cbd5e1; }
         td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         tr:nth-child(even) td { background: #f8fafc; }
         .firmas { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 20px; page-break-inside: avoid; }
-        .linea-firma { width: 40%; text-align: center; color: #64748b; border-top: 1px solid #94a3b8; padding-top: 6px; }
+        .linea-firma { width: 40%; text-align: center; color: #64748b; border-top: 1px solid #94a3b8; padding-top: 8px; }
       </style>
     </head>
     <body>
@@ -923,7 +930,6 @@ function exportarRemitoPDF() {
 
   printWindow.document.close();
 }
-
 
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
