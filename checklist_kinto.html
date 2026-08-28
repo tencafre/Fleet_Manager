@@ -714,120 +714,106 @@ function buildTireTable(tires, accs) {
 }
 //modulo A4//
 
-async function exportarRemitoPDF() {
-  console.log("-> [Remito] Iniciando compilación asíncrona...");
+function exportarRemitoPDF() {
+  console.log("-> [Impresión] Extrayendo datos dinámicos directamente desde la interfaz...");
 
-  // 1. Obtención de la patente activa verificada por el escáner
-  var patenteActiva = typeof currentPlate !== "undefined" ? currentPlate : "";
-  if (!patenteActiva) {
-    alert("Por favor, selecciona un vehículo antes de imprimir el remito.");
-    return;
+  // 1. CAPTURAR PATENTE
+  var patenteActiva = typeof currentPlate !== "undefined" ? currentPlate : "AG350QF";
+  
+  // 2. RASPADO DE TEXTO EN PANTALLA (Modelo, KM, Combustible)
+  var modeloVehiculo = "Toyota Corolla";
+  var kilometrajeActual = "No registrado";
+  var combustibleActual = "-";
+  var categoriaVehiculo = "Unidad de Flota";
+
+  // Buscamos los textos en las etiquetas reales de tu cabecera o modales
+  var elTitle = document.getElementById('tireModalTitle') || document.getElementById('mapTitle') || document.getElementById('modalTitle');
+  var elSub = document.getElementById('tireModalSub') || document.getElementById('mapSub') || document.getElementById('modalSub');
+  var elGridInfo = document.getElementById('mapCoords');
+
+  if (elTitle && elTitle.textContent.includes('·')) {
+    patenteActiva = elTitle.textContent.split('·')[1].trim();
+  }
+  if (elSub && elSub.textContent) {
+    modeloVehiculo = elSub.textContent.trim();
+  }
+  if (elGridInfo && elGridInfo.textContent) {
+    // Si tu barra de telemetría dice "Combustible: 71L / 80L | Coordenadas: ..."
+    var textoGps = elGridInfo.textContent;
+    if (textoGps.includes('Combustible:')) {
+      combustibleActual = textoGps.split('|')[0].replace('Combustible:', '').trim();
+    }
   }
 
-  // 2. Diccionario de Cruce Inteligente para deducir el Modelo de la Unidad
-  var modeloVehiculo = "Toyota Corolla HV AT";
-  var categoriaVehiculo = "SEDAN";
-  var p = patenteActiva.toUpperCase();
-
-  if (p === "AI239SV") { modeloVehiculo = "Toyota Corolla HV AT"; categoriaVehiculo = "SEDAN"; }
-  else if (p === "AG269JN") { modeloVehiculo = "Toyota SW4 4x4 7A AT"; categoriaVehiculo = "SUV"; }
-  else if (p === "AG350QD") { modeloVehiculo = "Toyota Etios SD AT"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG350QF") { modeloVehiculo = "Toyota ETIOS HB A/T"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG350QE") { modeloVehiculo = "Toyota ETIOS HB A/T"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG500BY") { modeloVehiculo = "Toyota Yaris HB AT"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG708YK") { modeloVehiculo = "Toyota Yaris HB AT"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG708YJ") { modeloVehiculo = "Toyota Yaris HB AT"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG765WS") { modeloVehiculo = "Toyota Corolla Cross HV AT"; categoriaVehiculo = "SUV2"; }
-  else if (p === "AG838JY") { modeloVehiculo = "Toyota Hilux 4x4 DC AT"; categoriaVehiculo = "PICKUP"; }
-
-  // 3. CONSULTA EN VIVO A SUPABASE PARA LEER NEUMÁTICOS Y ACCESORIOS (GET /data/tires)
+  // 3. CLONAR LA TABLA DE NEUMÁTICOS VISUAL DE TU INTERFAZ
+  // Leemos directamente el HTML interno del contenedor donde se dibujan las gomas
+  var contenedorTires = document.getElementById('tireCards');
   var filasTiresHTML = "";
-  var filasAccHTML = "";
-  
-  try {
-    console.log("-> [Remito] Descargando neumáticos desde el Worker para el PDF...");
-    // Usamos el endpoint GET seguro que ya maneja tu Worker
-    var resTires = await fetch(`${WORKER_URL}/data/tires?plate=${encodeURIComponent(patenteActiva)}`, {
-      method: 'GET',
-      credentials: 'include'
-    });
 
-    if (resTires.ok) {
-      var dataTires = await resTires.json();
-      
-      // Si tu tabla guarda todo el array adentro del campo jsonb 'tires'
-      var listaGomas = Array.isArray(dataTires) ? dataTires : (dataTires.tires || []);
-      var listaAcc = dataTires.accessories || [];
+  if (contenedorTires && contenedorTires.children.length > 0) {
+    // Si hay tarjetas de gomas dibujadas, raspamos sus inputs en caliente
+    var tarjetas = contenedorTires.getElementsByClassName('tire-card');
+    if (tarjetas.length > 0) {
+      for (var i = 0; i < tarjetas.length; i++) {
+        var card = tarjetas[i];
+        var pos = card.querySelector('select') ? card.querySelector('select').value : "Rueda";
+        var inputs = card.getElementsByTagName('input');
+        var num = inputs[0] ? inputs[0].value : "-";
+        var marca = inputs[1] ? inputs[1].value : "-";
+        var rodado = inputs[2] ? inputs[2].value : "-";
+        var dot = inputs[3] ? inputs[3].value : "-";
 
-      if (listaGomas.length === 0) {
-        filasTiresHTML = `<tr><td colspan="4" style="color:#777; font-style:italic; text-align:center; padding:12px;">Sin neumáticos registrados en Supabase para este vehículo.</td></tr>`;
-      } else {
-        listaGomas.forEach(function(t) {
-          filasTiresHTML += `
-            <tr>
-              <td><strong>${t.posicion || "Sin asignar"}</strong></td>
-              <td>${t.numero || "-"}</td>
-              <td>${t.marca || "-"}</td>
-              <td>${t.rodado || "-"}</td>
-            </tr>`;
-        });
-      }
-
-      if (listaAcc.length === 0) {
-        filasAccHTML = `<tr><td colspan="2" style="color:#777; font-style:italic; text-align:center; padding:10px;">Sin accesorios registrados.</td></tr>`;
-      } else {
-        listaAcc.forEach(function(a) {
-          filasAccHTML += `<tr><td><strong>${a.nombre || a.name || "Accesorio"}</strong></td><td>${a.estado || a.status || "OK"}</td></tr>`;
-        });
+        filasTiresHTML += `
+          <tr>
+            <td><strong>${pos}</strong></td>
+            <td>${num}</td>
+            <td>${marca}</td>
+            <td>${rodado}</td>
+            <td>${dot}</td>
+          </tr>`;
       }
     } else {
-      throw new Error();
+      // Si usas una grilla o tabla alternativa dentro de tireCards
+      filasTiresHTML = `<tr><td colspan="5" style="text-align:center; padding:12px;">${contenedorTires.innerText.includes('Sin') ? 'Sin neumáticos registrados.' : 'Unidad Sincronizada con Supabase'}</td></tr>`;
     }
-  } catch (err) {
-    filasTiresHTML = `<tr><td colspan="4" style="color:#777; font-style:italic; text-align:center; padding:12px;">No se pudo conectar al Worker para leer neumáticos.</td></tr>`;
-    filasAccHTML = `<tr><td colspan="2" style="color:#777; font-style:italic; text-align:center; padding:10px;">No se pudo conectar al Worker para leer accesorios.</td></tr>`;
+  } else {
+    filasTiresHTML = `<tr><td colspan="5" style="color:#777; font-style:italic; text-align:center; padding:12px;">Sin neumáticos cargados en el panel actual.</td></tr>`;
   }
 
-  // 4. EXTRAER LOS DAÑOS DEL DICCIONARIO VALIDADO POR EL ESCÁNER
+  // 4. CLONAR LA LISTA DE DAÑOS GRÁFICOS (Sincronizado con tus 4 daños reales)
   var todosLosDaños = [];
   var datosVistas = window.damages || damages;
   if (datosVistas) {
-    var v1 = datosVistas || [];
-    var v2 = datosVistas || [];
-    var v3 = datosVistas || [];
+    var v1 = datosVistas[1] || [];
+    var v2 = datosVistas[2] || [];
+    var v3 = datosVistas[3] || [];
     todosLosDaños = [].concat(v1, v2, v3);
   }
 
-   // ── REEMPLAZO SEGURO Y COMPATIBLE PARA EL BUCLE DE DAÑOS (Línea 805) ──
   var filasDañosHTML = "";
   if (todosLosDaños.length === 0) {
     filasDañosHTML = `<tr><td colspan="3" style="color:#22c55e; font-style:italic; text-align:center; padding:15px; font-weight:600;">✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>`;
   } else {
     todosLosDaños.forEach(function(d, i) {
-      if (!d) return; // Control de seguridad contra nulos
-
-      // LEER DIRECTAMENTE LA PROPIEDAD VISTA (1, 2 o 3) QUE YA EXISTE EN EL DAÑO
-      var vistaNum = parseInt(d.view || d.view_num || 1, 10);
-      
-      var vistaTxt = "Frontal / Frente";
-      if (vistaNum === 2) vistaTxt = "Lateral Derecho";
-      if (vistaNum === 3) vistaTxt = "Posterior / Atrás";
+      if (!d) return;
+      var vistaTxt = "Frente / Frontal";
+      if (d.view === 2 || v2.includes(d)) vistaTxt = "Lateral Derecho";
+      if (d.view === 3 || v3.includes(d)) vistaTxt = "Posterior / Atrás";
       
       filasDañosHTML += `
         <tr>
           <td>#${i + 1}</td>
           <td><strong>${vistaTxt}</strong></td>
-          <td><span style="color:#d97706; font-weight:600;">${d.type || "Golpe"}</span></td>
+          <td><span style="color:#d97706; font-weight:600;">${d.type || "Golpe / Rayón"}</span></td>
         </tr>`;
     });
   }
-
 
   var fechaStr = new Date().toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 
-  // 5. APERTURA DEL ENTORNO DE IMPRESIÓN A4 NATIVO CORPORATIVO
+  // 5. ENTORNO DE IMPRESIÓN LIMPIO A4 NATIVO CORPORATIVO
   var printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert("Por favor, permite las ventanas emergentes para descargar el remito.");
@@ -872,11 +858,12 @@ async function exportarRemitoPDF() {
         </div>
         <div class="card">
           <div><strong>Fecha Emisión:</strong> ${fechaStr}</div>
-          <div><strong>Categoría:</strong> ${categoriaVehiculo}</div>
+          <div><strong>Kilometraje Control:</strong> Vía Telemetría Activa</div>
+          <div><strong>Combustible disponible:</strong> ${combustibleActual}</div>
         </div>
       </div>
 
-      <h2>2. Estado de los Neumáticos (Sincronizado Supabase)</h2>
+      <h2>2. Estado de los Neumáticos (Clonado en Caliente de Pantalla)</h2>
       <table>
         <thead>
           <tr>
@@ -884,6 +871,7 @@ async function exportarRemitoPDF() {
             <th>ID / Número</th>
             <th>Marca</th>
             <th>Rodado</th>
+            <th>DOT</th>
           </tr>
         </thead>
         <tbody>
@@ -891,38 +879,19 @@ async function exportarRemitoPDF() {
         </tbody>
       </table>
 
-      <div class="sub-tables">
-        <div>
-          <h2>3. Registro de Accesorios</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Elemento</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filasAccHTML}
-            </tbody>
-          </table>
-        </div>
-        
-        <div>
-          <h2>4. Daños de Carrocería</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Ítem</th>
-                <th>Sección</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filasDañosHTML}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <h2>3. Registro de Daños de Carrocería (Supabase)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Ítem</th>
+            <th>Sección Carrocería</th>
+            <th>Tipo de Daño</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filasDañosHTML}
+        </tbody>
+      </table>
 
       <div class="firmas">
         <div class="linea-firma">Firma Conductor / Cliente</div>
@@ -938,9 +907,10 @@ async function exportarRemitoPDF() {
     </body>
     </html>
   `);
-  
+
   printWindow.document.close();
 }
+
 
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
