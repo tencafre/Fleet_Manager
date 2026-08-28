@@ -751,46 +751,46 @@ function exportarRemitoPDF() {
     }
   }
 
-  // 4. LECTURA DE NEUMÁTICOS (Estructura fija alineada por CSS)
-  var filasTiresHTML = `
-    <tr><td><strong>Delantero Izquierdo</strong></td><td>TI-9912</td><td>Michelin</td><td>205/55R16</td></tr>
-    <tr><td><strong>Delantero Derecho</strong></td><td>TI-9913</td><td>Michelin</td><td>205/55R16</td></tr>
-    <tr><td><strong>Trasero Izquierdo</strong></td><td>TI-9841</td><td>Michelin</td><td>205/55R16</td></tr>
-    <tr><td><strong>Trasero Derecho</strong></td><td>TI-9842</td><td>Michelin</td><td>205/55R16</td></tr>
-    <tr><td><strong>Auxilio / Repuesto</strong></td><td>TI-0112</td><td>Pirelli</td><td>Temporario</td></tr>`;
+  // 4. LECTURA DE NEUMÁTICOS (Estructura alineada limpia)
+  var filasTiresHTML = 
+    "<tr><td>Delantero Izquierdo</td><td>TI-9912</td><td>Michelin</td><td>205/55R16</td></tr>" +
+    "<tr><td>Delantero Derecho</td><td>TI-9913</td><td>Michelin</td><td>205/55R16</td></tr>" +
+    "<tr><td>Trasero Izquierdo</td><td>TI-9841</td><td>Michelin</td><td>205/55R16</td></tr>" +
+    "<tr><td>Trasero Derecho</td><td>TI-9842</td><td>Michelin</td><td>205/55R16</td></tr>" +
+    "<tr><td>Auxilio / Repuesto</td><td>TI-0112</td><td>Pirelli</td><td>Temporario</td></tr>";
 
   // 5. REGISTRO DE ACCESORIOS DEL CHECKLIST
-  var filasAccHTML = `
-    <tr><td>Matafuego / Extintor</td><td style="color:#16a34a; font-weight:600;">✓ PRESENTE</td></tr>
-    <tr><td>Balizas Portátiles</td><td style="color:#16a34a; font-weight:600;">✓ PRESENTE</td></tr>
-    <tr><td>Crique y Llave de Rueda</td><td style="color:#16a34a; font-weight:600;">✓ PRESENTE</td></tr>
-    <tr><td>Tarjeta Verde / Seguro</td><td style="color:#16a34a; font-weight:600;">✓ PRESENTE</td></tr>`;
+  var filasAccHTML = 
+    "<tr><td>Matafuego / Extintor</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>" +
+    "<tr><td>Balizas Portátiles</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>" +
+    "<tr><td>Crique y Llave de Rueda</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>" +
+    "<tr><td>Tarjeta Verde / Seguro</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>";
 
   // 6. EXTRAER DAÑOS CONFIRMADOS POR TU CONSOLA (4 Daños)
   var todosLosDaños = [];
   var datosVistas = window.damages || damages;
   if (datosVistas) {
-    var v1 = datosVistas[1] || [];
-    var v2 = datosVistas[2] || [];
-    var v3 = datosVistas[3] || [];
+    var v1 = datosVistas || [];
+    var v2 = datosVistas || [];
+    var v3 = datosVistas || [];
     todosLosDaños = [].concat(v1, v2, v3);
   }
 
   var filasDañosHTML = "";
   if (todosLosDaños.length === 0) {
-    filasDañosHTML = `<tr><td colspan="3" style="color:#16a34a; font-style:italic; text-align:center; padding:15px; font-weight:600;">✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>`;
+    filasDañosHTML = "<tr><td colspan='3' style='color:#16a34a; font-style:italic; text-align:center; padding:12px;'>✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>";
   } else {
     todosLosDaños.forEach(function(d, i) {
       var vistaTxt = "Frontal / Frente";
       if (d.view === 2 || v2.includes(d)) vistaTxt = "Lateral Derecho";
       if (d.view === 3 || v3.includes(d)) vistaTxt = "Posterior / Atrás";
       
-      filasDañosHTML += `
-        <tr>
-          <td>#${i + 1}</td>
-          <td><strong>${vistaTxt}</strong></td>
-          <td><span style="color:#d97706; font-weight:600;">${d.type || "Golpe / Rayón"}</span></td>
-        </tr>`;
+      filasDañosHTML += 
+        "<tr>" +
+          "<td>#" + (i + 1) + "</td>" +
+          "<td><strong>" + vistaTxt + "</strong></td>" +
+          "<td><span style='color:#d97706; font-weight:600;'>" + (d.type || "Golpe / Rayón") + "</span></td>" +
+        "</tr>";
     });
   }
 
@@ -798,35 +798,35 @@ function exportarRemitoPDF() {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
 
-  // 7. ABRIR VENTANA DE IMPRESIÓN CON MAQUETACIÓN CSS ESTRICTA
+  // 7. ABRIR VENTANA DE IMPRESIÓN CON HOJA DE ESTILOS CSS REPARADA
   var printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert("Por favor, permite las ventanas emergentes para descargar el remito.");
     return;
   }
 
+  // Generamos el documento inyectando las variables de forma segura con plantillas nativas puras
   printWindow.document.write(`
     <html>
     <head>
       <title>Remito_${patenteActiva}</title>
       <style>
-        @import url('https://googleapis.com');
+        @import url("https://googleapis.com");
         @page { size: A4; margin: 15mm; }
-        body { font-family: 'Inter', sans-serif; color: #333; margin: 0; padding: 0; background: #fff; line-height: 1.4; }
-        .header { background: #1e293b; color: #fff; padding: 18px 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
-        .header h1 { margin: 0; font-size: 15px; letter-spacing: 0.5px; font-weight:700; }
-        .header span { font-size: 11px; opacity: 0.9; font-weight: 600; background:rgba(255,255,255,0.15); padding: 4px 8px; border-radius:4px; }
-        h2 { font-size: 11px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 4px; margin-top: 22px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        body { font-family: "Inter", sans-serif; color: #333; margin: 0; padding: 0; background: #fff; line-height: 1.4; font-size: 11px; }
+        .header { background: #1e293b; color: #fff; padding: 15px 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 14px; letter-spacing: 0.5px; font-weight:700; }
+        .header span { font-size: 10px; font-weight: 600; background:rgba(255,255,255,0.15); padding: 4px 8px; border-radius:4px; }
+        h2 { font-size: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 3px; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; font-size: 12px; }
+        .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; }
         .card div { margin-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 11px; table-layout: fixed; }
-        th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 8px 10px; font-weight: 600; border-bottom: 1px solid #cbd5e1; }
-        td { padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
+        th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 6px 10px; font-weight: 600; border-bottom: 1px solid #cbd5e1; border-top: 1px solid #cbd5e1; }
+        td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         tr:nth-child(even) td { background: #f8fafc; }
-        .sub-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .firmas { display: flex; justify-content: space-between; margin-top: 55px; padding: 0 20px; }
-        .linea-firma { width: 40%; text-align: center; font-size: 11px; color: #64748b; border-top: 1px solid #94a3b8; padding-top: 8px; }
+        .firmas { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 20px; page-break-inside: avoid; }
+        .linea-firma { width: 40%; text-align: center; color: #64748b; border-top: 1px solid #94a3b8; padding-top: 6px; }
       </style>
     </head>
     <body>
@@ -838,7 +838,7 @@ function exportarRemitoPDF() {
       <h2>1. Detalles de la Unidad e Inspección</h2>
       <div class="grid">
         <div class="card">
-          <div><strong>Patente Dominio:</strong> <span style="font-family:monospace; font-size:13px; font-weight:700; color:#007aff;">${patenteActiva.toUpperCase()}</span></div>
+          <div><strong>Patente Dominio:</strong> <span style="font-family:monospace; font-size:12px; font-weight:700; color:#007aff;">${patenteActiva.toUpperCase()}</span></div>
           <div><strong>Modelo / Unidad:</strong> ${modeloVehiculo}</div>
           <div><strong>Categoría:</strong> ${categoriaVehiculo}</div>
         </div>
@@ -849,12 +849,12 @@ function exportarRemitoPDF() {
         </div>
       </div>
 
-      <h2>2. Estado de los Neumáticos (Control Operativo de Flota)</h2>
+      <h2>2. Estado de los Neumáticos (Control Operativo)</h2>
       <table>
         <colgroup>
-          <col style="width: 30%;">
+          <col style="width: 35%;">
           <col style="width: 25%;">
-          <col style="width: 25%;">
+          <col style="width: 20%;">
           <col style="width: 20%;">
         </colgroup>
         <thead>
@@ -870,47 +870,41 @@ function exportarRemitoPDF() {
         </tbody>
       </table>
 
-      <div class="sub-tables">
-        <div>
-          <h2>3. Registro de Accesorios</h2>
-          <table>
-            <colgroup>
-              <col style="width: 70%;">
-              <col style="width: 30%;">
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Elemento Obligatorio</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filasAccHTML}
-            </tbody>
-          </table>
-        </div>
-        
-        <div>
-          <h2>4. Daños de Carrocería Detectados</h2>
-          <table>
-            <colgroup>
-              <col style="width: 15%;">
-              <col style="width: 50%;">
-              <col style="width: 35%;">
-            </colgroup>
-            <thead>
-              <tr>
-                <th>Ítem</th>
-                <th>Sección Carrocería</th>
-                <th>Gravedad</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filasDañosHTML}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <h2>3. Registro de Accesorios Obligatorios</h2>
+      <table>
+        <colgroup>
+          <col style="width: 70%;">
+          <col style="width: 30%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Elemento Evaluado</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filasAccHTML}
+        </tbody>
+      </table>
+
+      <h2>4. Daños de Carrocería Detectados (Supabase)</h2>
+      <table>
+        <colgroup>
+          <col style="width: 20%;">
+          <col style="width: 50%;">
+          <col style="width: 30%;">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Ítem</th>
+            <th>Sección Carrocería</th>
+            <th>Gravedad</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filasDañosHTML}
+        </tbody>
+      </table>
 
       <div class="firmas">
         <div class="linea-firma">Firma Conductor / Cliente</div>
@@ -922,13 +916,14 @@ function exportarRemitoPDF() {
           window.print();
           setTimeout(function() { window.close(); }, 400);
         };
-      </script>
+      <\/script>
     </body>
     </html>
   `);
 
   printWindow.document.close();
 }
+
 
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
