@@ -29,6 +29,43 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background:#fff}
 .page{max-width:800px;margin:0 auto;padding:18px 22px;background:#fff}
+  /* ── ESTILOS DE CONTROL DE IMPRESIÓN IMPENSADOS CONTRA FALLAS ── */
+@media print {
+  body.imprimiendo-remito {
+    background: #fff !important;
+    color: #000 !important;
+    padding: 10mm !important;
+    font-family: 'Inter', sans-serif !important;
+  }
+  
+  /* Ocultamos elementos interactivos innecesarios para el Remito papel (Botones, buscadores, sidebars) */
+  body.imprimiendo-remito button,
+  body.imprimiendo-remito .navbar,
+  body.imprimiendo-remito .sidebar,
+  body.imprimiendo-remito input[type="button"] {
+    display: none !important;
+  }
+  
+  /* Forzamos que las tablas de cubiertas y daños ocupen el 100% simétrico */
+  body.imprimiendo-remito table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 15px !important;
+  }
+  
+  body.imprimiendo-remito th {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    padding: 8px !important;
+  }
+  
+  body.imprimiendo-remito td {
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 8px !important;
+  }
+}
+
 
 /* ── HEADER ── */
 .header-bar{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1a1a1a}
@@ -714,223 +751,18 @@ function buildTireTable(tires, accs) {
 }
 //modulo A4//
 
-async function exportarRemitoPDF() {
-  console.log("-> [Remito] Iniciando compilación blindada alineada...");
-
-  // 1. DETERMINAR PATENTE ACTIVA
-  var patenteActiva = typeof currentPlate !== "undefined" ? currentPlate : "";
-  if (!patenteActiva) patenteActiva = window.currentPlate || "AG350QF";
-
-  // 2. DICCIONARIO INSTITUCIONAL DE VEHÍCULOS (Fiel a tu Pque.txt)
-  var modeloVehiculo = "Toyota Corolla HV AT";
-  var categoriaVehiculo = "SEDAN";
-  var p = patenteActiva.toUpperCase().trim();
-
-  if (p === "AI239SV") { modeloVehiculo = "Toyota Corolla HV AT AI239SV"; categoriaVehiculo = "SEDAN"; }
-  else if (p === "AG269JN") { modeloVehiculo = "Toyota SW4 4x4 7A AT AG269JN"; categoriaVehiculo = "SUV"; }
-  else if (p === "AG350QD") { modeloVehiculo = "Toyota Etios SD AT AG350QD"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG350QF") { modeloVehiculo = "Toyota ETIOS HB A/T AG350QF"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG350QE") { modeloVehiculo = "Toyota ETIOS HB A/T AG350QE"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG500BY") { modeloVehiculo = "Toyota Yaris HB AT AG500BY"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG708YK") { modeloVehiculo = "Toyota Yaris HB AT AG708YK"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG708YJ") { modeloVehiculo = "Toyota Yaris HB AT AG708YJ"; categoriaVehiculo = "HATCHBACK"; }
-  else if (p === "AG765WS") { modeloVehiculo = "Toyota Corolla Cross HV AT AG765WS"; categoriaVehiculo = "SUV2"; }
-  else if (p === "AG838JY") { modeloVehiculo = "Toyota Hilux 4x4 DC AT AG838JY"; categoriaVehiculo = "PICKUP"; }
-
-  // 3. RECUPERAR TELEMETRÍA ASÍNCRONA (Desde tu objeto ST de TelemGts_data.txt)
-  var kmTxt = "59.250 km";
-  var combustibleTxt = "71 L / 80L";
+function exportarRemitoPDF() {
+  console.log("-> [Remito] Disparando impresión nativa enfocada...");
   
-  var fuenteTel = window.ST && window.ST.tel ? window.ST.tel : (typeof ST !== "undefined" && ST.tel ? ST.tel : null);
-  if (fuenteTel && fuenteTel[p]) {
-    var dataTel = fuenteTel[p];
-    if (dataTel.km) kmTxt = dataTel.km + " km";
-    if (dataTel.fuel) {
-      var maxF = (modeloVehiculo.includes("Hilux") || modeloVehiculo.includes("SW4")) ? "80L" : "45L";
-      combustibleTxt = dataTel.fuel + " L / " + maxF;
-    }
-  }
-
-  // 4. LECTURA DE NEUMÁTICOS (Estructura alineada limpia)
-  var filasTiresHTML = 
-    "<tr><td>Delantero Izquierdo</td><td>TI-9912</td><td>Michelin</td><td>205/55R16</td></tr>" +
-    "<tr><td>Delantero Derecho</td><td>TI-9913</td><td>Michelin</td><td>205/55R16</td></tr>" +
-    "<tr><td>Trasero Izquierdo</td><td>TI-9841</td><td>Michelin</td><td>205/55R16</td></tr>" +
-    "<tr><td>Trasero Derecho</td><td>TI-9842</td><td>Michelin</td><td>205/55R16</td></tr>" +
-    "<tr><td>Auxilio / Repuesto</td><td>TI-0112</td><td>Pirelli</td><td>Temporario</td></tr>";
-
-  // 5. REGISTRO DE ACCESORIOS DEL CHECKLIST
-  var filasAccHTML = 
-    "<tr><td>Matafuego / Extintor</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>" +
-    "<tr><td>Balizas Portátiles</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>" +
-    "<tr><td>Crique y Llave de Rueda</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>" +
-    "<tr><td>Tarjeta Verde / Seguro</td><td style='color:#16a34a; font-weight:600;'>✓ PRESENTE</td></tr>";
-
-  // 6. EXTRAER DAÑOS DESDE WORKER EN ARRAY PLANO PURO
-  var filasDañosHTML = "";
-  try {
-    var resD = await fetch(WORKER_URL + "/data/damages?plate=" + encodeURIComponent(patenteActiva), {
-      method: "GET",
-      credentials: "include"
-    });
-
-    if (resD.ok) {
-      var listaDañosNube = await resD.json();
-      if (!listaDañosNube || listaDañosNube.length === 0) {
-        filasDañosHTML = "<tr><td colspan='3' style='color:#16a34a; font-style:italic; text-align:center; padding:12px;'>✓ Unidad Limpia: Sin daños ni rayones visuales detectados en la carrocería.</td></tr>";
-      } else {
-        for (var i = 0; i < listaDañosNube.length; i++) {
-          var item = listaDañosNube[i];
-          var vNum = parseInt(item.view_num || item.view || 1, 10);
-          
-          var vTxt = "Frontal / Frente";
-          if (vNum === 2) vTxt = "Lateral Derecho";
-          if (vNum === 3) vTxt = "Posterior / Atrás";
-
-          filasDañosHTML += 
-            "<tr>" +
-              "<td>#" + (i + 1) + "</td>" +
-              "<td><strong>" + vTxt + "</strong></td>" +
-              "<td><span style='color:#d97706; font-weight:600;'>" + (item.type || "Golpe / Rayón") + "</span></td>" +
-            "</tr>";
-        }
-      }
-    } else {
-      throw new Error();
-    }
-  } catch (err) {
-    filasDañosHTML = "<tr><td colspan='3' style='color:#dc2626; font-style:italic; text-align:center; padding:12px;'>Error al recuperar daños activos desde Supabase.</td></tr>";
-  }
-
-  var fechaStr = new Date().toLocaleDateString('es-AR', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-  });
-
-  // 7. ARMAR VENTANA AUXILIAR CON MAQUETACIÓN ESTRICTA LINEAL
-  var printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert("Por favor, permite las ventanas emergentes para descargar el remito.");
-    return;
-  }
-
-  printWindow.document.write(`
-    <html>
-    <head>
-      <title>Remito_${patenteActiva}</title>
-      <style>
-        @import url("https://googleapis.com");
-        @page { size: A4; margin: 15mm; }
-        body { font-family: "Inter", sans-serif; color: #333; margin: 0; padding: 0; background: #fff; line-height: 1.4; font-size: 11px; }
-        .header { background: #1e293b; color: #fff; padding: 15px 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 14px; letter-spacing: 0.5px; font-weight:700; }
-        .header span { font-size: 10px; font-weight: 600; background:rgba(255,255,255,0.15); padding: 4px 8px; border-radius:4px; }
-        h2 { font-size: 10px; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 3px; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; }
-        .card div { margin-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
-        th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 8px 10px; font-weight: 600; border-bottom: 1px solid #cbd5e1; border-top: 1px solid #cbd5e1; }
-        td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        tr:nth-child(even) td { background: #f8fafc; }
-        .firmas { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 20px; page-break-inside: avoid; }
-        .linea-firma { width: 40%; text-align: center; color: #64748b; border-top: 1px solid #94a3b8; padding-top: 8px; }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <h1>FLEET MANAGER · CONTROL DE INSPECCIÓN</h1>
-        <span>REMITO DE UNIDAD</span>
-      </div>
-
-      <h2>1. Detalles de la Unidad e Inspección</h2>
-      <div class="grid">
-        <div class="card">
-          <div><strong>Patente Dominio:</strong> <span style="font-family:monospace; font-size:12px; font-weight:700; color:#007aff;">${patenteActiva.toUpperCase()}</span></div>
-          <div><strong>Modelo / Unidad:</strong> ${modeloVehiculo}</div>
-          <div><strong>Categoría:</strong> ${categoriaVehiculo}</div>
-        </div>
-        <div class="card">
-          <div><strong>Fecha Emisión:</strong> ${fechaStr}</div>
-          <div><strong>Kilometraje actual:</strong> ${kmTxt}</div>
-          <div><strong>Combustible disponible:</strong> ${combustibleTxt}</div>
-        </div>
-      </div>
-
-      <h2>2. Estado de los Neumáticos (Control Operativo)</h2>
-      <table>
-        <colgroup>
-          <col style="width: 35%;">
-          <col style="width: 25%;">
-          <col style="width: 20%;">
-          <col style="width: 20%;">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Posición</th>
-            <th>ID / Número</th>
-            <th>Marca</th>
-            <th>Medida</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filasTiresHTML}
-        </tbody>
-      </table>
-
-      <h2>3. Registro de Accesorios Obligatorios</h2>
-      <table>
-        <colgroup>
-          <col style="width: 70%;">
-          <col style="width: 30%;">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Elemento Evaluado</th>
-            <th>Estado</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filasAccHTML}
-        </tbody>
-      </table>
-
-      <h2>4. Daños de Carrocería Detectados (Supabase)</h2>
-      <table>
-        <colgroup>
-          <col style="width: 20%;">
-          <col style="width: 50%;">
-          <col style="width: 30%;">
-        </colgroup>
-        <thead>
-          <tr>
-            <th>Ítem</th>
-            <th>Sección Carrocería</th>
-            <th>Gravedad</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filasDañosHTML}
-        </tbody>
-      </table>
-
-      <div class="firmas">
-        <div class="linea-firma">Firma Conductor / Cliente</div>
-        <div class="linea-firma">Firma Inspector Responsable</div>
-      </div>
-
-      <script>
-        window.onload = function() {
-          window.print();
-          setTimeout(function() { window.close(); }, 400);
-        };
-      <\/script>
-    </body>
-    </html>
-  `);
-
-  printWindow.document.close();
+  // Agregamos una clase temporal al cuerpo para activar el filtro de impresión CSS
+  document.body.classList.add('imprimiendo-remito');
+  
+  // Llamamos al cuadro de diálogo nativo del sistema operativo (Guardar como PDF)
+  window.print();
+  
+  // Limpiamos la clase al terminar para que la pantalla web vuelva a verse normal
+  document.body.classList.remove('imprimiendo-remito');
 }
-
 
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
