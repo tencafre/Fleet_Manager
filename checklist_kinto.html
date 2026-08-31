@@ -133,160 +133,121 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 .mono{font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.05em}
 
 /* ── PRINT ── */
-@media print{
-  .damage-controls,.vehicle-selector,.print-btn{display:none!important}
-  .page{padding:0;max-width:100%}
-  .car-canvas-wrap svg circle,.car-canvas-wrap svg text{display:block!important}
-}
-  /* ── CONTENEDOR ESCONDIDO EN PANTALLA NORMAL ── */
-#remito-impresion-a4 {
-  display: none;
-}
-
-/* ── CONFIGURACIÓN MAESTRA DE IMPRESIÓN IMPENSADA CONTRA DESFASES ── */
+/* ═════════════════════════════════════════════════════════════
+   ── CONTROL DE IMPRESIÓN DEL FORMULARIO ORIGINAL (1 HOJA A4) ──
+   ═════════════════════════════════════════════════════════════ */
 @media print {
-  /* 1. Ocultar absolutamente toda la interfaz original de la página web */
-  body * {
-    display: none !important;
-  }
-  
-  /* 2. Mostrar única y exclusivamente el contenedor compacto del remito */
-  #remito-impresion-a4, #remito-impresion-a4 * {
-    display: block !important;
-  }
-  
-  /* 3. Forzar dimensiones e inmunidad de márgenes A4 estrictos */
+  /* Forzamos que las dimensiones de la hoja sean estrictamente A4 */
   @page {
     size: A4 portrait;
-    margin: 10mm 15mm 10mm 15mm; /* Ajuste milimétrico perimetral */
-  }
-  
-  html, body {
-    background: #fff !important;
-    color: #000 !important;
-    font-family: 'Inter', -apple-system, sans-serif !important;
-    font-size: 10.5px !important; /* Tipografía compacta anti-desborde */
-    line-height: 1.3 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 210mm;
-    height: 297mm;
+    margin: 8mm 10mm 8mm 10mm; /* Margen optimizado anti-desborde */
   }
 
-  /* 4. Maquetación interna alineada de las secciones */
-  .r-header {
-    border-bottom: 2px solid #1e293b;
-    padding-bottom: 8px;
-    margin-bottom: 15px;
-    display: flex !important;
-    justify-content: space-between;
-    align-items: center;
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Inter', system-ui, sans-serif !important;
+    font-size: 10px !important; /* Achicamos la letra general del formulario */
+    line-height: 1.2 !important;
+    width: 210mm;
+    height: 297mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
   }
-  .r-header h1 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 700;
-    color: #1e293b;
+
+  /* Ocultamos elementos interactivos de navegación y botones */
+  button, 
+  .btn, 
+  .btn-pdf-export, 
+  input[type="button"], 
+  input[type="submit"],
+  .no-print,
+  #navbar,
+  .sidebar {
+    display: none !important;
   }
-  .r-header span {
-    font-size: 9px;
-    font-weight: 600;
-    border: 1px solid #1e293b;
-    padding: 2px 6px;
-    border-radius: 3px;
+
+  /* REESCALADO DEL GRÁFICO SVG (El camión/auto) */
+  /* Comprimimos el contenedor del vehículo para que no empuje el formulario a la segunda hoja */
+  svg, 
+  .svg-container, 
+  .car-diagram,
+  [id^="svg-"] {
+    max-width: 140mm !important; /* Reducimos el ancho del gráfico */
+    max-height: 55mm !important; /* Reducimos el alto del gráfico */
+    margin: 0 auto !important;
+    display: block !important;
+    page-break-inside: avoid !important;
   }
-  
-  h2 {
-    font-size: 10px;
-    color: #1e293b;
-    background: #f1f5f9;
-    padding: 4px 8px;
-    margin-top: 12px;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 700;
-  }
-  
-  .r-grid {
+
+  /* COMPACTACIÓN DE CONTENEDORES Y GRILLAS */
+  /* Forzamos a que las secciones de inputs se alineen de forma ajustada */
+  .grid, 
+  .form-grid, 
+  .row {
     display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
+    grid-template-columns: repeat(2, 1fr) !important; /* Forzamos dos columnas simétricas */
+    gap: 8px !important;
+    margin-bottom: 8px !important;
   }
-  .r-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 8px 10px;
-    border-radius: 4px;
+
+  .card, 
+  .input-group, 
+  .section {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 6px 10px !important; /* Menos relleno interno */
+    margin-bottom: 6px !important;
+    border-radius: 4px !important;
+    page-break-inside: avoid !important;
   }
-  .r-card div {
-    margin-bottom: 3px;
-  }
-  
-  /* 5. Forzar comportamiento simétrico de tablas en una sola línea */
-  #remito-impresion-a4 table {
-    display: table !important;
+
+  /* AJUSTE ESTRICTO DE TABLAS (Neumáticos y Accesorios originales) */
+  table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-bottom: 12px;
-    table-layout: fixed;
+    margin-top: 6px !important;
+    margin-bottom: 6px !important;
+    table-layout: fixed !important;
   }
-  #remito-impresion-a4 table * {
-    display: table-cell !important;
-  }
-  #remito-impresion-a4 tr {
-    display: table-row !important;
-  }
-  #remito-impresion-a4 thead {
-    display: table-header-group !important;
-  }
-  #remito-impresion-a4 tbody {
-    display: table-row-group !important;
-  }
-  
+
   th {
-    background: #f8fafc !important;
-    font-weight: 600;
-    text-align: left;
-    padding: 5px 8px;
-    border-bottom: 1px solid #cbd5e1;
-    border-top: 1px solid #cbd5e1;
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    padding: 4px 6px !important;
+    font-weight: 700 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    font-size: 9.5px !important;
   }
+
   td {
-    padding: 5px 8px;
-    border-bottom: 1px solid #e2e8f0;
-    color: #334155;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    padding: 4px 6px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    font-size: 9.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
-  
-  /* Grilla paralela para optimizar espacio al fondo de la hoja */
-  .r-sub-tables {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-  .r-sub-tables table {
-    margin-bottom: 0 !important;
-  }
-  
-  /* 6. Panel de firmas fijo al final de la página única */
-  .r-firmas {
+
+  /* PANEL DE FIRMAS COMPACTO AL PIE */
+  /* Lo arrastramos hacia arriba reduciendo el margen superior */
+  .firmas, 
+  .signature-container {
     display: flex !important;
-    justify-content: space-between;
-    margin-top: 35px;
-    padding: 0 10px;
+    justify-content: space-between !important;
+    margin-top: 25px !important;
+    padding: 0 15px !important;
+    page-break-inside: avoid !important;
   }
-  .r-linea {
-    width: 42%;
-    text-align: center;
-    color: #475569;
-    border-top: 1px solid #475569;
-    padding-top: 5px;
-    font-size: 9.5px;
+
+  .linea-firma, 
+  .sig-line {
+    width: 40% !important;
+    text-align: center !important;
+    border-top: 1px solid #000000 !important;
+    padding-top: 4px !important;
+    font-size: 9px !important;
   }
 }
 
