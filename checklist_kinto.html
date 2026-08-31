@@ -30,42 +30,6 @@
 html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background:#fff}
 .page{max-width:800px;margin:0 auto;padding:18px 22px;background:#fff}
   
-  /* ── ESTILOS DE CONTROL DE IMPRESIÓN IMPENSADOS CONTRA FALLAS ── */
-@media print {
-  body.imprimiendo-remito {
-    background: #fff !important;
-    color: #000 !important;
-    padding: 10mm !important;
-    font-family: 'Inter', sans-serif !important;
-  }
-  
-  /* Ocultamos elementos interactivos innecesarios para el Remito papel (Botones, buscadores, sidebars) */
-  body.imprimiendo-remito button,
-  body.imprimiendo-remito .navbar,
-  body.imprimiendo-remito .sidebar,
-  body.imprimiendo-remito input[type="button"] {
-    display: none !important;
-  }
-  
-  /* Forzamos que las tablas de cubiertas y daños ocupen el 100% simétrico */
-  body.imprimiendo-remito table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-top: 15px !important;
-  }
-  
-  body.imprimiendo-remito th {
-    background: #f1f5f9 !important;
-    color: #1e293b !important;
-    border-bottom: 2px solid #cbd5e1 !important;
-    padding: 8px !important;
-  }
-  
-  body.imprimiendo-remito td {
-    border-bottom: 1px solid #e2e8f0 !important;
-    padding: 8px !important;
-  }
-}
 
 
 /* ── HEADER ── */
