@@ -30,6 +30,21 @@
 html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background:#fff}
 .page{max-width:800px;margin:0 auto;padding:18px 22px;background:#fff}
   
+/* ── CALIBRACIÓN DE ALTURA ESTRICTA PARA EL CONTENEDOR 3 (PANTALLA) ── */
+#img-3, #svg-3, 
+.img-container-3, .svg-container-3,
+[id*="img-3"], [id*="svg-3"] {
+  height: 140px !important;    /* Forzamos la altura idéntica a la vista 2 */
+  max-height: 140px !important;
+  width: auto !important;      /* El ancho se adapta de forma proporcional sin deformar el auto */
+}
+
+/* En caso de que uses contenedores wrapper que agrupen la imagen + el SVG arriba */
+.dmg-panel-3, #panel-3 {
+  height: 140px !important;
+  max-height: 140px !important;
+  overflow: hidden;
+}
 
 
 /* ── HEADER ── */
