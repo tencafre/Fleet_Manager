@@ -76,14 +76,7 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 .legend span{font-size:7.5px;color:#aaa}
 .legend b{font-weight:500;color:#555}
 /*svg NORMAL*/
- /* ── ALINEACIÓN SIMÉTRICA DE DIAGRAMAS SVG (PANTALLA NORMAL) ── */
-#svg-2, #img-3, 
-.svg-container-2, .svg-container-3,
-svg[id="svg-2"], svg[id="img-3"] {
-  height: 180px !important; /* Ajusta este número (180px, 150px, etc.) al tamaño nativo que use tu interfaz */
-  max-height: 180px !important;
-  width: auto !important; /* Permite que el ancho se adapte proporcionalmente sin deformar el dibujo */
-}
+
  
 /* ── CHECKLIST ── */
 .checklist-grid{display:grid;grid-template-columns:1fr 1fr;border:0.5px solid #ccc}
@@ -149,7 +142,7 @@ svg[id="svg-2"], svg[id="img-3"] {
   /* Forzamos dimensiones de hoja A4 estrictas sin desbordes */
   @page {
     size: A4 portrait;
-    margin: 8mm 12mm 8mm 12mm;
+    margin: 4mm 6mm 4mm 6mm;
   }
 
   html, body {
