@@ -907,17 +907,17 @@ async function exportarRemitoPDF() {
   var fechaStr = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   contenedorRemito.innerHTML = 
-    '<div class="r-header"><h1>FLEET MANAGER · REMITO DE INSPECCIÓN</h1><span>A4 COMPACTO</span></div>' +
-    '<h2>1. Datos de la Unidad</h2>' +
-    '<div class="r-grid"><div class="r-card"><div><strong>Patente:</strong> ' + p + '</div><div><strong>Modelo:</strong> ' + modeloVehiculo + '</div></div>' +
-    '<div class="r-card"><div><strong>Fecha:</strong> ' + fechaStr + '</div><div><strong>Kilometraje:</strong> Telemetría Activa</div></div></div>' +
-    '<h2>2. Neumáticos Sincronizados</h2>' +
-    '<table><thead><tr><th>Posición</th><th>ID Neumático</th><th>Marca</th><th>Medida</th></tr></thead><tbody>' + filasTires + '</tbody></table>' +
-    '<div class="r-sub-tables">' +
-      '<div><h2>3. Accesorios</h2><table><thead><tr><th>Elemento</th><th>Estado</th></tr></thead><tbody>' + filasAcc + '</tbody></table></div>' +
-      '<div><h2>4. Daños Carrocería</h2><table><thead><tr><th>Ítem</th><th>Sección</th><th>Tipo</th></tr></thead><tbody>' + filasDaños + '</tbody></table></div>' +
-    '</div>' +
-    '<div class="r-firmas"><div class="r-linea">Firma Conductor / Cliente</div><div class="r-linea">Firma Inspector Responsable</div></div>';
+    //'<div class="r-header"><h1>FLEET MANAGER · REMITO DE INSPECCIÓN</h1><span>A4 COMPACTO</span></div>' +
+    //'<h2>1. Datos de la Unidad</h2>' +
+    //'<div class="r-grid"><div class="r-card"><div><strong>Patente:</strong> ' + p + '</div><div><strong>Modelo:</strong> ' + modeloVehiculo + '</div></div>' +
+    //'<div class="r-card"><div><strong>Fecha:</strong> ' + fechaStr + '</div><div><strong>Kilometraje:</strong> Telemetría Activa</div></div></div>' +
+    //'<h2>2. Neumáticos Sincronizados</h2>' +
+    //'<table><thead><tr><th>Posición</th><th>ID Neumático</th><th>Marca</th><th>Medida</th></tr></thead><tbody>' + filasTires + '</tbody></table>' +
+    //'<div class="r-sub-tables">' +
+      //'<div><h2>3. Accesorios</h2><table><thead><tr><th>Elemento</th><th>Estado</th></tr></thead><tbody>' + filasAcc + '</tbody></table></div>' +
+      //'<div><h2>4. Daños Carrocería</h2><table><thead><tr><th>Ítem</th><th>Sección</th><th>Tipo</th></tr></thead><tbody>' + filasDaños + '</tbody></table></div>' +
+    //'</div>' +
+    //'<div class="r-firmas"><div class="r-linea">Firma Conductor / Cliente</div><div class="r-linea">Firma Inspector Responsable</div></div>';
 
   // 6. Activar el foco de impresión nativo del navegador
   window.print();
