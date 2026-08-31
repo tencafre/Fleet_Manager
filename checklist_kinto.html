@@ -133,21 +133,21 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 .mono{font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.05em}
 
 /* ── PRINT ── */
-/* ═════════════════════════════════════════════════════════════
-   ── CONTROL DE IMPRESIÓN DEL FORMULARIO ORIGINAL (1 HOJA A4) ──
-   ═════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ── CONTROL DE IMPRESIÓN DEL FORMULARIO ORIGINAL (ANTI-SUPERPOSICIÓN A4) ──
+   ═══════════════════════════════════════════════════════════════════════════ */
 @media print {
-  /* Forzamos que las dimensiones de la hoja sean estrictamente A4 */
+  /* Forzamos dimensiones de hoja A4 estrictas sin desbordes */
   @page {
     size: A4 portrait;
-    margin: 8mm 10mm 8mm 10mm; /* Margen optimizado anti-desborde */
+    margin: 8mm 12mm 8mm 12mm;
   }
 
   html, body {
     background: #ffffff !important;
     color: #000000 !important;
     font-family: 'Inter', system-ui, sans-serif !important;
-    font-size: 10px !important; /* Achicamos la letra general del formulario */
+    font-size: 10px !important;
     line-height: 1.2 !important;
     width: 210mm;
     height: 297mm;
@@ -156,59 +156,55 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
     overflow: hidden !important;
   }
 
-  /* Ocultamos elementos interactivos de navegación y botones */
-  button, 
-  .btn, 
-  .btn-pdf-export, 
-  input[type="button"], 
-  input[type="submit"],
-  .no-print,
-  #navbar,
-  .sidebar {
+  /* Ocultamos elementos interactivos y barras de navegación */
+  button, .btn, .btn-pdf-export, input[type="button"], input[type="submit"],
+  .no-print, #navbar, .sidebar, .header-actions {
     display: none !important;
   }
 
-  /* REESCALADO DEL GRÁFICO SVG (El camión/auto) */
-  /* Comprimimos el contenedor del vehículo para que no empuje el formulario a la segunda hoja */
-  svg, 
-  .svg-container, 
-  .car-diagram,
-  [id^="svg-"] {
-    max-width: 140mm !important; /* Reducimos el ancho del gráfico */
-    max-height: 55mm !important; /* Reducimos el alto del gráfico */
-    margin: 0 auto !important;
+  /* ── BLINDAJE ANTI-SUPERPOSICIÓN MAESTRO ── */
+  /* Rompemos las grillas y absolutos que causan que el SVG flote sobre el checklist */
+  .grid, .form-grid, .row, .container, main, section, form {
     display: block !important;
-    page-break-inside: avoid !important;
+    position: static !important;
+    float: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* COMPACTACIÓN DE CONTENEDORES Y GRILLAS */
-  /* Forzamos a que las secciones de inputs se alineen de forma ajustada */
-  .grid, 
-  .form-grid, 
-  .row {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important; /* Forzamos dos columnas simétricas */
-    gap: 8px !important;
-    margin-bottom: 8px !important;
-  }
-
-  .card, 
-  .input-group, 
-  .section {
+  .card, .input-group, .section {
+    display: block !important;
+    position: static !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    padding: 6px 10px !important; /* Menos relleno interno */
-    margin-bottom: 6px !important;
+    padding: 5px 8px !important;
+    margin-bottom: 5px !important;
     border-radius: 4px !important;
     page-break-inside: avoid !important;
   }
 
-  /* AJUSTE ESTRICTO DE TABLAS (Neumáticos y Accesorios originales) */
+  /* ── REDIMENSIONADO AISLADO DEL GRÁFICO SVG VEHÍCULO ── */
+  /* Lo aislamos en su propio carril vertical estricto para que nada se le encime */
+  svg, .svg-container, .car-diagram, [id^="svg-"], #canvas-container {
+    display: block !important;
+    position: static !important;
+    clear: both !important; /* Fuerza a las tablas a esperar que el SVG termine */
+    margin: 8px auto !important;
+    max-width: 130mm !important; /* Escala compactada optimizada para 1 hoja */
+    max-height: 50mm !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* ── MAQUETACIÓN LINEAL DE TABLAS (CHECKLIST FINAL) ── */
   table {
+    display: table !important;
+    position: static !important;
+    clear: both !important;
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-top: 6px !important;
-    margin-bottom: 6px !important;
+    margin-top: 5px !important;
+    margin-bottom: 5px !important;
     table-layout: fixed !important;
   }
 
@@ -224,32 +220,32 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
   td {
     padding: 4px 6px !important;
     border-bottom: 1px solid #e2e8f0 !important;
-    font-size: 9.5px !important;
+    font-size: 9px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
 
-  /* PANEL DE FIRMAS COMPACTO AL PIE */
-  /* Lo arrastramos hacia arriba reduciendo el margen superior */
-  .firmas, 
-  .signature-container {
+  /* PANEL DE FIRMAS FIJO AL PIE SIN MONTARSE */
+  .firmas, .signature-container {
     display: flex !important;
+    position: static !important;
     justify-content: space-between !important;
-    margin-top: 25px !important;
-    padding: 0 15px !important;
+    margin-top: 20px !important;
+    padding: 0 10px !important;
     page-break-inside: avoid !important;
+    clear: both !important;
   }
 
-  .linea-firma, 
-  .sig-line {
-    width: 40% !important;
+  .linea-firma, .sig-line {
+    width: 42% !important;
     text-align: center !important;
     border-top: 1px solid #000000 !important;
     padding-top: 4px !important;
     font-size: 9px !important;
   }
 }
+
 
 </style>
 </head>
