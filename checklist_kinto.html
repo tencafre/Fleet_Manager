@@ -184,17 +184,19 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
     page-break-inside: avoid !important;
   }
 
-  /* ── REDIMENSIONADO AISLADO DEL GRÁFICO SVG VEHÍCULO ── */
-  /* Lo aislamos en su propio carril vertical estricto para que nada se le encime */
+   /* ── REDIMENSIONADO AISLADO Y SIMÉTRICO DEL GRÁFICO SVG VEHÍCULO (DENTRO DE @MEDIA PRINT) ── */
   svg, .svg-container, .car-diagram, [id^="svg-"], #canvas-container {
     display: block !important;
     position: static !important;
-    clear: both !important; /* Fuerza a las tablas a esperar que el SVG termine */
-    margin: 8px auto !important;
-    max-width: 130mm !important; /* Escala compactada optimizada para 1 hoja */
-    max-height: 50mm !important;
+    clear: both !important;
+    margin: 6px auto !important;
+    max-width: 120mm !important;
+    /* Forzamos que la altura máxima en papel sea idéntica para svg-2 y svg-3 sin montarse */
+    height: 42mm !important; 
+    max-height: 42mm !important;
     page-break-inside: avoid !important;
   }
+
 
   /* ── MAQUETACIÓN LINEAL DE TABLAS (CHECKLIST FINAL) ── */
   table {
