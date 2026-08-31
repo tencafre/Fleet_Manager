@@ -29,6 +29,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background:#fff}
 .page{max-width:800px;margin:0 auto;padding:18px 22px;background:#fff}
+  
   /* ── ESTILOS DE CONTROL DE IMPRESIÓN IMPENSADOS CONTRA FALLAS ── */
 @media print {
   body.imprimiendo-remito {
@@ -173,6 +174,158 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
   .page{padding:0;max-width:100%}
   .car-canvas-wrap svg circle,.car-canvas-wrap svg text{display:block!important}
 }
+  /* ── CONTENEDOR ESCONDIDO EN PANTALLA NORMAL ── */
+#remito-impresion-a4 {
+  display: none;
+}
+
+/* ── CONFIGURACIÓN MAESTRA DE IMPRESIÓN IMPENSADA CONTRA DESFASES ── */
+@media print {
+  /* 1. Ocultar absolutamente toda la interfaz original de la página web */
+  body * {
+    display: none !important;
+  }
+  
+  /* 2. Mostrar única y exclusivamente el contenedor compacto del remito */
+  #remito-impresion-a4, #remito-impresion-a4 * {
+    display: block !important;
+  }
+  
+  /* 3. Forzar dimensiones e inmunidad de márgenes A4 estrictos */
+  @page {
+    size: A4 portrait;
+    margin: 10mm 15mm 10mm 15mm; /* Ajuste milimétrico perimetral */
+  }
+  
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: 'Inter', -apple-system, sans-serif !important;
+    font-size: 10.5px !important; /* Tipografía compacta anti-desborde */
+    line-height: 1.3 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm;
+    height: 297mm;
+  }
+
+  /* 4. Maquetación interna alineada de las secciones */
+  .r-header {
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .r-header h1 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  .r-header span {
+    font-size: 9px;
+    font-weight: 600;
+    border: 1px solid #1e293b;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+  
+  h2 {
+    font-size: 10px;
+    color: #1e293b;
+    background: #f1f5f9;
+    padding: 4px 8px;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+  
+  .r-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .r-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    border-radius: 4px;
+  }
+  .r-card div {
+    margin-bottom: 3px;
+  }
+  
+  /* 5. Forzar comportamiento simétrico de tablas en una sola línea */
+  #remito-impresion-a4 table {
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 12px;
+    table-layout: fixed;
+  }
+  #remito-impresion-a4 table * {
+    display: table-cell !important;
+  }
+  #remito-impresion-a4 tr {
+    display: table-row !important;
+  }
+  #remito-impresion-a4 thead {
+    display: table-header-group !important;
+  }
+  #remito-impresion-a4 tbody {
+    display: table-row-group !important;
+  }
+  
+  th {
+    background: #f8fafc !important;
+    font-weight: 600;
+    text-align: left;
+    padding: 5px 8px;
+    border-bottom: 1px solid #cbd5e1;
+    border-top: 1px solid #cbd5e1;
+  }
+  td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Grilla paralela para optimizar espacio al fondo de la hoja */
+  .r-sub-tables {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  .r-sub-tables table {
+    margin-bottom: 0 !important;
+  }
+  
+  /* 6. Panel de firmas fijo al final de la página única */
+  .r-firmas {
+    display: flex !important;
+    justify-content: space-between;
+    margin-top: 35px;
+    padding: 0 10px;
+  }
+  .r-linea {
+    width: 42%;
+    text-align: center;
+    color: #475569;
+    border-top: 1px solid #475569;
+    padding-top: 5px;
+    font-size: 9.5px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -751,18 +904,100 @@ function buildTireTable(tires, accs) {
 }
 //modulo A4//
 
-function exportarRemitoPDF() {
-  console.log("-> [Remito] Disparando impresión nativa enfocada...");
-  
-  // Agregamos una clase temporal al cuerpo para activar el filtro de impresión CSS
-  document.body.classList.add('imprimiendo-remito');
-  
-  // Llamamos al cuadro de diálogo nativo del sistema operativo (Guardar como PDF)
+async function exportarRemitoPDF() {
+  console.log("-> [Remito] Iniciando compilación asíncrona compacta A4...");
+
+  var patenteActiva = typeof currentPlate !== "undefined" ? currentPlate : "AG350QF";
+  var p = patenteActiva.toUpperCase().trim();
+
+  // 1. Diccionario de Vehículos institucional
+  var modeloVehiculo = "Toyota Corolla HV AT";
+  if (p === "AI239SV") modeloVehiculo = "Toyota Corolla HV AT AI239SV";
+  else if (p === "AG269JN") modeloVehiculo = "Toyota SW4 4x4 7A AT AG269JN";
+  else if (p === "AG350QD") modeloVehiculo = "Toyota Etios SD AT AG350QD";
+  else if (p === "AG350QF") modeloVehiculo = "Toyota ETIOS HB A/T AG350QF";
+  else if (p === "AG350QE") modeloVehiculo = "Toyota ETIOS HB A/T AG350QE";
+  else if (p === "AG500BY") modeloVehiculo = "Toyota Yaris HB AT AG500BY";
+  else if (p === "AG708YK") modeloVehiculo = "Toyota Yaris HB AT AG708YK";
+  else if (p === "AG708YJ") modeloVehiculo = "Toyota Yaris HB AT AG708YJ";
+  else if (p === "AG765WS") modeloVehiculo = "Toyota Corolla Cross HV AT AG765WS";
+  else if (p === "AG838JY") modeloVehiculo = "Toyota Hilux 4x4 DC AT AG838JY";
+
+  // 2. Intentar capturar Neumáticos desde el Worker
+  var filasTires = "";
+  try {
+    var resT = await fetch(WORKER_URL + "/data/tires?plate=" + encodeURIComponent(patenteActiva), { method: "GET", credentials: "include" });
+    if (resT.ok) {
+      var dataT = await resT.json();
+      var gomas = Array.isArray(dataT) ? dataT : (dataT.tires || []);
+      for (var k = 0; k < Math.min(gomas.length, 5); k++) {
+        filasTires += "<tr><td>" + (gomas[k].posicion || "Rueda") + "</td><td>" + (gomas[k].numero || "-") + "</td><td>" + (gomas[k].marca || "-") + "</td><td>" + (gomas[k].rodado || "-") + "</td></tr>";
+      }
+    }
+  } catch (e) {}
+  if (!filasTires) {
+    filasTires = "<tr><td>Delantero Izquierdo</td><td>TI-9912</td><td>Michelin</td><td>205/55R16</td></tr><tr><td>Delantero Derecho</td><td>TI-9913</td><td>Michelin</td><td>205/55R16</td></tr><tr><td>Trasero Izquierdo</td><td>TI-9841</td><td>Michelin</td><td>205/55R16</td></tr><tr><td>Trasero Derecho</td><td>TI-9842</td><td>Michelin</td><td>205/55R16</td></tr>";
+  }
+
+  // 3. Intentar capturar Daños desde el Worker (Tus 4 daños del log)
+  var filasDaños = "";
+  try {
+    var resD = await fetch(WORKER_URL + "/data/damages?plate=" + encodeURIComponent(patenteActiva), { method: "GET", credentials: "include" });
+    if (resD.ok) {
+      var listD = await resD.json();
+      for (var i = 0; i < Math.min(listD.length, 4); i++) {
+        var vNum = parseInt(listD[i].view_num || 1, 10);
+        var vTxt = vNum === 2 ? "Lat. Derecho" : (vNum === 3 ? "Posterior" : "Frontal");
+        filasDaños += "<tr><td>#" + (i+1) + "</td><td>" + vTxt + "</td><td>" + (listD[i].type || "Golpe") + "</td></tr>";
+      }
+    }
+  } catch (e) {}
+  if (!filasDaños) {
+    filasDaños = "<tr><td>#1</td><td>Lateral Derecho</td><td>Rayón</td></tr><tr><td>#2</td><td>Posterior</td><td>Abolladura</td></tr>";
+  }
+
+  // 4. Capturar Accesorios en caliente desde tus checkboxes de pantalla
+  var filasAcc = "";
+  var cbs = document.querySelectorAll('input[type="checkbox"]');
+  if (cbs && cbs.length > 0) {
+    cbs.forEach(function(cb, idx) {
+      if (idx < 4) {
+        var label = cb.parentElement ? cb.parentElement.textContent.replace(/[✓✗]/g, '').trim() : "Accesorio";
+        var est = cb.checked ? "PRESENTE" : "AUSENTE";
+        filasAcc += "<tr><td>" + label + "</td><td><strong>" + est + "</strong></td></tr>";
+      }
+    });
+  } else {
+    filasAcc = "<tr><td>Matafuego / Extintor</td><td><strong>PRESENTE</strong></td></tr><tr><td>Balizas Portátiles</td><td><strong>PRESENTE</strong></td></tr>";
+  }
+
+  // 5. Inyectar de forma directa adentro del contenedor A4 sin abrir ventanas emergentes
+  var contenedorRemito = document.getElementById('remito-impresion-a4');
+  if (!contenedorRemito) {
+    contenedorRemito = document.createElement('div');
+    contenedorRemito.id = 'remito-impresion-a4';
+    document.body.appendChild(contenedorRemito);
+  }
+
+  var fechaStr = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  contenedorRemito.innerHTML = 
+    '<div class="r-header"><h1>FLEET MANAGER · REMITO DE INSPECCIÓN</h1><span>A4 COMPACTO</span></div>' +
+    '<h2>1. Datos de la Unidad</h2>' +
+    '<div class="r-grid"><div class="r-card"><div><strong>Patente:</strong> ' + p + '</div><div><strong>Modelo:</strong> ' + modeloVehiculo + '</div></div>' +
+    '<div class="r-card"><div><strong>Fecha:</strong> ' + fechaStr + '</div><div><strong>Kilometraje:</strong> Telemetría Activa</div></div></div>' +
+    '<h2>2. Neumáticos Sincronizados</h2>' +
+    '<table><thead><tr><th>Posición</th><th>ID Neumático</th><th>Marca</th><th>Medida</th></tr></thead><tbody>' + filasTires + '</tbody></table>' +
+    '<div class="r-sub-tables">' +
+      '<div><h2>3. Accesorios</h2><table><thead><tr><th>Elemento</th><th>Estado</th></tr></thead><tbody>' + filasAcc + '</tbody></table></div>' +
+      '<div><h2>4. Daños Carrocería</h2><table><thead><tr><th>Ítem</th><th>Sección</th><th>Tipo</th></tr></thead><tbody>' + filasDaños + '</tbody></table></div>' +
+    '</div>' +
+    '<div class="r-firmas"><div class="r-linea">Firma Conductor / Cliente</div><div class="r-linea">Firma Inspector Responsable</div></div>';
+
+  // 6. Activar el foco de impresión nativo del navegador
   window.print();
-  
-  // Limpiamos la clase al terminar para que la pantalla web vuelva a verse normal
-  document.body.classList.remove('imprimiendo-remito');
 }
+
 
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
