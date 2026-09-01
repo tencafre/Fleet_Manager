@@ -1140,42 +1140,59 @@ window.saveMaint = async function(){
   const intervalVal = parseInt(document.getElementById('maintInterval').value) || null;
 
   // clearedMultiple: use the selected interval km value
-  // This is the multiple that will suppress the maintenance alarm
   const tel = ST.tel ? ST.tel[modalPlate] : null;
   const alertInfo = tel ? maintAlertInfo(tel.km, modalPlate) : null;
   
-  // Prefer the user-selected interval; fall back to auto-detected nextMultiple
   const clearedMultiple = intervalVal || (alertInfo ? alertInfo.nextMultiple : null);
-
-  // Extraemos los KM actuales de telemetría para llenar tu campo obligatorio 'cleared_km'
-  // Si no hay telemetría activa en el momento, usamos el clearedMultiple de contingencia
   const clearedKmReal = tel && tel.km ? parseInt(tel.km, 10) : (clearedMultiple || 0);
 
-  console.log("-> [Sync Maint] Preparando subida asíncrona a Supabase para: " + modalPlate);
+  console.log("-> [Sync Maint] Solicitando registro persistente para: " + modalPlate);
 
-  // ── INYECCIÓN MAESTRA: Envío Directo a Supabase vía Worker (POST) ──
-  // Mapeamos tus variables a las columnas exactas de tu tabla fleet_maint_history
-  const guardadoExitoso = await pushNewMaintToRemote(
+  // 1. Enviamos el registro asíncrono a Supabase vía el Cloudflare Worker
+  const nuevoRegistro = await pushNewMaintToRemote(
     modalPlate, 
-    date,            // date (DATE)
-    typeLabel,       // tipo (TEXT)
-    clearedMultiple, // intervalo (INTEGER)
-    clearedKmReal,   // cleared_km (INTEGER) - Campo obligatorio en tu esquema
-    note             // notes (TEXT)
+    date, 
+    typeLabel, 
+    clearedMultiple, 
+    clearedKmReal, 
+    note
   );
 
-  if (guardadoExitoso) {
-    // Si Supabase aceptó el registro, refrescamos el listado visual del modal
-    renderHistList(modalPlate);
+  if (nuevoRegistro) {
+    // 2. FORZADO DE MEMORIA EN CALIENTE ANTI-RETARDOS
+    // Leemos el localStorage actual, inyectamos el nuevo service y volvemos a guardar en el acto
+    var p = modalPlate.toUpperCase().trim();
+    var rawHist = localStorage.getItem(STORE_PREFIX + p);
+    var historicoLocal = rawHist ? JSON.parse(rawHist) : [];
+    
+    // Agregamos el objeto respetando el formato que consumen tus alertas nativas
+    historicoLocal.push({
+      date: date,
+      tipo: typeLabel,
+      intervalo: clearedMultiple,
+      notes: note,
+      cleared_km: clearedKmReal
+    });
+    
+    // Pisamos el LocalStorage de forma síncrona para que no dependa del tiempo de respuesta del fetch
+    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(historicoLocal));
+
+    // 3. ACTUALIZAR INTERFAZ EN TIEMPO REAL
+    // Limpiamos la caja de notas
     document.getElementById('maintNote').value = '';
     
-    // Re-renderizamos el calendario para limpiar las alertas visuales en base al nuevo historial
-    if (typeof renderCal === 'function') renderCal();
-    console.log("✓ Proceso de guardado y supresión de alarmas finalizado con éxito.");
-  } else {
-    console.error("-> [Sync Maint] Se canceló la actualización de la UI porque falló la persistencia remota.");
+    // Redibujamos la lista de historiales del modal actual
+    renderHistList(modalPlate);
+    
+    // Forzamos el re-renderizado del calendario general. Ahora sí leerá el array con el service inyectado
+    if (typeof renderCal === 'function') {
+      renderCal();
+    }
+    
+    console.log("✓ Sincronización completada. Alerta visual suprimida con éxito.");
   }
 };
+
 
 
 window.deleteMaintEntry = function(plate, ts){
