@@ -1182,8 +1182,8 @@ window.deleteMaintEntry = function(plate, ts){
   renderHistList(plate);
   renderCal();
 };
-
-function renderHistList(plate){
+  
+async function renderHistList(plate){
    if(!plate) return;
   
   // Forzamos la descarga asíncrona de Supabase antes de pintar las filas en el modal
