@@ -837,21 +837,91 @@ let ST = {pque:null, res:null, tel:null};
 let modalPlate = null;
 
 // ── MAINTENANCE STORAGE (localStorage per plate) ──
-function getMaintHistory(plate){
-  try{
+// ── MAINTENANCE STORAGE (Sincronizado Supabase PostgreSQL) ──
+
+// Modificamos a asíncrona para descargar los Services reales desde la nube
+async function getMaintHistory(plate) {
+  if (!plate) return [];
+  try {
+    console.log("-> [Sync Maint] Solicitando historial a Supabase para: " + plate);
+    
+    const res = await fetch(`${WORKER_URL}/data/maintenance?plate=${encodeURIComponent(plate.toUpperCase().trim())}`, {
+      method: 'GET',
+      credentials: 'include' // Envía la cookie de sesión fleet_sid de forma segura
+    });
+
+    if (res.ok) {
+      const dbData = await res.json();
+      console.log(`-> [Sync Maint] Se descargaron ${dbData.length} registros desde Supabase.`);
+      
+      // Mantenemos actualizado tu localStorage original como respaldo de contingencia / offline
+      localStorage.setItem(STORE_PREFIX + plate, JSON.stringify(dbData));
+      return dbData;
+    }
+  } catch (e) {
+    console.warn("Worker inaccesible o sin sesión. Usando plan de contingencia LocalStorage...", e);
+  }
+
+  // PLAN DE CONTINGENCIA: Si la nube falla u offline, leemos tu memoria local original
+  try {
     const raw = localStorage.getItem(STORE_PREFIX + plate);
     return raw ? JSON.parse(raw) : [];
-  }catch(e){ return []; }
+  } catch(e) { 
+    return []; 
+  }
 }
 
-function saveMaintHistory(plate, history){
-  try{ localStorage.setItem(STORE_PREFIX + plate, JSON.stringify(history)); }catch(e){}
+// Envía el nuevo service directo a la tabla de Supabase (POST)
+async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, notes = "") {
+  if (!plate) return null;
+  console.log("-> [Sync Maint] Subiendo nuevo registro a Supabase para: " + plate);
+
+  try {
+    const res = await fetch(`${WORKER_URL}/data/maintenance`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plate:      plate.toUpperCase().trim(),
+        date:       date, // Formato YYYY-MM-DD
+        tipo:       tipo, // Texto
+        intervalo:  intervalo ? parseInt(intervalo, 10) : null,
+        cleared_km: parseInt(cleared_km, 10),
+        notes:      notes || null
+      })
+    });
+
+    const reply = await res.json();
+    if (res.ok && reply.status === 'ok') {
+      console.log("✓ Mantenimiento guardado de forma persistente en Supabase.");
+      
+      // Forzamos la actualización del listado local descargando los datos frescos
+      await getMaintHistory(plate);
+      
+      // Si usas alguna función nativa para redibujar el panel del auto, la llamamos aquí
+      if (typeof refreshMaintUI === 'function') refreshMaintUI(plate);
+      else if (typeof openVehicleModal === 'function') openVehicleModal(plate); // Ajustar a tu disparador nativo
+      
+      return reply.data;
+    } else {
+      alert("Error en base de datos: " + (reply.detalles || reply.error));
+    }
+  } catch (error) {
+    console.error("Fallo de comunicación interna en mantenimiento:", error);
+  }
+  return null;
 }
 
-function getLastMaint(plate){
-  const h = getMaintHistory(plate);
-  if(!h.length) return null;
-  return h.sort((a,b)=> b.date.localeCompare(a.date))[0];
+// Mantenemos tu lógica de cálculo intacta, pero agregando soporte asíncrono preventivo
+function getLastMaint(plate) {
+  try {
+    const raw = localStorage.getItem(STORE_PREFIX + plate);
+    const h = raw ? JSON.parse(raw) : [];
+    if (!h.length) return null;
+    return h.sort((a,b) => b.date.localeCompare(a.date))[0];
+  } catch(e) { 
+    return null; 
+  }
 }
 
 // ── MAINTENANCE ALERT LOGIC ──
@@ -1057,7 +1127,7 @@ document.querySelectorAll && document.addEventListener('keydown', e=>{
   if(e.key==='Escape') document.getElementById('modalOverlay').style.display='none';
 });
 
-window.saveMaint = function(){
+window.saveMaint = async function(){
   if(!modalPlate) return;
   const date = document.getElementById('maintDate').value;
   const note = document.getElementById('maintNote').value.trim();
@@ -1070,16 +1140,40 @@ window.saveMaint = function(){
   // This is the multiple that will suppress the maintenance alarm
   const tel = ST.tel ? ST.tel[modalPlate] : null;
   const alertInfo = tel ? maintAlertInfo(tel.km, modalPlate) : null;
+  
   // Prefer the user-selected interval; fall back to auto-detected nextMultiple
   const clearedMultiple = intervalVal || (alertInfo ? alertInfo.nextMultiple : null);
-  const history = getMaintHistory(modalPlate);
-  history.push({date, tipo: typeLabel, intervalo: clearedMultiple, note, ts: Date.now(), clearedMultiple});
-  saveMaintHistory(modalPlate, history);
-  renderHistList(modalPlate);
-  document.getElementById('maintNote').value = '';
-  // re-render calendar to update UI
-  renderCal();
+
+  // Extraemos los KM actuales de telemetría para llenar tu campo obligatorio 'cleared_km'
+  // Si no hay telemetría activa en el momento, usamos el clearedMultiple de contingencia
+  const clearedKmReal = tel && tel.km ? parseInt(tel.km, 10) : (clearedMultiple || 0);
+
+  console.log("-> [Sync Maint] Preparando subida asíncrona a Supabase para: " + modalPlate);
+
+  // ── INYECCIÓN MAESTRA: Envío Directo a Supabase vía Worker (POST) ──
+  // Mapeamos tus variables a las columnas exactas de tu tabla fleet_maint_history
+  const guardadoExitoso = await pushNewMaintToRemote(
+    modalPlate, 
+    date,            // date (DATE)
+    typeLabel,       // tipo (TEXT)
+    clearedMultiple, // intervalo (INTEGER)
+    clearedKmReal,   // cleared_km (INTEGER) - Campo obligatorio en tu esquema
+    note             // notes (TEXT)
+  );
+
+  if (guardadoExitoso) {
+    // Si Supabase aceptó el registro, refrescamos el listado visual del modal
+    renderHistList(modalPlate);
+    document.getElementById('maintNote').value = '';
+    
+    // Re-renderizamos el calendario para limpiar las alertas visuales en base al nuevo historial
+    if (typeof renderCal === 'function') renderCal();
+    console.log("✓ Proceso de guardado y supresión de alarmas finalizado con éxito.");
+  } else {
+    console.error("-> [Sync Maint] Se canceló la actualización de la UI porque falló la persistencia remota.");
+  }
 };
+
 
 window.deleteMaintEntry = function(plate, ts){
   let history = getMaintHistory(plate);
@@ -1090,6 +1184,11 @@ window.deleteMaintEntry = function(plate, ts){
 };
 
 function renderHistList(plate){
+   if(!plate) return;
+  
+  // Forzamos la descarga asíncrona de Supabase antes de pintar las filas en el modal
+  // getMaintHistory se encargará de bajar los datos y actualizar el localStorage automáticamente
+  await getMaintHistory(plate);
   const history = getMaintHistory(plate).sort((a,b)=>b.date.localeCompare(a.date));
   const container = document.getElementById('histList');
   if(!history.length){
