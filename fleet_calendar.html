@@ -1197,13 +1197,56 @@ window.saveMaint = async function(){
 
 
 
-window.deleteMaintEntry = function(plate, ts){
-  let history = getMaintHistory(plate);
-  history = history.filter(h => h.ts !== ts);
-  saveMaintHistory(plate, history);
-  renderHistList(plate);
-  renderCal();
+window.deleteMaintEntry = async function(plate, ts, id){
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+
+  // 1. CONFIRMACIÓN PREVENTIVA DEL OPERADOR
+  if (!confirm("¿Estás seguro de que deseas eliminar este registro de mantenimiento de forma permanente?")) return;
+
+  // 2. INTENTAR BORRAR DE LA NUBE DE SUPABASE (Si el objeto posee un ID universal)
+  if (id) {
+    console.log("-> [Sync Maint] Enviando petición DELETE para registro ID: " + id);
+    try {
+      const res = await fetch(`${WORKER_URL}/data/maintenance?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include' // Mantiene la cookie fleet_sid para la sesión activa
+      });
+
+      if (res.ok) {
+        console.log("✓ Registro eliminado con éxito de Supabase PostgreSQL.");
+      } else {
+        const replyErr = await res.json();
+        console.warn("-> [Aviso] Falló el borrado en la nube, procediendo localmente:", replyErr.error);
+      }
+    } catch (err) {
+      console.error("Error de red al intentar borrar de Supabase:", err);
+    }
+  }
+
+  // 3. ACTUALIZACIÓN DEL RESPALDO LOCAL E INTERFAZ (Tu lógica nativa intacta)
+  // Filtramos el array local usando tanto el id como el ts para que quede 100% limpio
+  let history = getMaintHistory(p);
+  history = history.filter(h => {
+    // Si viene ID de red, comparamos por ID. Si no, por el timestamp nativo
+    if (id && h.id) return h.id !== id;
+    return h.ts !== ts;
+  });
+
+  // Guardamos la lista depurada en LocalStorage
+  saveMaintHistory(p, history);
+
+  // Redibujamos de inmediato la lista de mantenimientos del modal en pantalla
+  renderHistList(p);
+
+  // Re-renderizamos el calendario general para reactivar las alertas si el service borrado era el último
+  if (typeof renderCal === 'function') {
+    renderCal();
+  }
+
+  console.log("✓ Ciclo de borrado de mantenimiento finalizado de forma simétrica.");
 };
+
   
 async function renderHistList(plate){
    if(!plate) return;
@@ -1227,11 +1270,11 @@ async function renderHistList(plate){
         <div class="hist-date">${df}</div>
         ${tipoStr}${noteStr}
       </div>
-      <button class="hist-del" onclick="deleteMaintEntry('${plate}',${h.ts})" title="Eliminar">✕</button>
+      <button class="hist-del" onclick="deleteMaintEntry('${plate}', ${item.ts}, '${item.id || ''}')" title="Eliminar">✕</button>
     </div>`;
   }).join('');
 }
-
+//'${plate}',${h.ts}
 // ── PARSERS ──
 function parsePque(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
