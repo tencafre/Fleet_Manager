@@ -840,41 +840,52 @@ let modalPlate = null;
 // ── MAINTENANCE STORAGE (Sincronizado Supabase PostgreSQL) ──
 
 // Modificamos a asíncrona para descargar los Services reales desde la nube
-async function getMaintHistory(plate) {
+// ── MAINTENANCE STORAGE (Sincronizado Supabase Antibugs) ──
+
+function getMaintHistory(plate) {
   if (!plate) return [];
+  var p = plate.toUpperCase().trim();
+  
+  // 1. LEER INSTANTÁNEAMENTE DEL LOCALSTORAGE (Evita el crash de .some)
+  var localData = [];
   try {
-    console.log("-> [Sync Maint] Solicitando historial a Supabase para: " + plate);
+    var raw = localStorage.getItem(STORE_PREFIX + p);
+    localData = raw ? JSON.parse(raw) : [];
+  } catch(e) { localData = []; }
+
+  // 2. DISPARAR DESCARGA SILENCIOSA EN SEGUNDO PLANO (Background Fetch)
+  // Actualiza la memoria local sin trabar el hilo principal de ejecución
+  if (!window._maintSyncing) window._maintSyncing = {};
+  if (!window._maintSyncing[p]) {
+    window._maintSyncing[p] = true;
     
-    const res = await fetch(`${WORKER_URL}/data/maintenance?plate=${encodeURIComponent(plate.toUpperCase().trim())}`, {
+    fetch(`${WORKER_URL}/data/maintenance?plate=${encodeURIComponent(p)}`, {
       method: 'GET',
-      credentials: 'include' // Envía la cookie de sesión fleet_sid de forma segura
-    });
-
-    if (res.ok) {
-      const dbData = await res.json();
-      console.log(`-> [Sync Maint] Se descargaron ${dbData.length} registros desde Supabase.`);
-      
-      // Mantenemos actualizado tu localStorage original como respaldo de contingencia / offline
-      localStorage.setItem(STORE_PREFIX + plate, JSON.stringify(dbData));
-      return dbData;
-    }
-  } catch (e) {
-    console.warn("Worker inaccesible o sin sesión. Usando plan de contingencia LocalStorage...", e);
+      credentials: 'include'
+    })
+    .then(function(res) { 
+      if (res.ok) return res.json(); 
+      throw new Error();
+    })
+    .then(function(dbData) {
+      if (Array.isArray(dbData)) {
+        localStorage.setItem(STORE_PREFIX + p, JSON.stringify(dbData));
+        // Si los datos de la nube cambiaron, forzamos un redibujado sutil
+        console.log(`-> [Sync Maint] Memoria sincronizada para ${p}.`);
+      }
+    })
+    .catch(function() { console.warn("-> Worker en mantenimiento u offline. Usando caché local."); })
+    .finally(function() { window._maintSyncing[p] = false; });
   }
 
-  // PLAN DE CONTINGENCIA: Si la nube falla u offline, leemos tu memoria local original
-  try {
-    const raw = localStorage.getItem(STORE_PREFIX + plate);
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { 
-    return []; 
-  }
+  return localData; // Retorna un array legítimo de forma inmediata
 }
 
-// Envía el nuevo service directo a la tabla de Supabase (POST)
+// Envía el nuevo service directo a Supabase (POST)
 async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, notes = "") {
   if (!plate) return null;
-  console.log("-> [Sync Maint] Subiendo nuevo registro a Supabase para: " + plate);
+  var p = plate.toUpperCase().trim();
+  console.log("-> [Sync Maint] Subiendo nuevo registro a Supabase para: " + p);
 
   try {
     const res = await fetch(`${WORKER_URL}/data/maintenance`, {
@@ -882,9 +893,9 @@ async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, no
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        plate:      plate.toUpperCase().trim(),
-        date:       date, // Formato YYYY-MM-DD
-        tipo:       tipo, // Texto
+        plate:      p,
+        date:       date,
+        tipo:       tipo,
         intervalo:  intervalo ? parseInt(intervalo, 10) : null,
         cleared_km: parseInt(cleared_km, 10),
         notes:      notes || null
@@ -895,16 +906,13 @@ async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, no
     if (res.ok && reply.status === 'ok') {
       console.log("✓ Mantenimiento guardado de forma persistente en Supabase.");
       
-      // Forzamos la actualización del listado local descargando los datos frescos
-      await getMaintHistory(plate);
-      
-      // Si usas alguna función nativa para redibujar el panel del auto, la llamamos aquí
-      if (typeof refreshMaintUI === 'function') refreshMaintUI(plate);
-      else if (typeof openVehicleModal === 'function') openVehicleModal(plate); // Ajustar a tu disparador nativo
-      
+      // Forzamos actualización inmediata del localStorage tras guardar
+      if (reply.data) {
+        var historico = getMaintHistory(p);
+        historico.push(reply.data);
+        localStorage.setItem(STORE_PREFIX + p, JSON.stringify(historico));
+      }
       return reply.data;
-    } else {
-      alert("Error en base de datos: " + (reply.detalles || reply.error));
     }
   } catch (error) {
     console.error("Fallo de comunicación interna en mantenimiento:", error);
@@ -912,17 +920,12 @@ async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, no
   return null;
 }
 
-// Mantenemos tu lógica de cálculo intacta, pero agregando soporte asíncrono preventivo
 function getLastMaint(plate) {
-  try {
-    const raw = localStorage.getItem(STORE_PREFIX + plate);
-    const h = raw ? JSON.parse(raw) : [];
-    if (!h.length) return null;
-    return h.sort((a,b) => b.date.localeCompare(a.date))[0];
-  } catch(e) { 
-    return null; 
-  }
+  var h = getMaintHistory(plate);
+  if (!h || !h.length) return null;
+  return h.sort(function(a, b) { return b.date.localeCompare(a.date); })[0];
 }
+
 
 // ── MAINTENANCE ALERT LOGIC ──
 // Alert when km is within 2000km of the next 10000 multiple.
