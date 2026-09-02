@@ -1248,33 +1248,44 @@ window.deleteMaintEntry = async function(plate, ts, id){
 };
 
   
-async function renderHistList(plate){
-   if(!plate) return;
+// ── BUSCA ESTA FUNCIÓN EN TU FLEET_CALENDAR.HTML Y REEMPLAZA EL BUCLE INTERNO ──
+async function renderHistList(plate) {
+  if (!plate) return;
   
-  // Forzamos la descarga asíncrona de Supabase antes de pintar las filas en el modal
-  // getMaintHistory se encargará de bajar los datos y actualizar el localStorage automáticamente
-  await getMaintHistory(plate);
-  const history = getMaintHistory(plate).sort((a,b)=>b.date.localeCompare(a.date));
-  const container = document.getElementById('histList');
-  if(!history.length){
-    container.innerHTML = '<div class="hist-empty">Sin registros aún</div>';
+  // 1. Sincronizamos bajando los datos frescos antes de pintar
+  const history = await getMaintHistory(plate);
+  const tbody = document.getElementById('maintTableBody') || document.getElementById('histTableBody'); // Ajusta al ID real de tu tbody
+  if (!tbody) return;
+
+  if (!history || history.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:10px;">Sin registros de mantenimiento.</td></tr>';
     return;
   }
-  container.innerHTML = history.map(h=>{
-    const d = new Date(h.date+'T12:00:00');
-    const df = d.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
-    const tipoStr = h.tipo ? `<div class="hist-note" style="font-weight:600;color:var(--accent)">${esc(h.tipo)}${h.intervalo?` · ${h.intervalo.toLocaleString('es-AR')} km`:''}</div>` : '';
-    const noteStr = h.note ? `<div class="hist-note">${esc(h.note)}</div>` : '';
-    return `<div class="hist-item">
-      <div>
-        <div class="hist-date">${df}</div>
-        ${tipoStr}${noteStr}
-      </div>
-      <button class="hist-del" onclick="deleteMaintEntry('${plate}', ${item.ts}, '${item.id || ''}')" title="Eliminar">✕</button>
-    </div>`;
+
+  // 2. Pintamos las filas mapeando de forma segura
+  // CORRECCIÓN: Usamos la letra "h" tradicional (o la que use tu script nativo) de forma homogénea
+  tbody.innerHTML = history.map(function(h) {
+    const fechaFormateada = h.date || '-';
+    const tipoTexto = h.tipo || h.type || 'Mantenimiento';
+    const notasTexto = h.note || h.notes || '-';
+    const kmCleared = h.cleared_km || h.intervalo || '-';
+    
+    // Inyectamos el ID de red (h.id) y el timestamp local (h.ts) con soporte redundante estricto
+    const idParam = h.id ? h.id : '';
+    const tsParam = h.ts ? h.ts : 0;
+
+    return '<tr>' +
+      '<td>' + fechaFormateada + '</td>' +
+      '<td><strong>' + tipoTexto + '</strong></td>' +
+      '<td>' + kmCleared + ' km</td>' +
+      '<td><span style="color:#555;">' + notasTexto + '</span></td>' +
+      '<td style="text-align:center;">' +
+        // El tacho de basura ahora recibe las variables sin romper el input
+        '<button class="btn-del-maint" onclick="deleteMaintEntry(\'' + plate + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:2px 6px;">🗑️</button>' +
+      '</td>' +
+    '</tr>';
   }).join('');
 }
-//'${plate}',${h.ts}
 // ── PARSERS ──
 function parsePque(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
