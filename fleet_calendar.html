@@ -1256,6 +1256,7 @@ window.deleteMaintEntry = async function(plate, ts, id){
 // ── BUSCA ESTA FUNCIÓN EN TU FLEET_CALENDAR.HTML Y REEMPLAZA EL BUCLE INTERNO ──
 // ── 1. RENDER HISTLIST CON CONTENEDOR ESTILIZADO ANTI-SUPERPOSICIÓN ──
 // ── 1. RENDER HISTLIST INTEGRADO Y MODULADO SIN SUPERPOSICIONES ──
+// ── 1. RENDER HISTLIST INTEGRADO Y MODULADO SIN SUPERPOSICIONES ──
 function renderHistList(plate) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
@@ -1313,6 +1314,53 @@ function renderHistList(plate) {
     '</tr>';
   }).join('');
 }
+
+// ── 2. FUNCIÓN DE BORRADO VÍA POST ALTERNATIVO ANTI-405 ──
+window.deleteMaintEntry = async function(plate, ts, id) {
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+
+  if (!confirm("¿Deseas eliminar este registro de mantenimiento de Supabase?")) return;
+
+  // Borrado remoto por POST seguro
+  if (id) {
+    console.log("-> [Sync Maint] Eliminando registro por canal POST alternativo para ID: " + id);
+    try {
+      const res = await fetch(`${WORKER_URL}/data/maintenance`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: id, plate: p })
+      });
+
+      if (res.ok) {
+        console.log("✓ Registro purgado con éxito de Supabase.");
+      }
+    } catch (err) {
+      console.error("Fallo de red en borrado:", err);
+    }
+  }
+
+  // Limpieza y sincronización del LocalStorage local
+  let history = getMaintHistory(p);
+  history = history.filter(function(h) {
+    if (id && h.id) return h.id !== id;
+    return h.ts !== ts;
+  });
+
+  try {
+    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history));
+  } catch(e) {}
+
+  // Refrescar listados del calendario en vivo
+  renderHistList(p);
+  if (typeof renderCal === 'function') {
+    renderCal();
+  }
+  
+  alert("Registro eliminado.");
+};
+
 
 // ── 2. FUNCIÓN DE BORRADO VÍA POST ALTERNATIVO ANTI-405 ──
 window.deleteMaintEntry = async function(plate, ts, id) {
