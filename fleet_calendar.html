@@ -1202,32 +1202,55 @@ window.saveMaint = async function(){
 
 
 
-window.deleteMaintEntry = async function(plate, ts, id){
+// ── FUNCIÓN DE BORRADO ASÍNCRONA CORREGIDA (ANTI-CACHÉ TOTAL) ──
+window.deleteMaintEntry = async function(plate, ts, id) {
   if (!plate) return;
   const p = plate.toUpperCase().trim();
 
-  // 1. CONFIRMACIÓN PREVENTIVA DEL OPERADOR
-  if (!confirm("¿Estás seguro de que deseas eliminar este registro de mantenimiento de forma permanente?")) return;
+  if (!confirm("¿Deseas eliminar este registro de mantenimiento de Supabase de forma permanente?")) return;
 
-  // 2. INTENTAR BORRAR DE LA NUBE DE SUPABASE (Si el objeto posee un ID universal)
+  // 1. FORZAMOS EL ENVÍO EXCLUSIVO VÍA POST (Esquiva el error 405 de raíz)
   if (id) {
-    console.log("-> [Sync Maint] Enviando petición DELETE para registro ID: " + id);
+    console.log("-> [Sync Maint] Eliminando registro por canal POST alternativo para ID: " + id);
     try {
-      const res = await fetch(`${WORKER_URL}/data/maintenance?id=${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        credentials: 'include' // Mantiene la cookie fleet_sid para la sesión activa
+      // Agregamos un token dinámico en la URL para obligar al navegador a descartar la caché de red
+      const res = await fetch(`${WORKER_URL}/data/maintenance?action=delete&id=${encodeURIComponent(id)}&_cb=${Date.now()}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: id, plate: p })
       });
 
       if (res.ok) {
-        console.log("✓ Registro eliminado con éxito de Supabase PostgreSQL.");
+        console.log("✓ Registro purgado con éxito de Supabase PostgreSQL.");
       } else {
-        const replyErr = await res.json();
-        console.warn("-> [Aviso] Falló el borrado en la nube, procediendo localmente:", replyErr.error);
+        console.warn("-> El Worker rechazó la baja por POST. Verifica el código de maintenance.js.");
       }
     } catch (err) {
-      console.error("Error de red al intentar borrar de Supabase:", err);
+      console.error("Fallo de red en borrado:", err);
     }
   }
+
+  // 2. Limpieza inmediata del LocalStorage local
+  let history = getMaintHistory(p);
+  history = history.filter(function(h) {
+    if (id && h.id) return h.id !== id;
+    return h.ts !== ts;
+  });
+
+  try {
+    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history));
+  } catch(e) {}
+
+  // 3. Refrescar listados del calendario en vivo
+  renderHistList(p);
+  if (typeof renderCal === 'function') {
+    renderCal();
+  }
+  
+  alert("Registro eliminado.");
+};
+
 
   // 3. ACTUALIZACIÓN DEL RESPALDO LOCAL E INTERFAZ (Tu lógica nativa intacta)
   // Filtramos el array local usando tanto el id como el ts para que quede 100% limpio
@@ -1315,51 +1338,7 @@ function renderHistList(plate) {
   }).join('');
 }
 
-// ── 2. FUNCIÓN DE BORRADO VÍA POST ALTERNATIVO ANTI-405 ──
-window.deleteMaintEntry = async function(plate, ts, id) {
-  if (!plate) return;
-  const p = plate.toUpperCase().trim();
 
-  if (!confirm("¿Deseas eliminar este registro de mantenimiento de Supabase?")) return;
-
-  // Borrado remoto por POST seguro
-  if (id) {
-    console.log("-> [Sync Maint] Eliminando registro por canal POST alternativo para ID: " + id);
-    try {
-      const res = await fetch(`${WORKER_URL}/data/maintenance`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id: id, plate: p })
-      });
-
-      if (res.ok) {
-        console.log("✓ Registro purgado con éxito de Supabase.");
-      }
-    } catch (err) {
-      console.error("Fallo de red en borrado:", err);
-    }
-  }
-
-  // Limpieza y sincronización del LocalStorage local
-  let history = getMaintHistory(p);
-  history = history.filter(function(h) {
-    if (id && h.id) return h.id !== id;
-    return h.ts !== ts;
-  });
-
-  try {
-    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history));
-  } catch(e) {}
-
-  // Refrescar listados del calendario en vivo
-  renderHistList(p);
-  if (typeof renderCal === 'function') {
-    renderCal();
-  }
-  
-  alert("Registro eliminado.");
-};
 
 
 // ── 2. FUNCIÓN DE BORRADO VÍA POST ALTERNATIVO ANTI-405 ──
