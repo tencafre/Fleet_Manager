@@ -1252,28 +1252,7 @@ window.deleteMaintEntry = async function(plate, ts, id) {
 };
 
 
-  // 3. ACTUALIZACIÓN DEL RESPALDO LOCAL E INTERFAZ (Tu lógica nativa intacta)
-  // Filtramos el array local usando tanto el id como el ts para que quede 100% limpio
-  let history = getMaintHistory(p);
-  history = history.filter(h => {
-    // Si viene ID de red, comparamos por ID. Si no, por el timestamp nativo
-    if (id && h.id) return h.id !== id;
-    return h.ts !== ts;
-  });
 
-  // Guardamos la lista depurada en LocalStorage
-  saveMaintHistory(p, history);
-
-  // Redibujamos de inmediato la lista de mantenimientos del modal en pantalla
-  renderHistList(p);
-
-  // Re-renderizamos el calendario general para reactivar las alertas si el service borrado era el último
-  if (typeof renderCal === 'function') {
-    renderCal();
-  }
-
-  console.log("✓ Ciclo de borrado de mantenimiento finalizado de forma simétrica.");
-};
 
   
 // ── BUSCA ESTA FUNCIÓN EN TU FLEET_CALENDAR.HTML Y REEMPLAZA EL BUCLE INTERNO ──
