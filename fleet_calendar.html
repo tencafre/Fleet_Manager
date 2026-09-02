@@ -1251,51 +1251,66 @@ window.deleteMaintEntry = async function(plate, ts, id) {
   alert("Registro eliminado.");
 };
 
-
-
-
-  
-// ── BUSCA ESTA FUNCIÓN EN TU FLEET_CALENDAR.HTML Y REEMPLAZA EL BUCLE INTERNO ──
-// ── 1. RENDER HISTLIST CON CONTENEDOR ESTILIZADO ANTI-SUPERPOSICIÓN ──
-// ── 1. RENDER HISTLIST INTEGRADO Y MODULADO SIN SUPERPOSICIONES ──
-// ── 1. RENDER HISTLIST INTEGRADO Y MODULADO SIN SUPERPOSICIONES ──
 function renderHistList(plate) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
   
-  // Buscamos la caja del modal real de mantenimiento
-  var modalBox = document.getElementById('openMaintModal') || document.querySelector('.modal-content') || document.getElementById('modalOverlay');
+  // 1. ANCLAJE Y AISLAMIENTO DE CONTENEDOR CONTRA SUPERPOSICIONES
+  // Buscamos el modal principal en base a las variables de tu interfaz nativa
+  var modalBox = document.getElementById('maintModal') || 
+                 document.querySelector('.modal-content') || 
+                 document.getElementById('modalOverlay');
+                 
   if (!modalBox) return;
 
-  // Verificamos si ya creamos la tabla integrada limpia abajo de tus inputs
+  // Verificamos si ya creamos la caja del historial integrada abajo de tus inputs
   var contenedorAlternativo = document.getElementById('contenedor-maint-auto');
   if (!contenedorAlternativo) {
     contenedorAlternativo = document.createElement('div');
     contenedorAlternativo.id = 'contenedor-maint-auto';
     
-    // Estilos lineales estrictos no invasivos
+    // Maquetación CSS estricta para forzar que espere que terminen los inputs de arriba
+    contenedorAlternativo.style.display = 'block';
     contenedorAlternativo.style.clear = 'both';
-    contenedorAlternativo.style.marginTop = '15px';
+    contenedorAlternativo.style.position = 'static';
+    contenedorAlternativo.style.marginTop = '25px';
     contenedorAlternativo.style.width = '100%';
-    contenedorAlternativo.style.maxHeight = '120px';
+    contenedorAlternativo.style.maxHeight = '150px';
     contenedorAlternativo.style.overflowY = 'auto';
-    contenedorAlternativo.style.borderTop = '1px solid #cbd5e1';
-    contenedorAlternativo.style.paddingTop = '8px';
+    contenedorAlternativo.style.borderTop = '2px solid #cbd5e1';
+    contenedorAlternativo.style.paddingTop = '12px';
+    contenedorAlternativo.style.boxSizing = 'border-box';
     
-    contenedorAlternativo.innerHTML = '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:sans-serif;"><thead style="background:#f1f5f9; position:sticky; top:0;"><tr><th style="padding:5px;">Fecha</th><th style="padding:5px;">Tipo</th><th style="padding:5px;">KM</th><th style="padding:5px;">Notas</th><th style="padding:5px; text-align:center;">Borrar</th></tr></thead><tbody id="autoTbodyMaint"></tbody></table>';
+    contenedorAlternativo.innerHTML = 
+      '<h3 style="margin:0 0 8px 0; font-size:11px; text-transform:uppercase; color:#1e293b; font-family:sans-serif; letter-spacing:0.5px;">Historial de Services Realizados</h3>' +
+      '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:sans-serif; background:#ffffff;">' +
+        '<thead style="background:#f1f5f9; position:sticky; top:0; z-index:10;">' +
+          '<tr>' +
+            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">Fecha</th>' +
+            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">Tipo</th>' +
+            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">KM</th>' +
+            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">Notas</th>' +
+            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b; text-align:center;">Acción</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody id="autoTbodyMaint"></tbody>' +
+      '</table>';
+      
     modalBox.appendChild(contenedorAlternativo);
   }
 
   var tbody = document.getElementById('autoTbodyMaint');
   if (!tbody) return;
 
+  // 2. Extraer el array del caché síncrono instantáneo
   var history = getMaintHistory(p);
 
   if (!history || history.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:10px;">Sin registros de mantenimiento cargados.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; font-style:italic; padding:15px; background:#f8fafc;">Sin registros de mantenimiento cargados en Supabase para este vehículo.</td></tr>';
     return;
   }
 
+  // 3. Pintamos las filas recorriendo el array nativo
   tbody.innerHTML = history.map(function(h) {
     var fecha = h.date || '-';
     var tipo = h.tipo || h.type || 'Mantenimiento';
@@ -1305,17 +1320,21 @@ function renderHistList(plate) {
     var tsParam = h.ts ? h.ts : 0;
     var idParam = h.id ? h.id : '';
 
-    return '<tr style="border-bottom:1px solid #e2e8f0;">' +
-      '<td style="padding:5px;">' + fecha + '</td>' +
-      '<td style="padding:5px;"><strong>' + tipo + '</strong></td>' +
-      '<td style="padding:5px;">' + km + ' km</td>' +
-      '<td style="padding:5px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + notas + '">' + notas + '</td>' +
-      '<td style="text-align:center; padding:5px;">' +
-        '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:11px; font-weight:bold;">🗑️</button>' +
+    return '<tr style="border-bottom:1px solid #e2e8f0; background:#ffffff;">' +
+      '<td style="padding:6px; color:#334155;">' + fecha + '</td>' +
+      '<td style="padding:6px; color:#1e293b;"><strong>' + tipo + '</strong></td>' +
+      '<td style="padding:6px; color:#334155;">' + km + ' km</td>' +
+      '<td style="padding:6px; color:#64748b; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + notas + '">' + notas + '</td>' +
+      '<td style="text-align:center; padding:6px;">' +
+        '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:11px; font-weight:bold; padding:2px 6px;" title="Eliminar registro">🗑️</button>' +
       '</td>' +
     '</tr>';
   }).join('');
 }
+
+
+
+  
 
 
 
