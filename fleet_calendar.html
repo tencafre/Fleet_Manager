@@ -1264,7 +1264,7 @@ function renderHistList(plate) {
   var p = plate.toUpperCase().trim();
   
   // Buscamos la caja del modal real de mantenimiento
-  var modalBox = document.getElementById('maintModal') || document.querySelector('.modal-content') || document.getElementById('modalOverlay');
+  var modalBox = document.getElementById('openMaintModal') || document.querySelector('.modal-content') || document.getElementById('modalOverlay');
   if (!modalBox) return;
 
   // Verificamos si ya creamos la tabla integrada limpia abajo de tus inputs
