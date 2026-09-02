@@ -1255,62 +1255,101 @@ function renderHistList(plate) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
   
-  // 1. ANCLAJE Y AISLAMIENTO DE CONTENEDOR CONTRA SUPERPOSICIONES
-  // Buscamos el modal principal en base a las variables de tu interfaz nativa
+  // 1. CAPTURAR LA CAJA INTERNA DEL MODAL
   var modalBox = document.getElementById('maintModal') || 
                  document.querySelector('.modal-content') || 
                  document.getElementById('modalOverlay');
                  
   if (!modalBox) return;
 
-  // Verificamos si ya creamos la caja del historial integrada abajo de tus inputs
-  var contenedorAlternativo = document.getElementById('contenedor-maint-auto');
-  if (!contenedorAlternativo) {
-    contenedorAlternativo = document.createElement('div');
-    contenedorAlternativo.id = 'contenedor-maint-auto';
+  // 2. FORZAR AMPLIACIÓN DEL MODAL PARA QUE NO SATURE LA HOJA
+  modalBox.style.maxHeight = '90vh';
+  modalBox.style.width = '850px'; // Le damos ancho para albergar las dos columnas
+  modalBox.style.maxWidth = '95%';
+  modalBox.style.display = 'flex';
+  modalBox.style.flexDirection = 'column';
+  modalBox.style.padding = '20px';
+  modalBox.style.boxSizing = 'border-box';
+
+  // 3. SEPARAR EL CONTENIDO EN DOS COLUMNAS SIMÉTRICAS
+  // Verificamos si ya creamos el contenedor de doble columna
+  var wrapperColumnas = document.getElementById('maint-split-wrapper');
+  if (!wrapperColumnas) {
+    wrapperColumnas = document.createElement('div');
+    wrapperColumnas.id = 'maint-split-wrapper';
+    wrapperColumnas.style.display = 'flex';
+    wrapperColumnas.style.gap = '20px';
+    wrapperColumnas.style.width = '100%';
+    wrapperColumnas.style.marginTop = '15px';
+    wrapperColumnas.style.flex = '1';
+    wrapperColumnas.style.minHeight = '0'; // Crucial para permitir scroll interno
+
+    // Identificamos el formulario actual que ya existe en tu modal
+    var formularioExistente = modalBox.querySelector('form') || modalBox.children[2]; // Captura tus inputs nativos
     
-    // Maquetación CSS estricta para forzar que espere que terminen los inputs de arriba
-    contenedorAlternativo.style.display = 'block';
-    contenedorAlternativo.style.clear = 'both';
-    contenedorAlternativo.style.position = 'static';
-    contenedorAlternativo.style.marginTop = '25px';
-    contenedorAlternativo.style.width = '100%';
-    contenedorAlternativo.style.maxHeight = '150px';
-    contenedorAlternativo.style.overflowY = 'auto';
-    contenedorAlternativo.style.borderTop = '2px solid #cbd5e1';
-    contenedorAlternativo.style.paddingTop = '12px';
-    contenedorAlternativo.style.boxSizing = 'border-box';
-    
-    contenedorAlternativo.innerHTML = 
-      '<h3 style="margin:0 0 8px 0; font-size:11px; text-transform:uppercase; color:#1e293b; font-family:sans-serif; letter-spacing:0.5px;">Historial de Services Realizados</h3>' +
-      '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:sans-serif; background:#ffffff;">' +
-        '<thead style="background:#f1f5f9; position:sticky; top:0; z-index:10;">' +
-          '<tr>' +
-            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">Fecha</th>' +
-            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">Tipo</th>' +
-            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">KM</th>' +
-            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b;">Notas</th>' +
-            '<th style="padding:6px; border-bottom:1px solid #cbd5e1; color:#1e293b; text-align:center;">Acción</th>' +
-          '</tr>' +
-        '</thead>' +
-        '<tbody id="autoTbodyMaint"></tbody>' +
-      '</table>';
-      
-    modalBox.appendChild(contenedorAlternativo);
+    if (formularioExistente) {
+      // Metemos tu formulario en la columna izquierda
+      var colIzquierda = document.createElement('div');
+      colIzquierda.id = 'maint-col-left';
+      colIzquierda.style.flex = '1';
+      formularioExistente.parentNode.insertBefore(colIzquierda, formularioExistente);
+      colIzquierda.appendChild(formularioExistente);
+    }
+
+    // Creamos la columna derecha exclusivamente para el Historial de Supabase
+    var colDerecha = document.createElement('div');
+    colDerecha.id = 'maint-col-right';
+    colDerecha.style.flex = '1.2';
+    colDerecha.style.display = 'flex';
+    colDerecha.style.flexDirection = 'column';
+    colDerecha.style.background = '#f8fafc';
+    colDerecha.style.border = '1px solid #e2e8f0';
+    colDerecha.style.borderRadius = '6px';
+    colDerecha.style.padding = '12px';
+    colDerecha.style.boxSizing = 'border-box';
+    colDerecha.style.minHeight = '0';
+
+    colDerecha.innerHTML = 
+      '<h3 style="margin:0 0 10px 0; font-size:11px; text-transform:uppercase; color:#1e293b; font-family:sans-serif; letter-spacing:0.5px; border-bottom:1px solid #cbd5e1; padding-bottom:4px;">Historial de Services</h3>' +
+      '<div style="overflow-y:auto; flex:1; min-height:0;">' +
+        '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:sans-serif;">' +
+          '<thead style="background:#f1f5f9; position:sticky; top:0; z-index:10;">' +
+            '<tr>' +
+              '<th style="padding:6px; color:#1e293b; border-bottom:1px solid #cbd5e1;">Fecha</th>' +
+              '<th style="padding:6px; color:#1e293b; border-bottom:1px solid #cbd5e1;">Tipo</th>' +
+              '<th style="padding:6px; color:#1e293b; border-bottom:1px solid #cbd5e1;">KM</th>' +
+              '<th style="padding:6px; color:#1e293b; border-bottom:1px solid #cbd5e1;">Notas</th>' +
+              '<th style="padding:6px; color:#1e293b; border-bottom:1px solid #cbd5e1; text-align:center;">Baja</th>' +
+            '</tr>' +
+          '</thead>' +
+          '<tbody id="autoTbodyMaint"></tbody>' +
+        '</table>' +
+      '</div>';
+
+    // Acoplamos el contenedor de columnas al modal
+    var leftCol = document.getElementById('maint_col_left') || modalBox.querySelector('#maint-col-left');
+    if (leftCol) {
+      leftCol.parentNode.insertBefore(wrapperColumnas, leftCol);
+      wrapperColumnas.appendChild(leftCol);
+      wrapperColumnas.appendChild(colDerecha);
+    } else {
+      modalBox.appendChild(wrapperColumnas);
+      wrapperColumnas.appendChild(colDerecha);
+    }
   }
 
   var tbody = document.getElementById('autoTbodyMaint');
   if (!tbody) return;
 
-  // 2. Extraer el array del caché síncrono instantáneo
+  // 4. Extraer el array del caché síncrono instantáneo
   var history = getMaintHistory(p);
 
   if (!history || history.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; font-style:italic; padding:15px; background:#f8fafc;">Sin registros de mantenimiento cargados en Supabase para este vehículo.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; font-style:italic; padding:20px;">Sin servicios registrados.</td></tr>';
     return;
   }
 
-  // 3. Pintamos las filas recorriendo el array nativo
+  // 5. Renderizar filas limpias con tachos de basura funcionales
   tbody.innerHTML = history.map(function(h) {
     var fecha = h.date || '-';
     var tipo = h.tipo || h.type || 'Mantenimiento';
@@ -1321,12 +1360,12 @@ function renderHistList(plate) {
     var idParam = h.id ? h.id : '';
 
     return '<tr style="border-bottom:1px solid #e2e8f0; background:#ffffff;">' +
-      '<td style="padding:6px; color:#334155;">' + fecha + '</td>' +
-      '<td style="padding:6px; color:#1e293b;"><strong>' + tipo + '</strong></td>' +
-      '<td style="padding:6px; color:#334155;">' + km + ' km</td>' +
-      '<td style="padding:6px; color:#64748b; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + notas + '">' + notas + '</td>' +
-      '<td style="text-align:center; padding:6px;">' +
-        '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:11px; font-weight:bold; padding:2px 6px;" title="Eliminar registro">🗑️</button>' +
+      '<td style="padding:6px 4px; color:#334155;">' + fecha + '</td>' +
+      '<td style="padding:6px 4px; color:#1e293b;"><strong>' + tipo + '</strong></td>' +
+      '<td style="padding:6px 4px; color:#334155;">' + km + '</td>' +
+      '<td style="padding:6px 4px; max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + notas + '">' + notas + '</td>' +
+      '<td style="text-align:center; padding:6px 4px;">' +
+        '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:11px; font-weight:bold; padding:2px 4px;">🗑️</button>' +
       '</td>' +
     '</tr>';
   }).join('');
