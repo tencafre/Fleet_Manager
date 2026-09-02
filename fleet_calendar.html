@@ -1255,50 +1255,41 @@ window.deleteMaintEntry = async function(plate, ts, id){
   
 // ── BUSCA ESTA FUNCIÓN EN TU FLEET_CALENDAR.HTML Y REEMPLAZA EL BUCLE INTERNO ──
 // ── 1. RENDER HISTLIST CON CONTENEDOR ESTILIZADO ANTI-SUPERPOSICIÓN ──
+// ── 1. RENDER HISTLIST INTEGRADO Y MODULADO SIN SUPERPOSICIONES ──
 function renderHistList(plate) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
   
-  var tbody = document.getElementById('maintHistList') || 
-              document.getElementById('maintHistoryBody') || 
-              document.getElementById('maintTableBody') || 
-              document.querySelector('#maintModal table tbody') ||
-              document.querySelector('.modal table tbody');
+  // Buscamos la caja del modal real de mantenimiento
+  var modalBox = document.getElementById('maintModal') || document.querySelector('.modal-content') || document.getElementById('modalOverlay');
+  if (!modalBox) return;
 
-  // Si no existe, lo inyectamos de forma controlada pero con CSS limpio para que no se superponga
-  if (!tbody) {
-    console.warn("-> [Remedio] No se encontró contenedor en el HTML estático. Inyectando tabla dinámica...");
+  // Verificamos si ya creamos la tabla integrada limpia abajo de tus inputs
+  var contenedorAlternativo = document.getElementById('contenedor-maint-auto');
+  if (!contenedorAlternativo) {
+    contenedorAlternativo = document.createElement('div');
+    contenedorAlternativo.id = 'contenedor-maint-auto';
     
-    // Buscamos la caja del contenido del modal para acoplarlo en su flujo lineal abajo
-    var modalBox = document.getElementById('maintModal') || document.querySelector('.modal-content') || document.getElementById('modalOverlay');
+    // Estilos lineales estrictos no invasivos
+    contenedorAlternativo.style.clear = 'both';
+    contenedorAlternativo.style.marginTop = '15px';
+    contenedorAlternativo.style.width = '100%';
+    contenedorAlternativo.style.maxHeight = '120px';
+    contenedorAlternativo.style.overflowY = 'auto';
+    contenedorAlternativo.style.borderTop = '1px solid #cbd5e1';
+    contenedorAlternativo.style.paddingTop = '8px';
     
-    if (modalBox) {
-      var contenedorAlternativo = document.getElementById('contenedor-maint-auto');
-      if (!contenedorAlternativo) {
-        contenedorAlternativo = document.createElement('div');
-        contenedorAlternativo.id = 'contenedor-maint-auto';
-        // Estilos de aislamiento estricto para evitar montajes visuales
-        contenedorAlternativo.style.clear = 'both';
-        contenedorAlternativo.style.marginTop = '20px';
-        contenedorAlternativo.style.width = '100%';
-        contenedorAlternativo.style.maxHeight = '140px';
-        contenedorAlternativo.style.overflowY = 'auto';
-        contenedorAlternativo.style.borderTop = '1px solid #e2e8f0';
-        contenedorAlternativo.style.paddingTop = '10px';
-        
-        contenedorAlternativo.innerHTML = '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left;"><thead style="background:#f1f5f9; position:sticky; top:0;"><tr><th style="padding:6px;">Fecha</th><th style="padding:6px;">Tipo</th><th style="padding:6px;">KM</th><th style="padding:6px;">Notas</th><th style="padding:6px; text-align:center;">Acción</th></tr></thead><tbody id="autoTbodyMaint"></tbody></table>';
-        modalBox.appendChild(contenedorAlternativo);
-      }
-      tbody = document.getElementById('autoTbodyMaint');
-    }
+    contenedorAlternativo.innerHTML = '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:sans-serif;"><thead style="background:#f1f5f9; position:sticky; top:0;"><tr><th style="padding:5px;">Fecha</th><th style="padding:5px;">Tipo</th><th style="padding:5px;">KM</th><th style="padding:5px;">Notas</th><th style="padding:5px; text-align:center;">Borrar</th></tr></thead><tbody id="autoTbodyMaint"></tbody></table>';
+    modalBox.appendChild(contenedorAlternativo);
   }
 
+  var tbody = document.getElementById('autoTbodyMaint');
   if (!tbody) return;
 
   var history = getMaintHistory(p);
 
   if (!history || history.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:12px;">Sin registros de mantenimiento cargados en Supabase.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:10px;">Sin registros de mantenimiento cargados.</td></tr>';
     return;
   }
 
@@ -1312,16 +1303,62 @@ function renderHistList(plate) {
     var idParam = h.id ? h.id : '';
 
     return '<tr style="border-bottom:1px solid #e2e8f0;">' +
-      '<td style="padding:6px 6px;">' + fecha + '</td>' +
-      '<td style="padding:6px 6px;"><strong>' + tipo + '</strong></td>' +
-      '<td style="padding:6px 6px;">' + km + ' km</td>' +
-      '<td style="padding:6px 6px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="color:#555;" title="' + notas + '">' + notas + '</span></td>' +
-      '<td style="text-align:center; padding:6px 6px;">' +
-        '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:11px; padding:2px 4px;">🗑️</button>' +
+      '<td style="padding:5px;">' + fecha + '</td>' +
+      '<td style="padding:5px;"><strong>' + tipo + '</strong></td>' +
+      '<td style="padding:5px;">' + km + ' km</td>' +
+      '<td style="padding:5px; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + notas + '">' + notas + '</td>' +
+      '<td style="text-align:center; padding:5px;">' +
+        '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:11px; font-weight:bold;">🗑️</button>' +
       '</td>' +
     '</tr>';
   }).join('');
 }
+
+// ── 2. FUNCIÓN DE BORRADO VÍA POST ALTERNATIVO ANTI-405 ──
+window.deleteMaintEntry = async function(plate, ts, id) {
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+
+  if (!confirm("¿Deseas eliminar este registro de mantenimiento de Supabase?")) return;
+
+  // Borrado remoto por POST seguro
+  if (id) {
+    console.log("-> [Sync Maint] Eliminando registro por canal POST alternativo para ID: " + id);
+    try {
+      const res = await fetch(`${WORKER_URL}/data/maintenance`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: id, plate: p })
+      });
+
+      if (res.ok) {
+        console.log("✓ Registro purgado con éxito de Supabase.");
+      }
+    } catch (err) {
+      console.error("Fallo de red en borrado:", err);
+    }
+  }
+
+  // Limpieza y sincronización del LocalStorage local
+  let history = getMaintHistory(p);
+  history = history.filter(function(h) {
+    if (id && h.id) return h.id !== id;
+    return h.ts !== ts;
+  });
+
+  try {
+    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history));
+  } catch(e) {}
+
+  // Refrescar listados del calendario en vivo
+  renderHistList(p);
+  if (typeof renderCal === 'function') {
+    renderCal();
+  }
+  
+  alert("Registro eliminado.");
+};
 
 // ── 2. FUNCIÓN DE BORRADO ASÍNCRONA CORREGIDA (ANTI-CRASH) ──
 window.deleteMaintEntry = async function(plate, ts, id) {
