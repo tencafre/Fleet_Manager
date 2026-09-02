@@ -1258,12 +1258,20 @@ function renderHistList(plate) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
   
-  // 1. Obtener el contenedor real de tu interfaz (Verificá si el ID es histTableBody o maintTableBody)
-  var tbody = document.getElementById('histTableBody') || document.getElementById('maintTableBody');
-  if (!tbody) return;
+  // 1. ESCÁNER AUTOMÁTICO DE CONTENEDOR (Antibugs)
+  // Buscamos todos los IDs posibles que maneja tu archivo HTML para el historial
+  var tbody = document.getElementById('maintHistoryBody') || 
+              document.getElementById('histTableBody') || 
+              document.getElementById('maintTableBody') || 
+              document.getElementById('maintHistoryList') ||
+              document.querySelector('#maintModal table tbody'); // Rescate por selector CSS si no encuentra el ID
+
+  if (!tbody) {
+    console.error("-> [Critical Error] No se encontró ningún <tbody> válido dentro del modal para dibujar el historial.");
+    return;
+  }
 
   // 2. Extraer el array del caché de LocalStorage de forma síncrona instantánea
-  // getMaintHistory(p) ya maneja la descarga en segundo plano desde Supabase
   var history = getMaintHistory(p);
 
   if (!history || history.length === 0) {
@@ -1271,14 +1279,11 @@ function renderHistList(plate) {
     return;
   }
 
-  // 3. Pintamos las filas recorriendo el array nativo con tu mapeo de variables
+  // 3. Pintamos las filas recorriendo el array nativo
   tbody.innerHTML = history.map(function(h) {
-    // Soportamos de forma redundante las llaves de tu LocalStorage viejo y Supabase
     var fecha = h.date || '-';
     var tipo = h.tipo || h.type || 'Mantenimiento';
     var km = h.cleared_km || h.intervalo || '-';
-    
-    // Soportamos 'note' (local) y 'notes' (Supabase) para evitar campos vacíos
     var notas = h.note || h.notes || '-';
     
     // Identificadores de control para el borrado simétrico
@@ -1286,12 +1291,12 @@ function renderHistList(plate) {
     var idParam = h.id ? h.id : '';
 
     return '<tr>' +
-      '<td>' + fecha + '</td>' +
-      '<td><strong>' + tipo + '</strong></td>' +
-      '<td>' + km + ' km</td>' +
-      '<td><span style="color:#555;">' + notas + '</span></td>' +
-      '<td style="text-align:center;">' +
-        '<button onclick="deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:12px; padding:2px 6px;" title="Eliminar registro">🗑️</button>' +
+      '<td style="padding:6px 8px;">' + fecha + '</td>' +
+      '<td style="padding:6px 8px;"><strong>' + tipo + '</strong></td>' +
+      '<td style="padding:6px 8px;">' + km + ' km</td>' +
+      '<td style="padding:6px 8px;"><span style="color:#555;">' + notas + '</span></td>' +
+      '<td style="text-align:center; padding:6px 8px;">' +
+        '<button onclick="deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:12px; padding:2px 4px;" title="Eliminar registro">🗑️</button>' +
       '</td>' +
     '</tr>';
   }).join('');
