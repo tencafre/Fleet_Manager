@@ -846,15 +846,12 @@ function getMaintHistory(plate) {
   if (!plate) return [];
   var p = plate.toUpperCase().trim();
   
-  // 1. LEER INSTANTÁNEAMENTE DEL LOCALSTORAGE (Evita el crash de .some)
   var localData = [];
   try {
     var raw = localStorage.getItem(STORE_PREFIX + p);
     localData = raw ? JSON.parse(raw) : [];
   } catch(e) { localData = []; }
 
-  // 2. DISPARAR DESCARGA SILENCIOSA EN SEGUNDO PLANO (Background Fetch)
-  // Actualiza la memoria local sin trabar el hilo principal de ejecución
   if (!window._maintSyncing) window._maintSyncing = {};
   if (!window._maintSyncing[p]) {
     window._maintSyncing[p] = true;
@@ -863,23 +860,31 @@ function getMaintHistory(plate) {
       method: 'GET',
       credentials: 'include'
     })
-    .then(function(res) { 
-      if (res.ok) return res.json(); 
-      throw new Error();
-    })
+    .then(function(res) { if (res.ok) return res.json(); throw new Error(); })
     .then(function(dbData) {
       if (Array.isArray(dbData)) {
         localStorage.setItem(STORE_PREFIX + p, JSON.stringify(dbData));
-        // Si los datos de la nube cambiaron, forzamos un redibujado sutil
         console.log(`-> [Sync Maint] Memoria sincronizada para ${p}.`);
+        
+        // ── EXTRA: Si el modal está abierto en pantalla, forzamos el redibujado sutil de las filas ──
+        if (typeof modalPlate !== "undefined" && modalPlate === p) {
+          // Volvemos a llamar a renderHistList de forma segura para volcar los IDs de Supabase
+          var tbody = document.getElementById('histTableBody') || document.getElementById('maintTableBody');
+          if (tbody) {
+            tbody.innerHTML = dbData.map(function(h) {
+              return '<tr><td>' + (h.date || '-') + '</td><td><strong>' + (h.tipo || 'Mantenimiento') + '</strong></td><td>' + (h.cleared_km || '-') + ' km</td><td><span style="color:#555;">' + (h.notes || h.note || '-') + '</span></td><td style="text-align:center;"><button onclick="deleteMaintEntry(\'' + p + '\', ' + (h.ts || 0) + ', \'' + (h.id || '') + '\')" style="background:none;border:none;cursor:pointer;color:#dc2626;">🗑️</button></td></tr>';
+            }).join('');
+          }
+        }
       }
     })
-    .catch(function() { console.warn("-> Worker en mantenimiento u offline. Usando caché local."); })
+    .catch(function() { console.warn("-> Worker offline. Usando caché local."); })
     .finally(function() { window._maintSyncing[p] = false; });
   }
 
-  return localData; // Retorna un array legítimo de forma inmediata
+  return localData; 
 }
+
 
 // Envía el nuevo service directo a Supabase (POST)
 async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, notes = "") {
@@ -1249,43 +1254,49 @@ window.deleteMaintEntry = async function(plate, ts, id){
 
   
 // ── BUSCA ESTA FUNCIÓN EN TU FLEET_CALENDAR.HTML Y REEMPLAZA EL BUCLE INTERNO ──
-async function renderHistList(plate) {
+function renderHistList(plate) {
   if (!plate) return;
+  var p = plate.toUpperCase().trim();
   
-  // 1. Sincronizamos bajando los datos frescos antes de pintar
-  const history = await getMaintHistory(plate);
-  const tbody = document.getElementById('maintTableBody') || document.getElementById('histTableBody'); // Ajusta al ID real de tu tbody
+  // 1. Obtener el contenedor real de tu interfaz (Verificá si el ID es histTableBody o maintTableBody)
+  var tbody = document.getElementById('histTableBody') || document.getElementById('maintTableBody');
   if (!tbody) return;
 
+  // 2. Extraer el array del caché de LocalStorage de forma síncrona instantánea
+  // getMaintHistory(p) ya maneja la descarga en segundo plano desde Supabase
+  var history = getMaintHistory(p);
+
   if (!history || history.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:10px;">Sin registros de mantenimiento.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:12px;">Sin registros de mantenimiento cargados.</td></tr>';
     return;
   }
 
-  // 2. Pintamos las filas mapeando de forma segura
-  // CORRECCIÓN: Usamos la letra "h" tradicional (o la que use tu script nativo) de forma homogénea
+  // 3. Pintamos las filas recorriendo el array nativo con tu mapeo de variables
   tbody.innerHTML = history.map(function(h) {
-    const fechaFormateada = h.date || '-';
-    const tipoTexto = h.tipo || h.type || 'Mantenimiento';
-    const notasTexto = h.note || h.notes || '-';
-    const kmCleared = h.cleared_km || h.intervalo || '-';
+    // Soportamos de forma redundante las llaves de tu LocalStorage viejo y Supabase
+    var fecha = h.date || '-';
+    var tipo = h.tipo || h.type || 'Mantenimiento';
+    var km = h.cleared_km || h.intervalo || '-';
     
-    // Inyectamos el ID de red (h.id) y el timestamp local (h.ts) con soporte redundante estricto
-    const idParam = h.id ? h.id : '';
-    const tsParam = h.ts ? h.ts : 0;
+    // Soportamos 'note' (local) y 'notes' (Supabase) para evitar campos vacíos
+    var notas = h.note || h.notes || '-';
+    
+    // Identificadores de control para el borrado simétrico
+    var tsParam = h.ts ? h.ts : 0;
+    var idParam = h.id ? h.id : '';
 
     return '<tr>' +
-      '<td>' + fechaFormateada + '</td>' +
-      '<td><strong>' + tipoTexto + '</strong></td>' +
-      '<td>' + kmCleared + ' km</td>' +
-      '<td><span style="color:#555;">' + notasTexto + '</span></td>' +
+      '<td>' + fecha + '</td>' +
+      '<td><strong>' + tipo + '</strong></td>' +
+      '<td>' + km + ' km</td>' +
+      '<td><span style="color:#555;">' + notas + '</span></td>' +
       '<td style="text-align:center;">' +
-        // El tacho de basura ahora recibe las variables sin romper el input
-        '<button class="btn-del-maint" onclick="deleteMaintEntry(\'' + plate + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none;border:none;cursor:pointer;color:#dc2626;padding:2px 6px;">🗑️</button>' +
+        '<button onclick="deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:12px; padding:2px 6px;" title="Eliminar registro">🗑️</button>' +
       '</td>' +
     '</tr>';
   }).join('');
 }
+
 // ── PARSERS ──
 function parsePque(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
