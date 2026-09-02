@@ -1258,48 +1258,72 @@ function renderHistList(plate) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
   
-  // 1. ANCLAJE REDUNDANTE FINAL (Mapeado exacto con tu archivo HTML)
+  // 1. INTENTAR BUSCAR EL CONTENEDOR EXISTENTE
   var tbody = document.getElementById('maintHistList') || 
-              document.getElementById('maintHistBody') || 
               document.getElementById('maintHistoryBody') || 
-              document.querySelector('#maintModal tbody') ||
-              document.querySelector('.modal tbody');
+              document.getElementById('maintTableBody') || 
+              document.querySelector('#maintModal table tbody') ||
+              document.querySelector('.modal table tbody');
 
+  // 2. 🚀 AUTOINYECCIÓN DEFENSIVA (Si no existe, se crea para evitar el crash)
   if (!tbody) {
-    console.error("-> [Critical Error] No se encontró la tabla de historial en el HTML. Verificá el ID de tu <tbody>.");
+    console.warn("-> [Remedio] No se encontró contenedor en el HTML estático. Inyectando tabla dinámica...");
+    
+    // Buscamos la caja del modal (Ajustado al ID universal 'maintModal')
+    var modalBox = document.getElementById('maintModal') || document.querySelector('.modal-content') || document.getElementById('modalOverlay');
+    
+    if (modalBox) {
+      // Creamos una sección de tabla limpia de contingencia al fondo del modal
+      var contenedorAlternativo = document.getElementById('contenedor-maint-auto');
+      if (!contenedorAlternativo) {
+        contenedorAlternativo = document.createElement('div');
+        contenedorAlternativo.id = 'contenedor-maint-auto';
+        contenedorAlternativo.style.marginTop = '15px';
+        contenedorAlternativo.style.maxHeight = '150px';
+        contenedorAlternativo.style.overflowY = 'auto';
+        contenedorAlternativo.innerHTML = '<table style="width:100%; border-collapse:collapse; font-size:11px;"><thead style="background:#f1f5f9;"><tr><th style="text-align:left;padding:6px;">Fecha</th><th style="text-align:left;padding:6px;">Tipo</th><th style="text-align:left;padding:6px;">KM</th><th style="text-align:left;padding:6px;">Notas</th><th style="padding:6px;">Acción</th></tr></thead><tbody id="autoTbodyMaint"></tbody></table>';
+        modalBox.appendChild(contenedorAlternativo);
+      }
+      tbody = document.getElementById('autoTbodyMaint');
+    }
+  }
+
+  // Si a pesar de todo no hay puntero, abortamos de forma controlada sin romper la pestaña
+  if (!tbody) {
+    console.error("-> Error crítico irreversible: El DOM del modal es inaccesible.");
     return;
   }
 
-  // 2. Extraer el array del caché de LocalStorage de forma síncrona instantánea
+  // 3. Extraer el array del caché de LocalStorage de forma síncrona instantánea
   var history = getMaintHistory(p);
 
   if (!history || history.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:12px;">Sin registros de mantenimiento cargados.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; font-style:italic; padding:12px;">Sin registros de mantenimiento cargados en Supabase.</td></tr>';
     return;
   }
 
-  // 3. Pintamos las filas recorriendo el array nativo
+  // 4. Pintamos las filas recorriendo el array nativo mapeado con Supabase
   tbody.innerHTML = history.map(function(h) {
     var fecha = h.date || '-';
     var tipo = h.tipo || h.type || 'Mantenimiento';
     var km = h.cleared_km || h.intervalo || '-';
     var notas = h.note || h.notes || '-';
     
-    // Identificadores de control para el borrado simétrico
     var tsParam = h.ts ? h.ts : 0;
     var idParam = h.id ? h.id : '';
 
-    return '<tr>' +
-      '<td style="padding:6px 8px;">' + fecha + '</td>' +
-      '<td style="padding:6px 8px;"><strong>' + tipo + '</strong></td>' +
-      '<td style="padding:6px 8px;">' + km + ' km</td>' +
-      '<td style="padding:6px 8px;"><span style="color:#555;">' + notas + '</span></td>' +
-      '<td style="text-align:center; padding:6px 8px;">' +
+    return '<tr style="border-bottom:1px solid #e2e8f0;">' +
+      '<td style="padding:6px 6px;">' + fecha + '</td>' +
+      '<td style="padding:6px 6px;"><strong>' + tipo + '</strong></td>' +
+      '<td style="padding:6px 6px;">' + km + ' km</td>' +
+      '<td style="padding:6px 6px; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><span style="color:#555;" title="' + notas + '">' + notas + '</span></td>' +
+      '<td style="text-align:center; padding:6px 6px;">' +
         '<button onclick="deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:12px; padding:2px 4px;" title="Eliminar registro">🗑️</button>' +
       '</td>' +
     '</tr>';
   }).join('');
 }
+
 
 // ── PARSERS ──
 function parsePque(txt){
