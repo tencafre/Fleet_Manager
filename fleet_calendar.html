@@ -1255,7 +1255,7 @@ function renderHistList(plate) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
   
-  // 1. ANCLAJE AL CONTENEDOR NATIVO DE TU INTERFAZ (Se eliminan tablas inyectadas raras)
+  // 1. ANCLAJE AL CONTENEDOR NATIVO DE TU INTERFAZ
   var contenedorHistorial = document.getElementById('histList');
   
   if (!contenedorHistorial) {
@@ -1263,49 +1263,61 @@ function renderHistList(plate) {
     return;
   }
 
-  // 2. Extraer el array del caché síncrono instantáneo (Sincronizado con Supabase de fondo)
+  // Estilos de aislamiento y diseño para el contenedor superior
+  contenedorHistorial.style.marginTop = '15px';
+  contenedorHistorial.style.border = '1px solid #e2e8f0';
+  contenedorHistorial.style.borderRadius = '8px';
+  contenedorHistorial.style.overflow = 'hidden';
+  contenedorHistorial.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+  contenedorHistorial.style.background = '#ffffff';
+
+  // 2. Extraer el array del caché síncrono instantáneo
   var history = getMaintHistory(p);
 
   if (!history || history.length === 0) {
-    contenedorHistorial.innerHTML = '<div style="text-align:center; color:#777; font-style:italic; padding:15px; font-size:11.5px;">Sin registros de mantenimiento cargados.</div>';
+    contenedorHistorial.innerHTML = '<div style="text-align:center; color:#64748b; font-style:italic; padding:20px; font-size:12px; font-family:\'Inter\', sans-serif; background:#f8fafc;">Sin registros de mantenimiento cargados en Supabase.</div>';
     return;
   }
 
-  // 3. Renderizamos las tarjetas o renglones adaptados al flujo nativo de tu div #histList
-  // Generamos una estructura de tabla limpia contenida para que respete tus dimensiones CSS
+  // 3. Renderizamos las filas adaptadas a la paleta institucional (Gris azulado corporativo)
   var tablaHTML = 
-    '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:sans-serif;">' +
-      '<thead style="background:#f1f5f9; position:sticky; top:0; z-index:5;">' +
-        '<tr>' +
-          '<th style="padding:6px; border-bottom:1px solid #cbd5e1;">Fecha</th>' +
-          '<th style="padding:6px; border-bottom:1px solid #cbd5e1;">Tipo</th>' +
-          '<th style="padding:6px; border-bottom:1px solid #cbd5e1;">Kilómetros</th>' +
-          '<th style="padding:6px; border-bottom:1px solid #cbd5e1;">Notas</th>' +
-          '<th style="padding:6px; border-bottom:1px solid #cbd5e1; text-align:center;">Baja</th>' +
-        '</tr>' +
-      '</thead>' +
-      '<tbody>' +
-        history.map(function(h) {
-          var fecha = h.date || '-';
-          var tipo = h.tipo || h.type || 'Mantenimiento';
-          var km = h.cleared_km || h.intervalo || '-';
-          var notas = h.note || h.notes || '-';
-          
-          var tsParam = h.ts ? h.ts : 0;
-          var idParam = h.id ? h.id : '';
+    '<div style="max-height:160px; overflow-y:auto; width:100%;">' +
+      '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:\'Inter\', system-ui, sans-serif; table-layout:fixed;">' +
+        '<thead style="background:#1e293b; color:#ffffff; position:sticky; top:0; z-index:5;">' +
+          '<tr>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:22%;">Fecha</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:30%;">Tipo de Servicio</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:20%;">Kilómetros</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:20%;">Notas</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:8%; text-align:center;">Acción</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' +
+          history.map(function(h, index) {
+            var fecha = h.date || '-';
+            var tipo = h.tipo || h.type || 'Mantenimiento';
+            var km = h.cleared_km || h.intervalo || '-';
+            var notas = h.note || h.notes || '-';
+            
+            var tsParam = h.ts ? h.ts : 0;
+            var idParam = h.id ? h.id : '';
+            
+            // Fondo cebra alterno para una lectura impecable
+            var bgFila = (index % 2 === 0) ? '#ffffff' : '#f8fafc';
 
-          return '<tr style="border-bottom:1px solid #e2e8f0; background:#ffffff;">' +
-            '<td style="padding:6px 4px; color:#334155;">' + fecha + '</td>' +
-            '<td style="padding:6px 4px; color:#1e293b;"><strong>' + tipo + '</strong></td>' +
-            '<td style="padding:6px 4px; color:#334155;">' + km + ' km</td>' +
-            '<td style="padding:6px 4px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + notas + '">' + notas + '</td>' +
-            '<td style="text-align:center; padding:6px 4px;">' +
-              '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#dc2626; font-size:12px; font-weight:bold; padding:2px 4px;" title="Eliminar del sistema">🗑️</button>' +
-            '</td>' +
-          '</tr>';
-        }).join('') +
-      '</tbody>' +
-    '</table>';
+            return '<tr style="background:' + bgFila + '; border-bottom:1px solid #e2e8f0;" onmouseover="this.style.background=\'#f1f5f9\'" onmouseout="this.style.background=\'' + bgFila + '\'">' +
+              '<td style="padding:8px 10px; color:#475569; font-weight:500;">' + fecha + '</td>' +
+              '<td style="padding:8px 10px; color:#1e293b;"><strong>' + tipo + '</strong></td>' +
+              '<td style="padding:8px 10px; color:#334155; font-family:monospace; font-size:11.5px;">' + (km !== '-' ? km.toLocaleString('es-AR') : '-') + ' km</td>' +
+              '<td style="padding:8px 10px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="' + notas + '">' + notas + '</td>' +
+              '<td style="text-align:center; padding:8px 10px;">' +
+                '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:12px; padding:2px 4px; border-radius:4px; transition:all 0.2s;" onmouseover="this.style.color=\'#b91c1c\'" onmouseout="this.style.color=\'#ef4444\'" title="Eliminar del sistema Supabase">🗑️</button>' +
+              '</td>' +
+            '</tr>';
+          }).join('') +
+        '</tbody>' +
+      '</table>' +
+    '</div>';
 
   // Volcamos todo el bloque limpio de forma directa adentro de tu contenedor legítimo
   contenedorHistorial.innerHTML = tablaHTML;
