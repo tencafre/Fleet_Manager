@@ -1153,7 +1153,7 @@ window.saveMaint = async function(){
 
   console.log("-> [Sync Maint] Solicitando registro persistente para: " + modalPlate);
 
-  // 1. Enviamos el registro asíncrono a Supabase vía el Cloudflare Worker (Usa 'notes')
+  // 1. Enviamos el registro asíncrono a Supabase vía el Cloudflare Worker
   const nuevoRegistro = await pushNewMaintToRemote(
     modalPlate, 
     date, 
@@ -1168,28 +1168,37 @@ window.saveMaint = async function(){
     var rawHist = localStorage.getItem(STORE_PREFIX + p);
     var historicoLocal = rawHist ? JSON.parse(rawHist) : [];
     
-    // 2. ── INTEGRACIÓN REDUNDANTE DUAL ──
-    // Guardamos 'note' y 'notes' al mismo tiempo para satisfacer a tu algoritmo local
-    // y a la estructura relacional de Supabase de forma simultánea.
-    historicoLocal.push({
+    // 2. ── INYECCIÓN MAESTRA REDUNDANTE DE ALARMAS ──
+    // Tu validador nativo necesita leer las llaves numéricas exactas
+    // Guardamos la estructura dual para que rompa el loop y apague la alerta
+    var nuevoItemHistorial = {
+      id: nuevoRegistro.id || "", // Vinculamos el UUID real devuelto por Supabase
       date: date,
       tipo: typeLabel,
+      type: typeLabel,
       intervalo: clearedMultiple,
-      note: note,             // <--- Nombre original local exigido por maintAlertInfo
-      notes: note,            // <--- Nombre remoto exigido por Supabase
+      note: note,             
+      notes: note,            
       cleared_km: clearedKmReal,
       ts: Date.now(),
       clearedMultiple: clearedMultiple
-    });
+    };
+
+    historicoLocal.push(nuevoItemHistorial);
     
-    // Pisamos el LocalStorage de forma instantánea
+    // Pisamos el LocalStorage de forma síncrona instantánea
     localStorage.setItem(STORE_PREFIX + p, JSON.stringify(historicoLocal));
 
-    // 3. ACTUALIZAR INTERFAZ EN EL ACTO
+    // Si tu aplicación guarda el historial en un objeto de estado global en caliente, lo inyectamos:
+    if (typeof ST !== "undefined" && ST.maintHistory) {
+      ST.maintHistory[p] = historicoLocal;
+    }
+
+    // 3. ACTUALIZAR INTERFAZ Y APAGAR ALERTA EN EL ACTO
     document.getElementById('maintNote').value = '';
     
     // Redibujamos la lista de historiales del modal actual
-    renderHistList(modalPlate);
+    renderHistList(p);
     
     // Forzamos el re-renderizado del calendario general. Ahora sí se apagará la alerta.
     if (typeof renderCal === 'function') {
@@ -1199,6 +1208,7 @@ window.saveMaint = async function(){
     console.log("✓ Sincronización completada. Alerta visual de mantenimiento suprimida con éxito.");
   }
 };
+
 
 
 
