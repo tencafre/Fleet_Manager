@@ -1,5 +1,5 @@
 yevw52d	Service	Toyota Corolla HV AT AG192XC	Retiro CERRITO CAR	--	4:55 PM  May 22, 2026	6:55 PM  Jan 1, 2027	Current
 ldp6pe6	Matias Blas	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	10:00 AM  Aug 31, 2026	10:00 AM  Sep 7, 2026	Current
-k5d8r0v	Matias Alejandro Storni	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	9:00 AM  Sep 4, 2026	9:00 AM  Sep 7, 2026	Pending
+k5d8r0v	Matias Alejandro Storni	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	9:00 AM  Sep 4, 2026	9:00 AM  Sep 7, 2026	Current
 k3rj6z1	Rodolfo Eisenacht	Toyota Etios SD AT AG350QD	Retiro CERRITO CAR	--	2:00 PM  Sep 4, 2026	2:00 PM  Sep 5, 2026	New
 k90wo9v	Sofia Speluzzi	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	10:00 AM  Dec 14, 2026	10:00 AM  Jan 15, 2027	New
