@@ -1,876 +1,876 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+
+
+
+
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://api.github.com;">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1B5E20">
-<title>Fleet Mobile · Retiro CERRITO CAR</title>
-<!-- Materialize CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-<!-- Material Icons -->
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<!-- Inter + JetBrains Mono -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+  connect-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
+  style-src * 'unsafe-inline';
+  script-src * 'unsafe-inline' 'unsafe-eval';
+  font-src * data:;
+  img-src * data: blob:;
+">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Calendar — Retiro CERRITO CAR</title>
+<!-- UI/UX Pro Max: Inter + JetBrains Mono — dashboard operations pairing -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script></script>
 <style>
-/* ═══════════════════════════════════════════════════
-   Fleet Mobile — Fine Design System
-   Inspired by: Linear, Vercel, Raycast dark aesthetics
-   Typography: Inter (UI) + JetBrains Mono (data/codes)
-═══════════════════════════════════════════════════ */
+/*
+ * Design System — Fleet Operations Dashboard
+ * ui-ux-pro-max-skill · style: AI-Native + Glassmorphism subtle
+ * product-type: fleet-logistics-dashboard
+ * palette: deep-navy × carbon × operative-teal × amber-alert
+ * typography: Inter (UI) + JetBrains Mono (codes/KPIs) — weight-hierarchy applied
+ * ux-rules: semantic tokens · WCAG AA · color-not-decorative-only · dark desaturated
+ */
 
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── SEMANTIC COLOR TOKENS (light) ── */
 :root{
-  /* Surfaces — layered depth */
-  --bg:     #0a0a0b;
-  --s0:     #0f0f11;
-  --s1:     #161618;
-  --s2:     #1c1c1f;
-  --s3:     #242428;
-  --s4:     #2e2e33;
+  /* surfaces */
+  --bg:         #f0f2f5;
+  --surface:    #ffffff;
+  --surface2:   #f5f6f8;
+  --surface3:   #eceef2;
+  --glass:      rgba(255,255,255,0.72);
 
-  /* Borders — ultra-subtle */
-  --b:      rgba(255,255,255,.055);
-  --bs:     rgba(255,255,255,.10);
-  --bm:     rgba(255,255,255,.16);
+  /* borders */
+  --border:     rgba(0,0,0,0.07);
+  --border-s:   rgba(0,0,0,0.13);
+  --border-m:   rgba(0,0,0,0.20);
 
-  /* Text hierarchy */
-  --t:      #f0f0f2;
-  --t2:     #8b8b96;
-  --t3:     #52525a;
-  --t-inv:  #0a0a0b;
+  /* text hierarchy — weight-hierarchy rule applied */
+  --text:       #0f1117;   /* display/headline 700 */
+  --text2:      #4a5568;   /* body 400 */
+  --text3:      #8a95a3;   /* label/caption 400 */
+  --text-inv:   #ffffff;
 
-  /* Brand — teal with warm tint */
-  --acc:    #2dd4bf;
-  --acc2:   #0d9488;
-  --accl:   rgba(45,212,191,.10);
-  --acc-glow: 0 0 20px rgba(45,212,191,.18);
+  /* semantic primary — operative teal */
+  --accent:     #0d9488;
+  --accent-2:   #0f766e;
+  --accent-l:   #ccfbf1;
+  --accent-mid: rgba(13,148,136,0.12);
 
-  /* Semantic status — muted, desaturated for dark */
-  --c-ok:   #34d399;  --cl-ok:  rgba(52,211,153,.10);
-  --c-new:  #f59e0b;  --cl-new: rgba(245,158,11,.10);
-  --c-fut:  #818cf8;  --cl-fut: rgba(129,140,248,.10);
-  --c-svc:  --c-new;  --cl-svc: rgba(245,158,11,.10);
-  --c-err:  #f87171;  --cl-err: rgba(248,113,113,.10);
-  --c-blu:  #60a5fa;  --cl-blu: rgba(96,165,250,.10);
-  --nav: 52px;
-  --tab: 56px;
-  --safe-b: env(safe-area-inset-bottom, 0px);
-  --r:  10px;
-  --rs: 6px;
-  --rl: 14px;
+  /* semantic status tokens — color-not-decorative-only rule */
+  --c-current:  #166534;  /* active reservation — green */
+  --cl-current: #dcfce7;
+  --c-new:      #9a3412;  /* new/starting — orange */
+  --cl-new:     #ffedd5;
+  --c-future:   #3730a3;  /* future — indigo */
+  --cl-future:  #e0e7ff;
+  --c-service:  #92400e;  /* service/maintenance — amber */
+  --cl-service: #fef3c7;
+  --c-error:    #b91c1c;  /* error/alert — red */
+  --cl-error:   #fee2e2;
+  --c-booked:   #1e40af;  /* booked/location — blue */
+  --cl-booked:  #dbeafe;
+
+  /* layout */
+  --col-label:  216px;
+  --col-maint:  152px;
+  --day-w:      28px;
+  --cell-h:     58px;
+  --header-h:   46px;
+  --radius:     10px;
+  --radius-sm:  6px;
+  --radius-lg:  14px;
+
+  /* elevation — glassmorphism subtle */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:  0 4px 16px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
+  --shadow-lg:  0 12px 40px rgba(0,0,0,.14), 0 4px 12px rgba(0,0,0,.08);
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{font-size:15px;-webkit-text-size-adjust:100%}
+
+/* ── SEMANTIC COLOR TOKENS (dark) — desaturated per ui-ux-pro-max rule ── */
+@media(prefers-color-scheme:dark){:root{
+  --bg:         #0d0f14;
+  --surface:    #161920;
+  --surface2:   #1e2230;
+  --surface3:   #252a38;
+  --glass:      rgba(22,25,32,0.80);
+
+  --border:     rgba(255,255,255,0.06);
+  --border-s:   rgba(255,255,255,0.11);
+  --border-m:   rgba(255,255,255,0.18);
+
+  --text:       #e8eaf0;
+  --text2:      #8892a4;
+  --text3:      #4e5a6e;
+  --text-inv:   #0d0f14;
+
+  --accent:     #14b8a6;
+  --accent-2:   #0d9488;
+  --accent-l:   rgba(20,184,166,0.15);
+  --accent-mid: rgba(20,184,166,0.10);
+
+  /* dark: desaturated tonal variants — not inverted */
+  --c-current:  #4ade80;  --cl-current: rgba(74,222,128,0.12);
+  --c-new:      #fb923c;  --cl-new:     rgba(251,146,60,0.12);
+  --c-future:   #818cf8;  --cl-future:  rgba(129,140,248,0.12);
+  --c-service:  #fbbf24;  --cl-service: rgba(251,191,36,0.12);
+  --c-error:    #f87171;  --cl-error:   rgba(248,113,113,0.12);
+  --c-booked:   #60a5fa;  --cl-booked:  rgba(96,165,250,0.12);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.30);
+  --shadow-md:  0 4px 16px rgba(0,0,0,.40);
+  --shadow-lg:  0 12px 40px rgba(0,0,0,.55);
+}}
+
+/* ── BASE ── */
 body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:13px;
+  line-height:1.5;
   background:var(--bg);
-  color:var(--t);
-  min-height:100dvh;
-  overflow-x:hidden;
+  color:var(--text);
+  min-height:100vh;
   -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
 }
-.mono{font-family:'JetBrains Mono',ui-monospace,monospace;letter-spacing:.01em}
+code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 
-/* ══════════════════════════════════════════════════
-   TOP APP BAR — frosted glass, ultra-thin
-══════════════════════════════════════════════════ */
-.top-app-bar{
-  position:fixed;top:0;left:0;right:0;z-index:90;
-  height:var(--nav);
-  background:rgba(10,10,11,.88);
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border-bottom:1px solid var(--b);
-  display:flex;align-items:center;
-  padding:0 6px 0 14px;gap:8px;
+/* ── TOPBAR — glass morphism subtle ── */
+.topbar{
+  background:var(--glass);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border-s);
+  padding:0 24px;
+  height:54px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  z-index:100;
+  box-shadow:var(--shadow-sm);
 }
-.brand{flex:1;min-width:0}
-.brand-title{
-  font-size:14px;font-weight:700;letter-spacing:-.025em;
-  color:var(--t);line-height:1;
-}
-.brand-sub{font-size:10px;color:var(--t3);margin-top:1px;letter-spacing:.01em}
-.topbar-date{
-  font-size:10px;color:var(--t3);
-  font-family:'JetBrains Mono',monospace;white-space:nowrap;
-}
-.icon-btn{
-  width:34px;height:34px;border-radius:8px;border:none;
-  background:var(--s2);color:var(--t2);
+.brand{display:flex;align-items:center;gap:10px}
+.brand-logo{
+  width:28px;height:28px;border-radius:7px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .15s;flex-shrink:0;border:1px solid var(--b);
+  box-shadow:0 2px 8px rgba(13,148,136,.35);
 }
-.icon-btn:active{background:var(--s3);transform:scale(.92)}
-.icon-btn .material-icons{font-size:18px}
-.src-dots{display:flex;gap:5px;align-items:center}
-.src-dot{
-  width:5px;height:5px;border-radius:50%;
-  background:var(--t3);transition:all .3s;
-}
-.src-dot.ok{background:var(--c-ok);box-shadow:0 0 6px rgba(52,211,153,.45)}
-.src-dot.err{background:var(--c-err)}
-.src-dot.loading{background:var(--c-new);animation:blink .9s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.brand-logo i{color:#fff;font-size:14px}
+.brand-name{font-size:13px;font-weight:600;letter-spacing:-.02em;color:var(--text)}
+.brand-sep{width:1px;height:16px;background:var(--border-s)}
+.brand-sub{font-size:11px;color:var(--text3);font-weight:400}
+.dot{display:none} /* replaced by logo */
+.sub{display:none}
+.tr{display:flex;align-items:center;gap:8px}
+.datebadge{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:-.01em}
 
-/* ══════════════════════════════════════════════════
-   KPI STRIP — glass morphism, minimal
-══════════════════════════════════════════════════ */
-.kpi-strip{
-  position:fixed;top:var(--nav);left:0;right:0;z-index:89;
-  display:grid;grid-template-columns:repeat(4,1fr);
-  gap:1px;background:var(--b);
-  border-bottom:1px solid var(--b);
+/* file/action buttons */
+.filebtn{
+  font-size:11px;font-weight:500;
+  color:var(--text2);
+  background:var(--surface2);
+  border:1px solid var(--border-s);
+  border-radius:var(--radius-sm);
+  padding:5px 10px;
+  cursor:pointer;
+  display:flex;align-items:center;gap:5px;
+  white-space:nowrap;
+  transition:all .15s;
+  font-family:'Inter',sans-serif;
 }
-.kpi-cell{
-  background:var(--s0);
-  padding:7px 8px 8px;text-align:center;
-  position:relative;overflow:hidden;
+.filebtn:hover{background:var(--surface3);border-color:var(--border-m);color:var(--text)}
+/* carga manual desactivada */
+
+/* source status badges */
+.src-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--text3);transition:background .3s}
+.src-dot.ok{background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.5)}
+.src-dot.err{background:#ef4444}
+.src-dot.loading{background:#f59e0b;animation:pulse-dot .8s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+
+/* ── KPI STATS ROW — bento-grid style ── */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:1px;
+  background:var(--border);
+  border-bottom:1px solid var(--border-s);
 }
-.kpi-cell::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,rgba(45,212,191,.03) 0%,transparent 60%);
+.sc{
+  background:var(--surface);
+  padding:14px 20px;
+  position:relative;
+  overflow:hidden;
+  transition:background .15s;
+}
+.sc::before{
+  content:'';
+  position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 60%,rgba(13,148,136,.03) 100%);
   pointer-events:none;
 }
-.kpi-n{
-  font-size:20px;font-weight:700;
-  letter-spacing:-.04em;color:var(--t);line-height:1;
+.sl{
+  font-size:10px;font-weight:600;
+  color:var(--text3);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin-bottom:5px;
+}
+.sv{
+  font-size:24px;font-weight:700;
+  letter-spacing:-.04em;
+  line-height:1;
+  color:var(--text);
   font-family:'Inter',sans-serif;
 }
-.kpi-l{
-  font-size:8px;text-transform:uppercase;letter-spacing:.09em;
-  color:var(--t3);margin-top:3px;font-weight:600;
-}
+.ss{font-size:10px;color:var(--text3);margin-top:4px;font-weight:400}
 
-/* ══════════════════════════════════════════════════
-   VIEW TABS — pill-style, refined
-══════════════════════════════════════════════════ */
-.view-tabs{
-  position:fixed;
-  top:calc(var(--nav) + 38px);
-  left:0;right:0;z-index:88;
-  display:flex;gap:0;
-  background:var(--s0);
-  border-bottom:1px solid var(--b);
-  padding:0 4px;
-}
-.vtab{
-  flex:1;
-  padding:8px 4px 9px;
-  font-size:9px;font-weight:700;
-  color:var(--t3);
-  border:none;background:none;cursor:pointer;
-  border-bottom:2px solid transparent;
-  transition:all .18s;letter-spacing:.05em;
-  text-transform:uppercase;
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-}
-.vtab .material-icons{font-size:17px;transition:color .18s}
-.vtab.active{color:var(--acc)}
-.vtab.active .material-icons{color:var(--acc)}
-.vtab.active{border-bottom-color:var(--acc)}
+/* ── MAIN ── */
+.main{padding:22px 24px 56px}
 
-/* ══════════════════════════════════════════════════
-   SCROLL AREA
-══════════════════════════════════════════════════ */
-.scroll-area{
-  padding-top:calc(var(--nav) + 38px + 36px + 2px);
-  padding-bottom:calc(var(--tab) + var(--safe-b) + 20px);
-  min-height:100dvh;
+/* ── MONTH NAV ── */
+.mnav{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.mtitle{
+  font-size:16px;font-weight:600;
+  min-width:138px;
+  letter-spacing:-.02em;
+  color:var(--text);
 }
-
-/* ══════════════════════════════════════════════════
-   MONTH NAV
-══════════════════════════════════════════════════ */
-.month-nav{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:14px 14px 8px;
-}
-.month-title{
-  font-size:17px;font-weight:700;letter-spacing:-.03em;
-  color:var(--t);
-}
-.mnav-btns{display:flex;gap:5px;align-items:center}
-.mnav-btn{
-  width:30px;height:30px;border-radius:var(--rs);
-  border:1px solid var(--b);
-  background:var(--s1);color:var(--t2);
+.nbtn{
+  width:28px;height:28px;
+  border:1px solid var(--border-s);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  color:var(--text2);
+  cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:all .15s;
+  font-size:13px;
+  transition:all .15s;
+  box-shadow:var(--shadow-sm);
 }
-.mnav-btn:active{background:var(--s2);transform:scale(.9)}
-.mnav-btn .material-icons{font-size:16px}
-.today-chip{
-  font-size:9px;font-weight:700;height:26px;
-  border-radius:5px;padding:0 10px;
-  border:1px solid rgba(45,212,191,.3);
-  color:var(--acc);background:var(--accl);
-  cursor:pointer;letter-spacing:.06em;text-transform:uppercase;
+.nbtn:hover{background:var(--surface2);border-color:var(--border-m);color:var(--text)}
+.tbtn{font-size:10px;font-weight:600;width:auto;padding:0 10px;height:28px;
+  color:var(--accent);border-color:var(--accent-l);background:var(--accent-mid)}
+.tbtn:hover{background:var(--accent-l);color:var(--accent-2)}
+
+/* ── CALENDAR TABLE ── */
+.calwrap{
+  background:var(--surface);
+  border:1px solid var(--border-s);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:var(--shadow-md);
+}
+.calscroll{overflow-x:auto}
+.caltable{border-collapse:collapse}
+
+/* sticky label cols */
+.clth{
+  width:var(--col-label);min-width:var(--col-label);
+  background:var(--surface);
+  border-right:1px solid var(--border-s);
+  position:sticky;left:0;z-index:11;
+  padding:0 14px;height:var(--header-h);vertical-align:middle;
+}
+.cmth{
+  width:var(--col-maint);min-width:var(--col-maint);
+  background:var(--surface);
+  border-right:1px solid var(--border-s);
+  position:sticky;left:var(--col-label);z-index:11;
+  padding:0 10px;height:var(--header-h);vertical-align:middle;text-align:left;
+}
+.cltd{
+  background:var(--surface);
+  border-right:1px solid var(--border-s);
+  padding:7px 14px;
+  position:sticky;left:0;z-index:9;
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
+}
+.cmtd{
+  background:var(--surface);
+  border-right:1px solid var(--border-s);
+  padding:7px 10px;
+  position:sticky;left:var(--col-label);z-index:9;
+  border-bottom:1px solid var(--border);
+  vertical-align:top;
+  min-width:var(--col-maint);
+}
+
+/* day headers */
+.dayth{
+  width:var(--day-w);min-width:var(--day-w);
+  height:var(--header-h);
+  text-align:center;vertical-align:bottom;
+  padding-bottom:7px;
+  border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border-s);
+  font-size:9px;font-weight:500;
+  color:var(--text3);
+  line-height:1.2;
+  background:var(--surface);
+  transition:background .12s;
+}
+.dayth .dn{
+  display:block;font-size:12px;font-weight:600;
+  color:var(--text2);line-height:1;margin-bottom:2px;
+  font-family:'JetBrains Mono',monospace;
+}
+.dayth.tcol{background:var(--accent-mid)!important}
+.dayth.tcol .dn{color:var(--accent)}
+.dayth.wk{background:var(--surface2)}
+
+/* vehicle rows */
+.vrow{border-bottom:1px solid var(--border);transition:background .1s}
+.vrow:last-child{border-bottom:none}
+.vrow:hover .cltd,.vrow:hover .cmtd{background:var(--surface2)}
+
+/* vehicle name — weight-hierarchy: 600 heading */
+.vname{
+  font-size:11px;font-weight:600;
+  color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  display:block;
+  letter-spacing:-.01em;
+}
+
+/* plate tag — JetBrains Mono for codes/IDs */
+.vplate{font-size:10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
+.plate-tag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;
+  letter-spacing:.06em;
+  color:var(--c-booked);
+  background:var(--cl-booked);
+  border:1px solid rgba(30,64,175,.2);
+  border-radius:4px;
+  padding:1px 7px;
+  display:inline-block;
+}
+@media(prefers-color-scheme:dark){
+  .plate-tag{color:var(--c-booked);background:var(--cl-booked);border-color:rgba(96,165,250,.2)}
+}
+.plate-loc{font-size:10px;font-weight:500}
+
+/* telem row */
+.vtelrow{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+.vti{font-size:9px;color:var(--text3);display:inline-flex;align-items:center;gap:2px;font-weight:400}
+.fbar-track{
+  display:inline-block;width:32px;height:3px;
+  background:var(--border-s);border-radius:2px;overflow:hidden;vertical-align:middle;
+}
+.fbar-fill{display:block;height:100%;border-radius:2px;transition:width .4s ease}
+
+/* ── TRANSFER ALERT ── */
+.vrow-alert .dcell{background:rgba(251,191,36,.05)!important}
+.vrow-alert .dcell.wk{background:rgba(251,191,36,.09)!important}
+.vrow-alert .cltd,.vrow-alert .cmtd{
+  border-left:3px solid #f59e0b!important;
+  background:rgba(251,191,36,.03)!important;
+}
+.transfer-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:9px;font-weight:600;letter-spacing:.01em;
+  color:#92400e;
+  background:linear-gradient(135deg,#fef9c3,#fef3c7);
+  border:1px solid rgba(245,158,11,.4);
+  border-radius:5px;
+  padding:2px 7px;
+  margin-top:3px;margin-bottom:2px;
+  animation:pulse-badge 2.2s ease-in-out infinite;
+  box-shadow:0 1px 4px rgba(245,158,11,.15);
+}
+@media(prefers-color-scheme:dark){
+  .transfer-badge{color:#fbbf24;background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3)}
+  .vrow-alert .dcell{background:rgba(251,191,36,.05)!important}
+}
+@keyframes pulse-badge{0%,100%{opacity:1;box-shadow:0 1px 4px rgba(245,158,11,.15)}50%{opacity:.7;box-shadow:0 1px 8px rgba(245,158,11,.30)}}
+.transfer-detail{display:block;font-size:9px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── MAINTENANCE COLUMN ── */
+.maint-alert{
+  display:flex;align-items:flex-start;gap:6px;
+  background:linear-gradient(135deg,#fff1f0,#fee2e2);
+  border:1px solid rgba(185,28,28,.2);
+  border-radius:var(--radius-sm);
+  padding:5px 8px;cursor:pointer;
+  transition:all .15s;
+  box-shadow:0 1px 3px rgba(185,28,28,.08);
+}
+.maint-alert:hover{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:rgba(185,28,28,.35)}
+@media(prefers-color-scheme:dark){
+  .maint-alert{background:rgba(185,28,28,.12);border-color:rgba(248,113,113,.2)}
+  .maint-alert:hover{background:rgba(185,28,28,.20)}
+}
+.maint-alert-icon{font-size:13px;color:var(--c-error);flex-shrink:0;margin-top:1px}
+.maint-alert-text{font-size:9px;line-height:1.45}
+.maint-alert-title{font-weight:700;color:var(--c-error);display:block;letter-spacing:.01em}
+.maint-alert-km{color:var(--text2);display:block;margin-top:1px}
+.maint-ok{font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.maint-last{font-size:9px;color:var(--text3);margin-top:3px;display:block}
+
+.maint-register-btn{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;font-weight:600;
+  color:var(--accent);
+  background:var(--accent-mid);
+  border:1px solid rgba(13,148,136,.25);
+  border-radius:4px;padding:2px 7px;
+  cursor:pointer;margin-top:4px;
+  transition:all .15s;font-family:'Inter',sans-serif;
+}
+.maint-register-btn:hover{background:var(--accent-l);border-color:var(--accent)}
+.maint-hist-btn{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;color:var(--text3);
+  background:none;border:none;cursor:pointer;
+  padding:2px 0;font-family:'Inter',sans-serif;margin-top:2px;
+}
+.maint-hist-btn:hover{color:var(--text2)}
+
+/* ── MODAL — elevated glass ── */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.5);
+  backdrop-filter:blur(4px);
+  z-index:1000;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.modal{
+  background:var(--surface);
+  border:1px solid var(--border-s);
+  border-radius:var(--radius-lg);
+  width:100%;max-width:390px;
+  overflow:hidden;
+  box-shadow:var(--shadow-lg);
+}
+.modal-head{padding:18px 20px 13px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
+.modal-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.modal-body{padding:15px 20px}
+.form-row{margin-bottom:13px}
+.form-label{font-size:11px;font-weight:500;color:var(--text2);display:block;margin-bottom:4px}
+.form-input{
+  width:100%;
+  background:var(--surface2);
+  border:1px solid var(--border-s);
+  border-radius:var(--radius-sm);
+  padding:8px 11px;
+  font-size:12px;color:var(--text);
+  font-family:'Inter',sans-serif;
+  outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-mid)}
+.modal-foot{padding:11px 20px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
+.btn-cancel{
+  font-size:12px;font-weight:500;
+  color:var(--text2);
+  background:var(--surface2);
+  border:1px solid var(--border-s);
+  border-radius:var(--radius-sm);
+  padding:7px 16px;cursor:pointer;
+  font-family:'Inter',sans-serif;
   transition:all .15s;
 }
-.today-chip:active{background:rgba(45,212,191,.2)}
+.btn-cancel:hover{background:var(--surface3);color:var(--text)}
+.btn-save{
+  font-size:12px;font-weight:600;
+  color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  border:none;
+  border-radius:var(--radius-sm);
+  padding:7px 16px;cursor:pointer;
+  font-family:'Inter',sans-serif;
+  box-shadow:0 2px 8px rgba(13,148,136,.3);
+  transition:all .15s;
+}
+.btn-save:hover{box-shadow:0 4px 14px rgba(13,148,136,.4);transform:translateY(-1px)}
 
-/* ══════════════════════════════════════════════════
-   MONTH GRID — refined cells
-══════════════════════════════════════════════════ */
-.month-wrap{padding:0 10px 10px}
-.dow-row{
-  display:grid;grid-template-columns:repeat(7,1fr);
-  gap:2px;margin-bottom:3px;
+/* history list */
+.hist-list{max-height:190px;overflow-y:auto;margin-top:8px}
+.hist-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid var(--border);
 }
-.dow-lbl{
-  text-align:center;font-size:8px;font-weight:700;
-  color:var(--t3);text-transform:uppercase;letter-spacing:.07em;padding:3px 0;
-}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-day{
-  background:var(--s1);border-radius:var(--rs);
-  min-height:54px;padding:5px 4px 3px;
-  position:relative;overflow:hidden;cursor:pointer;
-  transition:all .15s;border:1px solid transparent;
-}
-.cal-day:active{background:var(--s2);transform:scale(.96)}
-.cal-day.other{opacity:.22}
-.cal-day.today{
-  border-color:var(--acc);
-  background:var(--accl);
-  box-shadow:inset 0 0 0 1px rgba(45,212,191,.15);
-}
-.cal-day.today .day-num{color:var(--acc);font-weight:800}
-.cal-day.weekend{background:rgba(255,255,255,.018)}
-.day-num{
-  font-size:11px;font-weight:600;color:var(--t2);
-  font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:3px;
-}
-.day-pips{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}
-.pip{
-  width:4px;height:4px;border-radius:50%;flex-shrink:0;
-  box-shadow:0 0 4px currentColor;
-}
-.day-more{
-  position:absolute;bottom:3px;right:4px;
-  font-size:7px;color:var(--t3);font-weight:600;letter-spacing:.03em;
-}
+.hist-item:last-child{border-bottom:none}
+.hist-date{font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.hist-note{font-size:10px;color:var(--text2);margin-top:1px}
+.hist-del{font-size:10px;color:var(--text3);background:none;border:none;cursor:pointer;padding:2px 5px;font-family:inherit;border-radius:3px}
+.hist-del:hover{color:var(--c-error);background:var(--cl-error)}
+.hist-empty{font-size:11px;color:var(--text3);padding:14px 0;text-align:center}
 
-/* ══════════════════════════════════════════════════
-   WEEK VIEW — fine grid
-══════════════════════════════════════════════════ */
-.week-wrap{padding:0 10px 10px}
-.week-head{
-  display:grid;grid-template-columns:28px repeat(7,1fr);gap:2px;margin-bottom:2px;
+/* ── DAY CELLS ── */
+.dcell{
+  width:var(--day-w);height:var(--cell-h);
+  border-right:1px solid var(--border);
+  position:relative;vertical-align:middle;
+  padding:0;cursor:default;
+  transition:background .1s;
 }
-.wh-col{
-  text-align:center;padding:5px 2px;
-  border-radius:var(--rs);background:var(--s1);
-  border:1px solid var(--b);
-}
-.wh-dow{
-  font-size:7px;font-weight:700;color:var(--t3);
-  text-transform:uppercase;letter-spacing:.06em;
-}
-.wh-num{
-  font-size:15px;font-weight:700;color:var(--t2);
-  font-family:'JetBrains Mono',monospace;line-height:1;margin-top:2px;
-}
-.wh-col.today{background:var(--accl);border-color:rgba(45,212,191,.2)}
-.wh-col.today .wh-num{color:var(--acc)}
-.week-body{display:grid;grid-template-columns:28px repeat(7,1fr);gap:2px}
-.h-lbl{
-  font-size:7px;color:var(--t3);
-  font-family:'JetBrains Mono',monospace;
-  text-align:right;padding-right:3px;
-  display:flex;align-items:flex-start;
-  padding-top:3px;height:48px;letter-spacing:-.01em;
-}
-.w-slot{
-  height:48px;background:var(--s1);
-  border-radius:3px;position:relative;overflow:hidden;
-  border:1px solid transparent;
-}
-.w-slot.today-col{
-  background:rgba(45,212,191,.04);
-  border-color:rgba(45,212,191,.08);
-}
-.w-event{
-  position:absolute;left:1px;right:1px;top:1px;
-  border-radius:3px;padding:2px 4px;
-  font-size:8px;font-weight:600;line-height:1.3;
-  overflow:hidden;cursor:pointer;
-  transition:filter .12s;
-}
-.w-event:active{filter:brightness(.82)}
+.dcell.wk{background:var(--surface2)}
+.dcell.tcol{background:var(--accent-mid)}
 
-/* ══════════════════════════════════════════════════
-   DAY VIEW — fine vehicle cards
-══════════════════════════════════════════════════ */
-.day-wrap{padding:0 10px 10px}
-.veh-card{
-  background:var(--s1);
-  border-radius:var(--r);
-  border:1px solid var(--b);
-  overflow:hidden;margin-bottom:7px;
-  transition:border-color .15s;
-}
-.veh-card:has(.res-row:hover){border-color:var(--bs)}
-.veh-head{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 12px 9px;
-  border-bottom:1px solid var(--b);
-  background:linear-gradient(to right,rgba(45,212,191,.025),transparent);
-}
-.veh-model{
-  font-size:12px;font-weight:600;letter-spacing:-.015em;
-  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  color:var(--t);
-}
-.plate-chip{
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px;font-weight:700;letter-spacing:.07em;
-  color:var(--c-blu);background:var(--cl-blu);
-  border-radius:4px;padding:2px 7px;white-space:nowrap;
-  border:1px solid rgba(96,165,250,.15);
-}
-.fuel-row{display:flex;align-items:center;gap:5px;flex-shrink:0}
-.fbar{
-  width:24px;height:2px;
-  background:var(--s4);border-radius:1px;overflow:hidden;
-}
-.fbar-f{height:100%;border-radius:1px;transition:width .4s ease}
-.fuel-txt{
-  font-size:9px;color:var(--t3);
-  font-family:'JetBrains Mono',monospace;letter-spacing:-.01em;
-}
-.veh-body{padding:6px 10px 8px}
-.res-row{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 8px;border-radius:var(--rs);
-  cursor:pointer;transition:background .12s;
-  margin-bottom:3px;
-}
-.res-row:last-child{margin-bottom:0}
-.res-row:active{background:var(--s3)}
-.res-stripe{
-  width:2px;align-self:stretch;border-radius:1px;
-  flex-shrink:0;min-height:28px;opacity:.8;
-}
-.res-info{flex:1;min-width:0}
-.res-name{
-  font-size:12px;font-weight:500;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  color:var(--t);letter-spacing:-.01em;
-}
-.res-dates{
-  font-size:9px;color:var(--t3);margin-top:2px;
-  font-family:'JetBrains Mono',monospace;letter-spacing:-.01em;
-}
-.status-chip{
-  font-size:8px;font-weight:700;border-radius:4px;
-  padding:2px 6px;white-space:nowrap;flex-shrink:0;
-  text-transform:uppercase;letter-spacing:.05em;
-}
-.cta-btn{
-  width:28px;height:28px;border-radius:7px;
-  background:var(--s2);border:1px solid var(--b);
-  color:var(--t3);display:flex;align-items:center;
-  justify-content:center;cursor:pointer;flex-shrink:0;
-  transition:all .12s;
-}
-.cta-btn .material-icons{font-size:15px}
-.cta-btn:active{background:var(--s3);color:var(--acc)}
-.no-res{
-  font-size:11px;color:var(--t3);
-  padding:10px 0;text-align:center;letter-spacing:.01em;
-}
-
-/* ══════════════════════════════════════════════════
-   BADGES — fine pill style
-══════════════════════════════════════════════════ */
-.badge-row{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;align-items:center}
-.badge{
-  display:inline-flex;align-items:center;gap:2px;
-  font-size:7px;font-weight:700;border-radius:3px;
-  padding:2px 5px;text-transform:uppercase;letter-spacing:.06em;
-}
-.badge-maint{
-  background:var(--cl-err);color:var(--c-err);
-  border:1px solid rgba(248,113,113,.2);
-  animation:pulse-badge 2.5s infinite;
-}
-.badge-transfer{
-  background:rgba(245,158,11,.10);color:var(--c-new);
-  border:1px solid rgba(245,158,11,.2);
-  animation:pulse-badge 2.5s infinite;
-}
-@keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.5}}
-
-/* ══════════════════════════════════════════════════
-   FLEET LIST — linear-style rows
-══════════════════════════════════════════════════ */
-.fleet-wrap{padding:0 10px 10px}
-.fl-item{
-  background:var(--s1);border-radius:var(--r);
-  border:1px solid var(--b);
-  display:flex;align-items:center;gap:12px;
-  padding:11px 13px;margin-bottom:5px;
-  cursor:pointer;transition:all .15s;
-}
-.fl-item:active{background:var(--s2);transform:scale(.99)}
-.fl-avatar{
-  width:34px;height:34px;border-radius:8px;
-  background:var(--s3);border:1px solid var(--b);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-.fl-avatar .material-icons{font-size:17px;color:var(--t3)}
-.fl-info{flex:1;min-width:0}
-.fl-model{
-  font-size:12px;font-weight:600;letter-spacing:-.015em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t);
-}
-.fl-sub{
-  font-size:9px;color:var(--t3);margin-top:3px;
-  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+/* ── RESERVATION BARS ── */
+.bar{
+  position:absolute;top:50%;transform:translateY(-50%);
+  height:17px;
+  display:flex;align-items:center;
+  overflow:hidden;z-index:2;
+  font-size:8px;font-weight:600;
+  white-space:nowrap;padding:0 5px;
+  cursor:pointer;
+  transition:filter .12s,transform .1s;
   letter-spacing:.01em;
 }
-.fl-status{
-  font-size:8px;font-weight:700;border-radius:4px;
-  padding:2px 7px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;
+.bar:hover{filter:brightness(.9);transform:translateY(-50%) scaleY(1.08)}
+.bar.bs{border-radius:5px 0 0 5px;left:3px;right:0}
+.bar.be{border-radius:0 5px 5px 0;left:0;right:3px}
+.bar.bso{border-radius:5px;left:3px;right:3px}
+.bar.bm{left:0;right:0;border-radius:0}
+.bc{background:var(--cl-current);color:var(--c-current);border-left:2.5px solid var(--c-current)}
+.bn{background:var(--cl-new);color:var(--c-new);border-left:2.5px solid var(--c-new)}
+.bf{background:var(--cl-future);color:var(--c-future);border-left:2.5px solid var(--c-future)}
+.bs2{background:var(--cl-service);color:var(--c-service);border-left:2.5px solid var(--c-service)}
+
+/* ── LEGEND ── */
+.legend{
+  display:flex;gap:18px;flex-wrap:wrap;
+  margin-top:16px;padding-top:16px;
+  border-top:1px solid var(--border);
+  align-items:center;
+}
+.li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);font-weight:400}
+.lsw{width:18px;height:4px;border-radius:2px}
+
+/* ── TOOLTIP ── */
+.tip{
+  position:fixed;
+  background:var(--surface);
+  color:var(--text);
+  font-size:11px;
+  padding:10px 13px;
+  border-radius:var(--radius-sm);
+  pointer-events:none;z-index:9999;
+  display:none;
+  line-height:1.7;max-width:230px;
+  border:1px solid var(--border-s);
+  box-shadow:var(--shadow-lg);
 }
 
-/* ══════════════════════════════════════════════════
-   BOTTOM NAV — glass, minimal
-══════════════════════════════════════════════════ */
-.bottom-nav{
-  position:fixed;bottom:0;left:0;right:0;z-index:90;
-  height:calc(var(--tab) + var(--safe-b));
-  background:rgba(10,10,11,.92);
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border-top:1px solid var(--b);
-  display:flex;align-items:flex-start;padding-top:5px;
-}
-.nav-item{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
-  font-size:8px;font-weight:700;color:var(--t3);
-  border:none;background:none;cursor:pointer;padding:5px 4px;
-  text-transform:uppercase;letter-spacing:.06em;transition:color .18s;
-}
-.nav-item .material-icons{font-size:20px;transition:color .18s}
-.nav-item.active{color:var(--t)}
-.nav-item.active .material-icons{color:var(--acc)}
+/* ── EMPTY STATE ── */
+.empty{padding:56px;text-align:center;color:var(--text3)}
+.empty i{font-size:32px;margin-bottom:12px;display:block;color:var(--border-m)}
+.empty p{font-size:12px;line-height:1.6}
 
-/* ══════════════════════════════════════════════════
-   FAB — refined
-══════════════════════════════════════════════════ */
-.fab{
-  position:fixed;right:16px;
-  bottom:calc(var(--tab) + var(--safe-b) + 12px);
-  z-index:95;
-  width:48px;height:48px;border-radius:14px;
-  background:var(--acc);color:var(--t-inv);border:none;
-  display:none;align-items:center;justify-content:center;
-  box-shadow:0 4px 20px rgba(45,212,191,.35), var(--acc-glow);
-  cursor:pointer;transition:transform .15s,box-shadow .15s;
-}
-.fab:active{transform:scale(.9);box-shadow:0 2px 8px rgba(45,212,191,.2)}
-.fab .material-icons{font-size:20px}
-.fab.show{display:flex}
+/* ── TIRE BADGES ── */
+.tire-badge-row{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:3px}
+.tire-mini{font-size:9px;font-weight:500;color:var(--c-booked);background:var(--cl-booked);
+  border-radius:3px;padding:1px 5px;display:inline-flex;align-items:center;gap:2px;
+  font-family:'JetBrains Mono',monospace}
 
-/* ══════════════════════════════════════════════════
-   BOTTOM SHEETS — ultra-refined
-══════════════════════════════════════════════════ */
-.sheet-overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.72);
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
-  z-index:200;display:none;flex-direction:column;justify-content:flex-end;
+/* ── FLEET MAP MODAL ── */
+.map-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  z-index:2500;display:none;align-items:center;justify-content:center;padding:16px}
+.map-overlay.open{display:flex}
+.map-modal{
+  background:var(--surface);
+  border:1px solid var(--border-s);
+  border-radius:var(--radius-lg);
+  width:100%;max-width:640px;
+  overflow:hidden;
+  box-shadow:var(--shadow-lg);
+  display:flex;
+  flex-direction:column;
+  max-height:90vh;
 }
-.sheet-overlay.open{display:flex}
-.sheet{
-  background:var(--s1);
-  border-radius:18px 18px 0 0;
-  border:1px solid var(--b);
-  border-bottom:none;
-  max-height:88dvh;overflow-y:auto;
-  padding-bottom:calc(24px + var(--safe-b));
-  animation:slideUp .2s cubic-bezier(.32,0,.67,0);
+.map-head{padding:14px 18px 10px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.map-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
+.map-sub{font-size:11px;color:var(--text2);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.map-close{background:none;border:none;cursor:pointer;color:var(--text3);
+  font-size:16px;padding:2px 6px;border-radius:4px;transition:color .12s}
+.map-close:hover{color:var(--text)}
+#fleetMapContainer{
+  height:400px;
+  min-height:280px;
+  width:100%;
+  display:block;
+  position:relative;
+  z-index:1;
+  flex:1;
 }
-@keyframes slideUp{from{transform:translateY(60%);opacity:.2}to{transform:translateY(0);opacity:1}}
-.drag-handle{
-  width:32px;height:3px;border-radius:2px;
-  background:var(--s4);margin:10px auto 0;
-}
-.sheet-title{
-  font-size:16px;font-weight:700;letter-spacing:-.025em;color:var(--t);
-}
-.sheet-sub{
-  font-size:10px;color:var(--t3);margin-top:3px;
-  font-family:'JetBrains Mono',monospace;letter-spacing:.01em;
-}
-.sheet-head{
-  padding:14px 18px 10px;
-  border-bottom:1px solid var(--b);
-  background:linear-gradient(to bottom,rgba(45,212,191,.03),transparent);
-}
-.sheet-body{padding:10px 18px 4px}
-.detail-row{
-  display:flex;justify-content:space-between;align-items:flex-start;
-  padding:9px 0;border-bottom:1px solid var(--b);gap:12px;
-}
-.detail-row:last-child{border-bottom:none}
-.detail-lbl{
-  font-size:11px;color:var(--t3);font-weight:500;
-  white-space:nowrap;flex-shrink:0;
-}
-.detail-val{
-  font-size:12px;font-weight:600;text-align:right;
-  color:var(--t);min-width:0;word-break:break-word;
-}
-.detail-val.mono{
-  font-family:'JetBrains Mono',monospace;
-  font-size:11px;letter-spacing:-.01em;
-}
-.sheet-actions{
-  padding:8px 18px 0;display:flex;flex-direction:column;gap:7px;
-}
-.sheet-btn{
-  width:100%;padding:13px;border:none;
-  border-radius:var(--r);
-  font-size:14px;font-weight:700;
-  font-family:'Inter',sans-serif;
-  cursor:pointer;display:flex;align-items:center;
-  justify-content:center;gap:8px;
-  letter-spacing:.005em;transition:all .15s;
-}
-.sheet-btn:active{transform:scale(.97)}
-.sheet-btn.primary{
-  background:linear-gradient(135deg,var(--acc),var(--acc2));
-  color:var(--t-inv);
-  box-shadow:0 3px 14px rgba(45,212,191,.25), var(--acc-glow);
-}
-.sheet-btn.primary:active{box-shadow:none}
-.sheet-btn.secondary{
-  background:var(--s2);color:var(--t2);
-  border:1px solid var(--b);
-}
-.sheet-btn .material-icons{font-size:17px}
+.map-foot{padding:8px 18px 12px;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.map-coords{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.map-btn-osm{font-size:11px;color:var(--accent);background:var(--accl,var(--accent-l));
+  border:1px solid var(--accent);border-radius:5px;padding:5px 10px;cursor:pointer;
+  font-family:inherit;transition:all .15s;text-decoration:none;display:inline-flex;
+  align-items:center;gap:4px}
+.map-btn-osm:hover{background:var(--accent);color:#fff}
 
-/* ══════════════════════════════════════════════════
-   CFG SHEET — fine settings UI
-══════════════════════════════════════════════════ */
-.cfg-lbl{
-  font-size:9px;font-weight:700;color:var(--t3);
-  text-transform:uppercase;letter-spacing:.09em;
-  display:block;margin:13px 0 5px;
+/* map pin button in vehicle cell */
+.map-pin-btn{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;font-weight:600;
+  color:var(--c-booked);background:var(--cl-booked);
+  border:1px solid rgba(96,165,250,.2);border-radius:4px;
+  padding:1px 6px;cursor:pointer;margin-left:2px;
+  transition:all .12s;font-family:inherit;
 }
-.cfg-input{
-  width:100%;background:var(--s2);
-  border:1px solid var(--b);border-radius:var(--rs);
-  padding:10px 12px;font-size:11px;color:var(--t);
-  font-family:'JetBrains Mono',monospace;
-  outline:none;transition:border-color .15s,box-shadow .15s;letter-spacing:.01em;
-}
-.cfg-input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(45,212,191,.12)}
-.gh-panel{
-  background:var(--s2);border:1px solid var(--b);
-  border-radius:var(--rs);padding:12px;margin-top:10px;display:none;
-}
-.save-btn{
-  width:100%;padding:13px;margin-top:16px;
-  background:linear-gradient(135deg,var(--acc),var(--acc2));
-  color:var(--t-inv);border:none;border-radius:var(--r);
-  font-size:14px;font-weight:700;font-family:'Inter',sans-serif;
-  cursor:pointer;letter-spacing:.01em;
-  box-shadow:0 3px 14px rgba(45,212,191,.25);transition:all .15s;
-}
-.save-btn:active{transform:scale(.97);box-shadow:none}
-.preset-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.preset-btn{
-  flex:1;padding:9px;background:var(--s2);color:var(--t2);
-  border:1px solid var(--b);border-radius:var(--rs);
-  font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;
-  display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;
-}
-.preset-btn:active{background:var(--s3)}
-/* ══════════════════════════════════════════════════
-   TIRE / ACCESSORY MODAL — mobile sheet
-══════════════════════════════════════════════════ */
-.tsheet-tabs{display:flex;border-bottom:1px solid var(--b);background:var(--s0)}
-.tsheet-tab{
-  flex:1;padding:10px 4px;font-size:10px;font-weight:700;
-  color:var(--t3);background:none;border:none;cursor:pointer;
-  border-bottom:2px solid transparent;transition:all .15s;
-  text-transform:uppercase;letter-spacing:.05em;
-  display:flex;align-items:center;justify-content:center;gap:4px;
-}
-.tsheet-tab .material-icons{font-size:14px}
-.tsheet-tab.active{color:var(--acc);border-bottom-color:var(--acc)}
-.tsheet-body{padding:12px 16px 6px;max-height:50vh;overflow-y:auto}
-.tsheet-vpicker{display:flex;flex-direction:column;gap:6px;padding-bottom:6px}
-.tsheet-vitem{
-  text-align:left;background:var(--s2);border:1px solid var(--b);
-  border-radius:var(--rs);padding:10px 13px;cursor:pointer;
-  font-family:'Inter',sans-serif;font-size:12px;color:var(--t);
-  transition:background .12s;display:flex;align-items:center;gap:8px;
-}
-.tsheet-vitem:active{background:var(--s3)}
-.tsheet-vitem .vplate{
-  font-family:'JetBrains Mono',monospace;font-weight:700;
-  color:var(--c-blu);font-size:11px;flex-shrink:0;
-}
-.tcard-m{
-  background:var(--s2);border:1px solid var(--b);border-radius:var(--rs);
-  padding:10px 12px;margin-bottom:8px;
-}
-.tcard-m-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-.tcard-m-badge{
-  font-size:9px;font-weight:700;background:var(--c-blu);color:#000;
-  border-radius:4px;padding:2px 7px;flex:1;
-}
-.tcard-m-del{background:none;border:none;color:var(--t3);cursor:pointer;padding:4px}
-.tcard-m-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
-.tcard-m-row.three{grid-template-columns:1fr 1fr 1fr}
-.tcard-m label{font-size:9px;color:var(--t3);display:block;margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-.tcard-m input,.tcard-m select{
-  width:100%;background:var(--s1);border:1px solid var(--b);border-radius:6px;
-  padding:7px 9px;font-size:11px;color:var(--t);font-family:'Inter',sans-serif;outline:none;
-}
-.tcard-m input:focus,.tcard-m select:focus{border-color:var(--acc)}
-.tadd-btn{
-  width:100%;padding:10px;background:var(--accl);color:var(--acc);
-  border:1px dashed var(--acc);border-radius:var(--rs);
-  font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
-  display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px;
-}
-.acc-row-m{display:flex;gap:6px;align-items:center;margin-bottom:6px}
-.acc-row-m select{flex:1.2}
-.acc-row-m input{flex:1.8}
-.acc-row-m button{
-  width:28px;height:28px;flex-shrink:0;background:var(--s1);border:1px solid var(--b);
-  border-radius:6px;color:var(--t3);display:flex;align-items:center;justify-content:center;
-}
-.tno-data{font-size:11px;color:var(--t3);text-align:center;padding:14px 0}
+.map-pin-btn:hover{background:var(--c-booked);color:#fff}
 
-/* ══════════════════════════════════════════════════
-   EMPTY STATE + UTILS + FINE DESIGN MARKER
-══════════════════════════════════════════════════ */
-/* fine-design v2.0 */
-.empty{padding:52px 24px;text-align:center;color:var(--t3)}
-.empty .material-icons{
-  font-size:38px;margin-bottom:12px;display:block;
-  color:var(--s4);
-}
-.empty p{font-size:12px;line-height:1.7;color:var(--t3)}
+/* ── TIRES / ACCESSORIES MODAL ── */
+.tmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);
+  z-index:2000;display:flex;align-items:flex-start;justify-content:center;
+  padding:16px;overflow-y:auto}
+.tmodal{background:var(--surface);border:1px solid var(--border-s);border-radius:14px;
+  width:100%;max-width:660px;box-shadow:0 12px 40px rgba(0,0,0,.35);margin:auto}
+.tmodal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between}
+.tmodal-title{font-size:14px;font-weight:700;letter-spacing:-.02em}
+.tmodal-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.tmodal-close{background:none;border:none;cursor:pointer;color:var(--text3);
+  font-size:16px;font-family:inherit;padding:2px 6px;border-radius:4px;transition:color .12s}
+.tmodal-close:hover{color:var(--text);background:var(--surface2)}
+.tmodal-tabs{display:flex;border-bottom:1px solid var(--border)}
+.tmodal-tab{flex:1;padding:10px 12px;font-size:11px;font-weight:600;background:none;border:none;
+  cursor:pointer;font-family:'Inter',sans-serif;color:var(--text2);
+  border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;
+  justify-content:center;gap:5px}
+.tmodal-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tmodal-body{padding:14px 16px 8px}
+.tmodal-foot{padding:10px 16px 14px;display:flex;gap:8px;justify-content:flex-end;
+  border-top:1px solid var(--border);margin-top:4px}
 
-/* Divider */
-.divider{height:1px;background:var(--b);margin:8px 0}
+/* tire cards grid */
+.tire-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;margin-bottom:10px}
+.tire-card{background:var(--surface2);border:1px solid var(--border-s);border-radius:8px;padding:10px 12px}
+.tire-card-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.tire-pos-badge{font-size:10px;font-weight:600;background:var(--c-booked);color:#fff;
+  border-radius:4px;padding:2px 8px;white-space:nowrap}
+.tire-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.tire-row.three{grid-template-columns:1fr 1fr 1fr}
+.tire-field label{font-size:10px;font-weight:500;color:var(--text2);display:block;margin-bottom:3px}
+.tire-field input,.tire-field select{width:100%;background:var(--surface);border:1px solid var(--border-s);
+  border-radius:4px;padding:5px 7px;font-size:11px;color:var(--text);font-family:'Inter',sans-serif;outline:none;
+  transition:border-color .15s}
+.tire-field input:focus,.tire-field select:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-mid)}
+.tire-remove{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;
+  margin-left:auto;font-family:inherit;padding:2px 5px;border-radius:3px;transition:all .12s}
+.tire-remove:hover{color:var(--c-error);background:var(--cl-error)}
+.add-tire-btn{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;
+  color:var(--accent);background:var(--accent-mid);border:1px dashed var(--accent);
+  border-radius:6px;padding:7px 14px;cursor:pointer;margin-bottom:8px;
+  font-family:'Inter',sans-serif;transition:all .12s}
+.add-tire-btn:hover{background:var(--accent-l)}
 
-/* Section header */
-.section-hd{
-  font-size:10px;font-weight:700;color:var(--t3);
-  text-transform:uppercase;letter-spacing:.09em;
-  padding:10px 14px 4px;
+/* accessories table */
+.acc-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
+.acc-table th{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.05em;border-bottom:1px solid var(--border-s);padding:5px 8px;text-align:left}
+.acc-table td{padding:4px 4px;border-bottom:1px solid var(--border)}
+.acc-table td input,.acc-table td select{width:100%;background:var(--surface2);
+  border:1px solid var(--border-s);border-radius:4px;padding:5px 7px;font-size:11px;
+  color:var(--text);font-family:'Inter',sans-serif;outline:none}
+.acc-table td input:focus,.acc-table td select:focus{border-color:var(--accent)}
+.acc-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;
+  font-family:inherit;padding:2px 5px;border-radius:3px;transition:all .12s}
+.acc-del:hover{color:var(--c-error);background:var(--cl-error)}
+.add-acc-btn{font-size:11px;font-weight:500;color:var(--accent);background:var(--accent-mid);
+  border:1px dashed var(--accent);border-radius:5px;padding:5px 12px;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:all .12s}
+.add-acc-btn:hover{background:var(--accent-l)}
+.no-data-row{font-size:11px;color:var(--text3);padding:10px 8px;text-align:center}
+
+/* ── QUICK TIRE GRID ── */
+.qtire-table{width:100%;border-collapse:collapse;font-size:11px}
+.qtire-table th{font-size:9px;font-weight:700;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.06em;border-bottom:1px solid var(--border-s);padding:5px 6px;text-align:left;background:var(--surface2)}
+.qtire-table td{padding:3px 4px;border-bottom:1px solid var(--border)}
+.qtire-table td:first-child{color:var(--text2);font-size:10px;font-weight:600;white-space:nowrap;padding-left:6px;min-width:110px}
+.qtire-pos-badge{display:inline-block;background:var(--c-booked);color:#fff;font-size:9px;font-weight:600;border-radius:3px;padding:1px 5px}
+.qtire-input{width:100%;background:var(--surface);border:1px solid var(--border-s);border-radius:4px;
+  padding:4px 6px;font-size:11px;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
+.qtire-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-mid)}
+.qtire-input.wide{min-width:80px}
+/* ═════════════════════════════════════════════════════════════
+   ── FILTRO DE MAQUETACIÓN MÓVIL ESTRICTO (ANTI-SUPERPOSICIÓN) ──
+   ═════════════════════════════════════════════════════════════ */
+@media screen {
+  /* Forzamos el comportamiento celular sin importar el tamaño del monitor */
+  body {
+    font-size: 11.5px !important;
+    padding: 8px !important;
+    background: #f8fafc !important;
+  }
+
+  /* El calendario de 31 días se convierte en una lista con scroll táctil */
+  .calendar-grid, #calendarContainer, .timeline-wrapper {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 4px;
+  }
+
+  /* Forzamos que los modales y el checklist se adapten al ancho del teléfono */
+  .modal-content, #maintModal, #maintModal form {
+    width: 96vw !important;
+    max-height: 90vh !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    display: block !important; /* Rompe el flex que causa superposiciones */
+  }
+
+  /* Tu contenedor legítimo #histList se aísla abajo con scroll independiente */
+  #histList {
+    display: block !important;
+    clear: both !important;
+    margin-top: 15px !important;
+    max-height: 140px !important;
+    overflow-y: auto !important;
+    border-top: 2px solid #cbd5e1 !important;
+    padding-top: 8px !important;
+  }
+
+  /* Optimizamos los botones para zonas de toque de dedos (Touch Targets) */
+  button, .btn, .btn-del-maint, input[type="button"] {
+    min-height: 44px !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    width: 100% !important; /* Los botones del formulario se estiran a bloque completo */
+    margin-bottom: 6px !important;
+  }
 }
+
+
+
 </style>
 </head>
 <body>
 
-<!-- TOP APP BAR -->
-<div class="top-app-bar">
+<div class="topbar">
   <div class="brand">
-    <div class="brand-title">Fleet Calendar</div>
-    <div class="brand-sub">Retiro CERRITO CAR</div>
+    <div class="brand-logo"><i class="ti ti-car"></i></div>
+    <span class="brand-name">Fleet Calendar</span>
+    <div class="brand-sep"></div>
+    <span class="brand-sub">Retiro CERRITO CAR</span>
   </div>
-  <span class="topbar-date" id="todayLbl"></span>
-  <div class="src-dots">
-    <span class="src-dot" id="dot-pque" title="Parque"></span>
-    <span class="src-dot" id="dot-res"  title="Reservas"></span>
-    <span class="src-dot" id="dot-tel"  title="Telemática"></span>
+  <div class="tr">
+    <span class="datebadge" id="todayLbl"></span>
+
+
+    <button class="filebtn" id="btnTireOpen" onclick="openTireModal(null,null)" style="color:var(--accent)">
+      <i class="ti ti-tire" style="font-size:13px"></i> Neumáticos
+    </button>
   </div>
-  <button class="icon-btn" onclick="openTireSheet(null)" title="Neumáticos y accesorios"><span class="material-icons">tire_repair</span></button>
-  <button class="icon-btn" onclick="openCfg()"><span class="material-icons">settings</span></button>
 </div>
 
-<!-- KPI STRIP -->
-<div class="kpi-strip">
-  <div class="kpi-cell"><div class="kpi-n" id="st-total">—</div><div class="kpi-l">Flota</div></div>
-  <div class="kpi-cell"><div class="kpi-n" id="st-active" style="color:#69F0AE">—</div><div class="kpi-l">Activas</div></div>
-  <div class="kpi-cell"><div class="kpi-n" id="st-avail">—</div><div class="kpi-l">Libres</div></div>
-  <div class="kpi-cell"><div class="kpi-n" id="st-maint">—</div><div class="kpi-l">Service</div></div>
+<div class="stats">
+  <div class="sc"><div class="sl">Flota total</div><div class="sv" id="stT">—</div><div class="ss">vehículos</div></div>
+  <div class="sc"><div class="sl">En curso hoy</div><div class="sv" id="stC">—</div><div class="ss">reservas activas</div></div>
+  <div class="sc"><div class="sl">Próximas</div><div class="sv" id="stN">—</div><div class="ss">reservas nuevas</div></div>
+  <div class="sc"><div class="sl">Disponibles</div><div class="sv" id="stA">—</div><div class="ss">sin reserva</div></div>
+  <div class="sc"><div class="sl">Alertas mant.</div><div class="sv" id="stM" style="color:#dc2626">—</div><div class="ss">próx. service</div></div>
 </div>
 
-<!-- VIEW TABS -->
-<div class="view-tabs">
-  <button class="vtab active" id="vtab-month"  onclick="switchView('month')">
-    <span class="material-icons">calendar_month</span>Mes
-  </button>
-  <button class="vtab" id="vtab-week"  onclick="switchView('week')">
-    <span class="material-icons">view_week</span>Semana
-  </button>
-  <button class="vtab" id="vtab-day"   onclick="switchView('day')">
-    <span class="material-icons">today</span>Día
-  </button>
-  <button class="vtab" id="vtab-list"  onclick="switchView('list')">
-    <span class="material-icons">directions_car</span>Flota
-  </button>
-</div>
-
-<!-- SCROLL AREA -->
-<div class="scroll-area" id="scrollArea">
-  <div class="month-nav" id="monthNav">
-    <span class="month-title" id="monthTitle"></span>
-    <div class="mnav-btns">
-      <button class="today-chip" onclick="goToday()">HOY</button>
-      <button class="mnav-btn" onclick="navigate(-1)"><span class="material-icons">chevron_left</span></button>
-      <button class="mnav-btn" onclick="navigate(1)"><span class="material-icons">chevron_right</span></button>
-    </div>
-  </div>
-  <div id="viewContent"></div>
-</div>
-
-<!-- FAB -->
-<button class="fab" id="fabBtn" onclick="fabAction()">
-  <span class="material-icons">assignment</span>
-</button>
-
-<!-- BOTTOM NAV -->
-<div class="bottom-nav">
-  <button class="nav-item active" id="nav-cal"   onclick="navSelect('cal');switchView('month')">
-    <span class="material-icons">calendar_today</span>Calendario
-  </button>
-  <button class="nav-item" id="nav-fleet" onclick="navSelect('fleet');switchView('list')">
-    <span class="material-icons">directions_car</span>Flota
-  </button>
-  <button class="nav-item" id="nav-day"   onclick="navSelect('day');switchView('day')">
-    <span class="material-icons">today</span>Hoy
-  </button>
-  <button class="nav-item" id="nav-cfg"   onclick="openCfg()">
-    <span class="material-icons">settings</span>Config
-  </button>
-</div>
-
-<!-- RESERVATION DETAIL SHEET -->
-<div class="sheet-overlay" id="resSheet" onclick="closeSheet('resSheet')">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="drag-handle"></div>
-    <div class="sheet-head">
-      <div class="sheet-title" id="sh-title">—</div>
-      <div class="sheet-sub"  id="sh-sub">—</div>
-    </div>
-    <div class="sheet-body" id="sh-body"></div>
-    <div class="sheet-actions">
-      <button class="sheet-btn primary" id="sh-checklist" onclick="launchChecklistFromSheet()">
-        <span class="material-icons">assignment_turned_in</span> Abrir Check List
-      </button>
-      <button class="sheet-btn secondary" onclick="closeSheet('resSheet')">
-        <span class="material-icons">close</span> Cerrar
-      </button>
+<div class="main">
+  <div id="app">
+    <div class="empty">
+      <i class="ti ti-files"></i>
+      <p>Cargando datos desde el servidor…</p>
     </div>
   </div>
 </div>
 
-<!-- DAY SHEET (from month tap) -->
-<div class="sheet-overlay" id="daySheet" onclick="closeSheet('daySheet')">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="drag-handle"></div>
-    <div class="sheet-head">
-      <div class="sheet-title" id="ds-title">—</div>
-    </div>
-    <div class="sheet-body" id="ds-body"></div>
-    <div class="sheet-actions">
-      <button class="sheet-btn secondary" onclick="switchView('day');closeSheet('daySheet')">
-        <span class="material-icons">today</span> Ver vista de día
-      </button>
-      <button class="sheet-btn secondary" onclick="closeSheet('daySheet')">
-        <span class="material-icons">close</span> Cerrar
-      </button>
-    </div>
-  </div>
-</div>
+<div class="tip" id="tip"></div>
 
-<!-- CONFIG SHEET -->
-<!-- ── TIRE / ACCESSORY SHEET ── -->
-<div class="sheet-overlay" id="tireSheet" onclick="closeSheet('tireSheet')">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="drag-handle"></div>
-    <div class="sheet-head">
-      <div class="sheet-title" id="tireSheetTitle">Neumáticos y accesorios</div>
-      <div class="sheet-sub" id="tireSheetSub"></div>
+<!-- Modal registro mantenimiento -->
+<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Registrar mantenimiento</div>
+      <div class="modal-sub" id="modalSub"></div>
     </div>
-    <div class="tsheet-tabs" id="tireSheetTabs" style="display:none">
-      <button class="tsheet-tab active" id="ttab-tires" onclick="switchTireSheetTab('tires')">
-        <span class="material-icons">tire_repair</span>Neumáticos
-      </button>
-      <button class="tsheet-tab" id="ttab-acc" onclick="switchTireSheetTab('acc')">
-        <span class="material-icons">build</span>Accesorios
-      </button>
-    </div>
-    <div class="tsheet-body" id="tireSheetBody"></div>
-    <div class="sheet-actions" id="tireSheetActions" style="display:none">
-      <button class="sheet-btn primary" onclick="saveTireSheetData()">
-        <span class="material-icons">save</span> Guardar
-      </button>
-      <button class="sheet-btn secondary" onclick="closeSheet('tireSheet')">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<div class="sheet-overlay" id="cfgSheet" onclick="closeSheet('cfgSheet')">
-  <div class="sheet" onclick="event.stopPropagation()">
-    <div class="drag-handle"></div>
-    <div class="sheet-head">
-      <div class="sheet-title">Fuentes de datos</div>
-      <div class="sheet-sub">Rutas de archivos .txt en el servidor o GitHub</div>
-    </div>
-    <div style="padding:4px 18px 0">
-      <span class="cfg-lbl"><span class="src-dot" id="cdot-pque" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Parque</span>
-      <input class="cfg-input" id="cfgPque" placeholder="./Pque.txt">
-      <span class="cfg-lbl"><span class="src-dot" id="cdot-res" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Reservas</span>
-      <input class="cfg-input" id="cfgRes"  placeholder="./scraped_data.txt">
-      <span class="cfg-lbl"><span class="src-dot" id="cdot-tel" style="display:inline-block;vertical-align:middle;margin-right:4px"></span>Telemática</span>
-      <input class="cfg-input" id="cfgTel"  placeholder="./TelemGts_data.txt">
-
-      <div class="gh-panel" id="ghPanel">
-        <span class="cfg-lbl" style="margin-top:0">URL base del repo GitHub</span>
-        <input class="cfg-input" id="ghUrl" placeholder="https://github.com/usuario/repo/tree/main/datos/">
-        <button onclick="applyGithubUrl()" style="margin-top:8px;padding:8px 14px;background:var(--accl);color:var(--acc);border:1px solid var(--acc);border-radius:var(--rs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Aplicar</button>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">Tipo de servicio</label>
+        <select class="form-input" id="maintType">
+          <option value="">— Seleccioná el tipo de servicio —</option>
+        </select>
       </div>
-
-      <span class="cfg-lbl">Webhook n8n — sync neumáticos</span>
-      <input class="cfg-input" id="cfgN8nWebhook" placeholder="https://tu-n8n.com/webhook/fleet-tires-sync">
-      <div id="cst-n8n" style="font-size:10px;margin-top:3px;min-height:14px"></div>
-      <div class="preset-btns">
-        <button class="preset-btn" onclick="toggleGhPanel()">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-          GitHub
-        </button>
-        <button class="preset-btn" onclick="resetLocal()">
-          <span class="material-icons" style="font-size:14px">storage</span> Local
-        </button>
+      <div class="form-row">
+        <label class="form-label">Intervalo (km del próximo service)</label>
+        <select class="form-input" id="maintInterval">
+          <option value="">— Se completa automáticamente —</option>
+        </select>
+        <div id="maintIntervalHint" style="font-size:10px;color:var(--text3);margin-top:4px"></div>
       </div>
-
-      <button class="save-btn" onclick="saveCfgAndReload()">
-        <span class="material-icons" style="font-size:16px;vertical-align:middle;margin-right:4px">save</span>
-        Guardar y recargar
-      </button>
-
-
+      <div class="form-row">
+        <label class="form-label">Fecha de realización</label>
+        <input type="date" class="form-input" id="maintDate">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Observaciones (opcional)</label>
+        <input type="text" class="form-input" id="maintNote" placeholder="ej: cambio de aceite, filtros…">
+      </div>
+      <div id="histSection">
+        <div style="font-size:11px;font-weight:500;margin-bottom:4px;color:var(--text2)">Historial de mantenimientos</div>
+        <div class="hist-list" id="histList"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveMaint()">Guardar</button>
     </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════════
-// GLOBALS
-// ═══════════════════════════════════════════════════════════════════════
-const TODAY = new Date(); TODAY.setHours(0,0,0,0);
-let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth(), vDay = TODAY.getDate();
-let curView = 'month';
-let ST = {pque:null, res:null, tel:null};
-let sheetRes = null;
+// ── STORAGE KEY PREFIX ──
+// ── MAINTENANCE SERVICE TYPES ──────────────────────────────────────────────
+const MAINT_TYPES = [
+  { label: 'Cambio de aceite y filtro',              km: 10000  },
+  { label: 'Rotación de neumáticos',                 km: 10000  },
+  { label: 'Filtro de aire',                         km: 20000  },
+  { label: 'Filtro de combustible',                  km: 20000  },
+  { label: 'Bujías',                                 km: 20000  },
+  { label: 'Líquido de frenos',                      km: 30000  },
+  { label: 'Correa / cadena de distribución',        km: 40000  },
+  { label: 'Amortiguadores',                         km: 50000  },
+  { label: 'Revisión general (service mayor)',       km: 0      },
+  { label: 'Revisión de frenos',                     km: 0      },
+  { label: 'Alineación y balanceo',                  km: 0      },
+  { label: 'Otro (ver observaciones)',               km: 0      },
+];
+
+const STORE_PREFIX = 'fleetcal_maint_';
+
+/* ── SYNC TOAST ── */
+function showSyncToast(msg, isErr) {
+  let t = document.getElementById('syncToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'syncToast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+      'background:var(--surface);border:1px solid var(--border-s);border-radius:8px;' +
+      'padding:8px 16px;font-size:12px;font-weight:500;z-index:9999;' +
+      'box-shadow:var(--shadow-md);transition:opacity .3s;white-space:nowrap;';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.color   = isErr ? '#f87171' : 'var(--accent)';
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+}
 
 /* ── XSS PROTECTION ── */
 function esc(s){
@@ -879,39 +879,575 @@ function esc(s){
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DOW_L  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const DOW_S  = ['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
-
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 document.getElementById('todayLbl').textContent =
-  TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'short'});
+  TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
 
-// ═══════════════════════════════════════════════════════════════════════
-// PARSERS
-// ═══════════════════════════════════════════════════════════════════════
+let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth();
+let ST = {pque:null, res:null, tel:null};
+let modalPlate = null;
+
+// ── MAINTENANCE STORAGE (localStorage per plate) ──
+// ── MAINTENANCE STORAGE (Sincronizado Supabase PostgreSQL) ──
+
+// Modificamos a asíncrona para descargar los Services reales desde la nube
+// ── MAINTENANCE STORAGE (Sincronizado Supabase Antibugs) ──
+
+
+function getMaintHistory(plate) {
+  if (!plate) return [];
+  var p = plate.toUpperCase().trim();
+  
+  // 1. LEER INSTANTÁNEAMENTE DEL LOCALSTORAGE (Evita bloqueos de renderizado)
+  var localData = [];
+  try {
+    var raw = localStorage.getItem(STORE_PREFIX + p);
+    localData = raw ? JSON.parse(raw) : [];
+  } catch(e) { localData = []; }
+
+  // 2. DESCARGA SILENCIOSA EN SEGUNDO PLANO (Background Fetch)
+  if (!window._maintSyncing) window._maintSyncing = {};
+  if (!window._maintSyncing[p]) {
+    window._maintSyncing[p] = true;
+    
+    fetch(`${WORKER_URL}/data/maintenance?plate=${encodeURIComponent(p)}&_cb=${Date.now()}`, {
+      method: 'GET',
+      credentials: 'include'
+    })
+    .then(function(res) { 
+      if (res.ok) return res.json(); 
+      throw new Error();
+    })
+    .then(function(dbData) {
+      if (Array.isArray(dbData)) {
+        // Mapeamos los datos de Supabase asegurando las propiedades nativas que pide tu algoritmo
+        var mapeadoData = dbData.map(function(item) {
+          return {
+            id: item.id,
+            date: item.date,
+            tipo: item.tipo,
+            type: item.tipo,
+            intervalo: item.intervalo,
+            cleared_km: item.cleared_km,
+            note: item.notes || item.note || '',
+            notes: item.notes || item.note || '',
+            ts: item.ts || new Date(item.date).getTime(),
+            clearedMultiple: item.intervalo // Sincroniza con el clearedMultiple nativo
+          };
+        });
+
+        // Verificamos si la cantidad de registros cambió respecto a lo que había guardado localmente
+        var cambioDetectado = (localData.length !== mapeadoData.length);
+
+        // Guardamos los datos reales y definitivos en el LocalStorage
+        localStorage.setItem(STORE_PREFIX + p, JSON.stringify(mapeadoData));
+        
+        // ── ACTUALIZACIÓN REACTIVA DE ALERTAS ──
+        // Si hay datos nuevos viniendo de Supabase, obligamos al calendario a apagarse
+        if (cambioDetectado) {
+          console.log(`-> [Sync Maint] ¡Cambio detectado en Supabase para ${p}! Actualizando alertas visuales...`);
+          
+          // Redibujamos el modal si está abierto
+          if (typeof modalPlate !== "undefined" && modalPlate === p) {
+            renderHistList(p);
+          }
+          
+          // Forzamos el re-renderizado de todo el calendario para apagar las alarmas en el acto
+          if (typeof renderCal === 'function') {
+            renderCal();
+          }
+        }
+      }
+    })
+    .catch(function() { console.warn("-> Worker offline para mantenimiento. Usando datos locales."); })
+    .finally(function() { window._maintSyncing[p] = false; });
+  }
+
+  return localData; 
+}
+
+// Envía el nuevo service directo a Supabase (POST)
+async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, notes = "") {
+  if (!plate) return null;
+  var p = plate.toUpperCase().trim();
+  console.log("-> [Sync Maint] Subiendo nuevo registro a Supabase para: " + p);
+
+  try {
+    const res = await fetch(`${WORKER_URL}/data/maintenance`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plate:      p,
+        date:       date,
+        tipo:       tipo,
+        intervalo:  intervalo ? parseInt(intervalo, 10) : null,
+        cleared_km: parseInt(cleared_km, 10),
+        notes:      notes || null
+      })
+    });
+
+    const reply = await res.json();
+    if (res.ok && reply.status === 'ok') {
+      console.log("✓ Mantenimiento guardado de forma persistente en Supabase.");
+      
+      // Forzamos actualización inmediata del localStorage tras guardar
+      if (reply.data) {
+        var historico = getMaintHistory(p);
+        historico.push(reply.data);
+        localStorage.setItem(STORE_PREFIX + p, JSON.stringify(historico));
+      }
+      return reply.data;
+    }
+  } catch (error) {
+    console.error("Fallo de comunicación interna en mantenimiento:", error);
+  }
+  return null;
+}
+
+function getLastMaint(plate) {
+  var h = getMaintHistory(plate);
+  if (!h || !h.length) return null;
+  return h.sort(function(a, b) { return b.date.localeCompare(a.date); })[0];
+}
+
+
+// ── MAINTENANCE ALERT LOGIC ──
+// Alert when km is within 2000km of the next 10000 multiple.
+// Suppressed when the last history entry's clearedMultiple matches the current nextMultiple.
+function maintAlertInfo(kmStr, plate){
+  if(!kmStr || kmStr==='-') return null;
+  const km = parseInt(kmStr.replace(/[.,]/g,''));
+  if(isNaN(km)) return null;
+  const nextMultiple = Math.ceil((km+1)/10000)*10000;
+  const remaining = nextMultiple - km;
+  if(remaining <= 2000){
+    // check if a maintenance was already registered for this exact service interval
+    if(plate){
+      const history = getMaintHistory(plate);
+      const alreadyCleared = history.some(h => h.clearedMultiple === nextMultiple);
+      if(alreadyCleared) return null;
+    }
+    return { km, nextMultiple, remaining };
+  }
+  return null;
+}
+
+// ── MODAL ──
+window.openMaintModal = function(plate, modelName){
+  modalPlate = plate;
+  const tel      = ST.tel ? ST.tel[plate] : null;
+  const kmStr    = tel ? tel.km : null;
+  const alertInf = kmStr ? maintAlertInfo(kmStr, plate) : null;
+
+  document.getElementById('modalTitle').textContent = 'Mantenimiento · ' + plate;
+  document.getElementById('modalSub').textContent   = modelName + (tel ? ' · ' + tel.km + ' km actuales' : '');
+  document.getElementById('maintDate').value         = TODAY.toISOString().slice(0,10);
+  document.getElementById('maintNote').value         = '';
+
+  // ── Populate tipo select ──
+  const typeEl = document.getElementById('maintType');
+  typeEl.innerHTML = '<option value="">— Seleccioná el tipo de servicio —</option>';
+  MAINT_TYPES.forEach((t, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = t.label;
+    typeEl.appendChild(opt);
+  });
+  typeEl.value = '';
+  typeEl.onchange = function() { updateIntervalSelect(alertInf); };
+
+  // ── Populate interval select ──
+  updateIntervalSelect(alertInf);
+
+  renderHistList(plate);
+  document.getElementById('modalOverlay').style.display = 'flex';
+};
+
+function updateIntervalSelect(alertInf) {
+  const typeIdx  = document.getElementById('maintType').value;
+  const intEl    = document.getElementById('maintInterval');
+  const hintEl   = document.getElementById('maintIntervalHint');
+  intEl.innerHTML = '';
+
+  // Build km multiples list around current alert or generic
+  const baseKm   = alertInf ? alertInf.km : 0;
+  const nextMult = alertInf ? alertInf.nextMultiple : null;
+
+  // Generate options: multiples of 10000 from 10000 to 200000
+  const multiples = [];
+  for(let k = 10000; k <= 200000; k += 10000) multiples.push(k);
+
+  multiples.forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    const isNext = k === nextMult;
+    opt.textContent = k.toLocaleString('es-AR') + ' km' + (isNext ? ' ⚠️ próximo service' : '');
+    if(isNext) opt.style.fontWeight = '700';
+    intEl.appendChild(opt);
+  });
+
+  // Auto-select: if type has a suggested km, use it; else use nextMultiple
+  if(typeIdx !== '' && MAINT_TYPES[typeIdx] && MAINT_TYPES[typeIdx].km > 0) {
+    intEl.value = MAINT_TYPES[typeIdx].km;
+  } else if(nextMult) {
+    intEl.value = nextMult;
+  } else {
+    intEl.value = 10000;
+  }
+
+  // Hint
+  if(nextMult) {
+    const remaining = alertInf ? alertInf.remaining : '—';
+    hintEl.textContent = 'Próximo service del vehículo: ' + nextMult.toLocaleString('es-AR') + ' km (faltan ' + remaining.toLocaleString('es-AR') + ' km)';
+    hintEl.style.color = 'var(--c-err,#f87171)';
+  } else {
+    hintEl.textContent = 'Seleccioná el múltiplo de km al que corresponde este service';
+    hintEl.style.color = 'var(--text3)';
+  }
+}
+
+window.closeModal = function(e){
+  if(e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').style.display = 'none';
+  modalPlate = null;
+};
+
+/* ── REFRESCO DE TELEMETRÍA EN VIVO CON MODAL ABIERTO ── */
+/* ── REFRESCO DE TELEMETRÍA EN VIVO CON MODAL ABIERTO (ORDENADO Y BLINDADO) ── */
+function refreshOpenMapTelemetry() {
+  // 1. Control de seguridad inicial obligatorio
+  const overlay = document.getElementById('mapOverlay');
+  if (!_mapInitialized || !_leafletMap || !overlay || !overlay.classList.contains('open')) {
+    return; 
+  }
+
+  // 2. Recuperamos la patente activa leyendo el encabezado del modal original
+  const titleText = document.getElementById('mapTitle').textContent || "";
+  const plate = titleText.replace('Ubicación · ', '').trim();
+
+  // Validamos que existan datos cargados en el estado global para esa patente
+  if (!plate || !ST.tel || !ST.tel[plate]) return;
+
+  const tel = ST.tel[plate];
+  const veh = ST.pque ? ST.pque.find(v => v.plate === plate) : null;
+  if (!tel.coords || tel.coords === '-') return;
+
+  // 3. Parseo numérico seguro de coordenadas extraídas de TelemGts_data.txt
+  const parts = tel.coords.split(',').map(s => parseFloat(s.trim()));
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return;
+  
+  const lat = parts[0];
+  const lng = parts[1];
+
+  console.log(`-> [Telemetría CDN] Actualizando en vivo: ${plate} a las coordenadas ${lat}, ${lng}`);
+
+  // 4. CÁLCULO DINÁMICO DE CAPACIDAD DE COMBUSTIBLE (Hilux/SW4 = 80L, Etios/Yaris = 45L)
+  const maxFuel = (veh && (veh.model.includes('Hilux') || veh.model.includes('SW4'))) ? '80' : '45';
+
+  // 5. ACTUALIZACIÓN DINÁMICA DE TEXTOS EN EL ENCABEZADO DEL MODAL
+  document.getElementById('mapSub').textContent =
+    (veh ? veh.model + ' · ' : '') + tel.km + ' km · ' + tel.loc;
+    
+  // Inyectamos el combustible real formateado ej: 71L / 80L
+  document.getElementById('mapCoords').textContent = 
+    `Combustible: ${tel.fuel}L / ${maxFuel}L | Coordenadas: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+  // 6. CONTROL Y REDIBUJADO DEL MARCADOR EN EL MAPA DE LEAFLET
+  _leafletMap.setView([lat, lng], _leafletMap.getZoom());
+
+  // Si existía un marcador previo, lo removemos para evitar duplicación visual
+  if (_leafletMarker) { 
+    _leafletMap.removeLayer(_leafletMarker); 
+    _leafletMarker = null; 
+  }
+
+  // Asignamos colores según el estado de la locación
+  const color = tel.loc === 'BOOKED' ? '#1e40af' :
+                tel.loc === 'PERU'   ? '#d97706' : '#166534';
+                
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="
+      background:${color};color:#fff;border-radius:50% 50% 50% 0;
+      width:32px;height:32px;
+      transform:rotate(-45deg);
+      border:2px solid #fff;
+      box-shadow:0 2px 8px rgba(0,0,0,.35);
+      display:flex;align-items:center;justify-content:center;
+    "><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -36]
+  });
+
+  // Re-inyectamos el pin actualizado con el botón de gestión de cubiertas integrado
+  _leafletMarker = L.marker([lat, lng], { icon })
+    .addTo(_leafletMap)
+    .bindPopup(`
+      <div style="font-family:system-ui;min-width:160px;padding:2px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px">${esc(plate)}</div>
+        <div style="font-size:11px;color:#555;margin-bottom:6px">${veh ? esc(veh.model) : ''}</div>
+        <div style="font-size:11px"><b>Km:</b> ${esc(tel.km)}</div>
+        <div style="font-size:11px"><b>Combustible:</b> ${esc(tel.fuel)} L / ${maxFuel}L</div>
+        <div style="font-size:11px"><b>Estado:</b>
+          <span style="font-weight:600;color:${color}">${esc(tel.loc)}</span>
+        </div>
+        <div style="font-size:10px;color:#999;margin-top:4px;border-bottom:1px solid #eee;padding-bottom:6px;">
+          ${lat.toFixed(5)}, ${lng.toFixed(5)}
+        </div>
+        <button onclick="openTireModal('${esc(plate)}')" 
+                style="margin-top:8px;width:100%;background:#2d2d35;color:#f5f5f7;border:1px solid #3a3a43;padding:5px;border-radius:5px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:500;"
+                onmouseover="this.style.background='#3a3a43'" onmouseout="this.style.background='#2d2d35'">
+          <i class="ti ti-tire" style="font-size:11px;"></i> Gestionar Cubiertas
+        </button>
+      </div>
+    `, { maxWidth: 220 });
+
+  _leafletMap.invalidateSize({ animate: false });
+}
+
+  
+// show tire button in topbar after data loads
+
+// allow close button
+document.querySelectorAll && document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') document.getElementById('modalOverlay').style.display='none';
+});
+
+window.saveMaint = async function(){
+  if(!modalPlate) return;
+  const date = document.getElementById('maintDate').value;
+  const note = document.getElementById('maintNote').value.trim();
+  if(!date){ alert('Seleccioná una fecha'); return; }
+  const typeIdx  = document.getElementById('maintType').value;
+  const typeLabel= typeIdx !== '' ? MAINT_TYPES[typeIdx].label : '';
+  const intervalVal = parseInt(document.getElementById('maintInterval').value) || null;
+
+  // clearedMultiple: use the selected interval km value
+  const tel = ST.tel ? ST.tel[modalPlate] : null;
+  const alertInfo = tel ? maintAlertInfo(tel.km, modalPlate) : null;
+  
+  const clearedMultiple = intervalVal || (alertInfo ? alertInfo.nextMultiple : null);
+  const clearedKmReal = tel && tel.km ? parseInt(tel.km, 10) : (clearedMultiple || 0);
+
+  console.log("-> [Sync Maint] Solicitando registro persistente para: " + modalPlate);
+
+  // 1. Enviamos el registro asíncrono a Supabase vía el Cloudflare Worker
+  const nuevoRegistro = await pushNewMaintToRemote(
+    modalPlate, 
+    date, 
+    typeLabel, 
+    clearedMultiple, 
+    clearedKmReal, 
+    note
+  );
+
+  if (nuevoRegistro) {
+    var p = modalPlate.toUpperCase().trim();
+    var rawHist = localStorage.getItem(STORE_PREFIX + p);
+    var historicoLocal = rawHist ? JSON.parse(rawHist) : [];
+    
+    // 2. ── INYECCIÓN MAESTRA REDUNDANTE DE ALARMAS ──
+    // Tu validador nativo necesita leer las llaves numéricas exactas
+    // Guardamos la estructura dual para que rompa el loop y apague la alerta
+    var nuevoItemHistorial = {
+      id: nuevoRegistro.id || "", // Vinculamos el UUID real devuelto por Supabase
+      date: date,
+      tipo: typeLabel,
+      type: typeLabel,
+      intervalo: clearedMultiple,
+      note: note,             
+      notes: note,            
+      cleared_km: clearedKmReal,
+      ts: Date.now(),
+      clearedMultiple: clearedMultiple
+    };
+
+    historicoLocal.push(nuevoItemHistorial);
+    
+    // Pisamos el LocalStorage de forma síncrona instantánea
+    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(historicoLocal));
+
+    // Si tu aplicación guarda el historial en un objeto de estado global en caliente, lo inyectamos:
+    if (typeof ST !== "undefined" && ST.maintHistory) {
+      ST.maintHistory[p] = historicoLocal;
+    }
+
+    // 3. ACTUALIZAR INTERFAZ Y APAGAR ALERTA EN EL ACTO
+    document.getElementById('maintNote').value = '';
+    
+    // Redibujamos la lista de historiales del modal actual
+    renderHistList(p);
+    
+    // Forzamos el re-renderizado del calendario general. Ahora sí se apagará la alerta.
+    if (typeof renderCal === 'function') {
+      renderCal();
+    }
+    
+    console.log("✓ Sincronización completada. Alerta visual de mantenimiento suprimida con éxito.");
+  }
+};
+
+
+
+
+// ── FUNCIÓN DE BORRADO ASÍNCRONA CORREGIDA (ANTI-CACHÉ TOTAL) ──
+window.deleteMaintEntry = async function(plate, ts, id) {
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+
+  if (!confirm("¿Deseas eliminar este registro de mantenimiento de Supabase de forma permanente?")) return;
+
+  // 1. FORZAMOS EL ENVÍO EXCLUSIVO VÍA POST (Esquiva el error 405 de raíz)
+  if (id) {
+    console.log("-> [Sync Maint] Eliminando registro por canal POST alternativo para ID: " + id);
+    try {
+      // Agregamos un token dinámico en la URL para obligar al navegador a descartar la caché de red
+      const res = await fetch(`${WORKER_URL}/data/maintenance?action=delete&id=${encodeURIComponent(id)}&_cb=${Date.now()}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id: id, plate: p })
+      });
+
+      if (res.ok) {
+        console.log("✓ Registro purgado con éxito de Supabase PostgreSQL.");
+      } else {
+        console.warn("-> El Worker rechazó la baja por POST. Verifica el código de maintenance.js.");
+      }
+    } catch (err) {
+      console.error("Fallo de red en borrado:", err);
+    }
+  }
+
+  // 2. Limpieza inmediata del LocalStorage local
+  let history = getMaintHistory(p);
+  history = history.filter(function(h) {
+    if (id && h.id) return h.id !== id;
+    return h.ts !== ts;
+  });
+
+  try {
+    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history));
+  } catch(e) {}
+
+  // 3. Refrescar listados del calendario en vivo
+  renderHistList(p);
+  if (typeof renderCal === 'function') {
+    renderCal();
+  }
+  
+  alert("Registro eliminado.");
+};
+
+function renderHistList(plate) {
+  if (!plate) return;
+  var p = plate.toUpperCase().trim();
+  
+  // 1. ANCLAJE AL CONTENEDOR NATIVO DE TU INTERFAZ
+  var contenedorHistorial = document.getElementById('histList');
+  
+  if (!contenedorHistorial) {
+    console.error("-> [Critical Error] No se encontró el div nativo #histList en el HTML.");
+    return;
+  }
+
+  // Estilos de aislamiento y diseño para el contenedor superior
+  contenedorHistorial.style.marginTop = '15px';
+  contenedorHistorial.style.border = '1px solid #e2e8f0';
+  contenedorHistorial.style.borderRadius = '8px';
+  contenedorHistorial.style.overflow = 'hidden';
+  contenedorHistorial.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+  contenedorHistorial.style.background = '#ffffff';
+
+  // 2. Extraer el array del caché síncrono instantáneo
+  var history = getMaintHistory(p);
+
+  if (!history || history.length === 0) {
+    contenedorHistorial.innerHTML = '<div style="text-align:center; color:#64748b; font-style:italic; padding:20px; font-size:12px; font-family:\'Inter\', sans-serif; background:#f8fafc;">Sin registros de mantenimiento cargados en Supabase.</div>';
+    return;
+  }
+
+  // 3. Renderizamos las filas adaptadas a la paleta institucional (Gris azulado corporativo)
+  var tablaHTML = 
+    '<div style="max-height:160px; overflow-y:auto; width:100%;">' +
+      '<table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family:\'Inter\', system-ui, sans-serif; table-layout:fixed;">' +
+        '<thead style="background:#1e293b; color:#ffffff; position:sticky; top:0; z-index:5;">' +
+          '<tr>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:22%;">Fecha</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:30%;">Tipo de Servicio</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:20%;">Kilómetros</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:20%;">Notas</th>' +
+            '<th style="padding:8px 10px; font-weight:600; font-size:10px; text-transform:uppercase; letter-spacing:0.5px; width:8%; text-align:center;">Acción</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>' +
+          history.map(function(h, index) {
+            var fecha = h.date || '-';
+            var tipo = h.tipo || h.type || 'Mantenimiento';
+            var km = h.cleared_km || h.intervalo || '-';
+            var notas = h.note || h.notes || '-';
+            
+            var tsParam = h.ts ? h.ts : 0;
+            var idParam = h.id ? h.id : '';
+            
+            // Fondo cebra alterno para una lectura impecable
+            var bgFila = (index % 2 === 0) ? '#ffffff' : '#f8fafc';
+
+            return '<tr style="background:' + bgFila + '; border-bottom:1px solid #e2e8f0;" onmouseover="this.style.background=\'#f1f5f9\'" onmouseout="this.style.background=\'' + bgFila + '\'">' +
+              '<td style="padding:8px 10px; color:#475569; font-weight:500;">' + fecha + '</td>' +
+              '<td style="padding:8px 10px; color:#1e293b;"><strong>' + tipo + '</strong></td>' +
+              '<td style="padding:8px 10px; color:#334155; font-family:monospace; font-size:11.5px;">' + (km !== '-' ? km.toLocaleString('es-AR') : '-') + ' km</td>' +
+              '<td style="padding:8px 10px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="' + notas + '">' + notas + '</td>' +
+              '<td style="text-align:center; padding:8px 10px;">' +
+                '<button onclick="window.deleteMaintEntry(\'' + p + '\', ' + tsParam + ', \'' + idParam + '\')" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:12px; padding:2px 4px; border-radius:4px; transition:all 0.2s;" onmouseover="this.style.color=\'#b91c1c\'" onmouseout="this.style.color=\'#ef4444\'" title="Eliminar del sistema Supabase">🗑️</button>' +
+              '</td>' +
+            '</tr>';
+          }).join('') +
+        '</tbody>' +
+      '</table>' +
+    '</div>';
+
+  // Volcamos todo el bloque limpio de forma directa adentro de tu contenedor legítimo
+  contenedorHistorial.innerHTML = tablaHTML;
+}
+
+
+
+  
+
+
+
+// ── PARSERS ──
 function parsePque(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
-    const cols=line.split('\t');
-    const main=cols[0].trim().split(/\s+/);
-    return {id:main[0], plate:main[main.length-1], model:main.slice(1,-1).join(' '),
-      bodyType:cols[1]?cols[1].trim():'', tankCap:cols[2]?parseInt(cols[2].trim())||0:0};
+    // split on tab first (new format has tabs separating extra cols)
+    const cols = line.split('\t');
+    const main = cols[0].trim().split(/\s+/);
+    const id = main[0];
+    const plate = main[main.length-1];
+    const model = main.slice(1,-1).join(' ');
+    const bodyType = cols[1] ? cols[1].trim() : '';
+    const tankCap = cols[2] ? parseInt(cols[2].trim()) || 0 : 0;
+    return {id, plate, model, bodyType, tankCap};
   });
 }
 function parseRes(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
-    const p=line.split('\t'); if(p.length<7) return null;
+    const p=line.split('\t');
+    if(p.length<7) return null;
     const [code,renter,vehicle,,,startS,endS,status]=p;
     const plate=vehicle.trim().split(' ').pop();
-    return {code:code.trim(), renter:renter.trim(), vehicle:vehicle.trim(), plate,
-      start:parseD(startS.trim()), end:parseD(endS.trim()),
-      startTime:fmtTime(startS.trim()), endTime:fmtTime(endS.trim()),
-      status:(status||'').trim()};
+    return {code:code.trim(),renter:renter.trim(),vehicle:vehicle.trim(),plate,
+      start:parseD(startS.trim()),end:parseD(endS.trim()),status:(status||'').trim()};
   }).filter(x=>x&&x.start&&x.end);
 }
 function parseTel(txt){
   const m={};
   txt.trim().split('\n').filter(l=>l.trim()).forEach(line=>{
-    const p=line.split('\t'); if(p.length<6) return;
+    const p=line.split('\t');
+    if(p.length<6) return;
     const plate=p[4].trim().split(' ').pop();
     m[plate]={id:p[0].trim(),coords:p[1].trim(),km:p[2].trim(),fuel:p[3].trim(),loc:p[5].trim()};
   });
@@ -925,195 +1461,72 @@ function parseD(str){
   h=parseInt(h); if(ap==='PM'&&h!==12) h+=12; if(ap==='AM'&&h===12) h=0;
   return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
 }
-function fmtTime(str){
-  const m=str.match(/(\d+):(\d+)\s+(AM|PM)/);
-  if(!m) return '';
-  let [,h,min,ap]=m; h=parseInt(h);
-  if(ap==='PM'&&h!==12) h+=12; if(ap==='AM'&&h===12) h=0;
-  return String(h).padStart(2,'0')+':'+min;
-}
-function fmtDate(d){
-  if(!d) return '—';
-  // handle both Date objects and ISO strings (from JSON serialization)
-  const dt = (d instanceof Date) ? d : new Date(d);
-  if(isNaN(dt.getTime())) return String(d);
-  return dt.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
-}
 
-// ═══════════════════════════════════════════════════════════════════════
-// FILE INPUTS
-// ═══════════════════════════════════════════════════════════════════════
 // ── CARGA MANUAL DESACTIVADA ── (solo autoload desde servidor/GitHub)
 
-// ═══════════════════════════════════════════════════════════════════════
-// AUTOLOAD / CONFIG
-// ═══════════════════════════════════════════════════════════════════════
-const CFG_KEY='fleetcal_datasrc';
-const CFG_DEF={pque:'./Pque.txt',res:'./scraped_data.txt',tel:'./TelemGts_data.txt',
-  tiresAcc:'./fleet_tires_acc.json'
+
+// ── AUTOLOAD & CONFIG ────────────────────────────────────────────────────────
+const CFG_KEY = 'fleetcal_datasrc';
+const CFG_DEFAULTS = {
+  pque:     'Pque.txt',
+  res:      'scraped_data.txt',
+  tel:      'TelemGts_data.txt',
+  tiresAcc: 'fleet_tires_acc.json',
 };
-function getCfg(){try{return Object.assign({},CFG_DEF,JSON.parse(localStorage.getItem(CFG_KEY)||'{}'));}catch(e){return{...CFG_DEF};}}
-function setCfg(c){try{localStorage.setItem(CFG_KEY,JSON.stringify(c));}catch(e){}}
-function setDot(k,s){
-  ['dot-'+k,'cdot-'+k].forEach(id=>{const el=document.getElementById(id);if(el)el.className='src-dot '+s;});
-}
+
+// URL del Cloudflare Worker — cambiar a la URL de producción al deployar
+// Desarrollo local:  http://localhost:8787
+// Producción:        https://fleet-worker.TU-USUARIO.workers.dev
 const WORKER_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
   ? 'http://localhost:8787'
-  : 'https://fleet-worker.TU-USUARIO.workers.dev'; // ← REEMPLAZAR al deployar
+  : 'https://fleet.fleetpromt.workers.dev'; // ← REEMPLAZAR al deployar
+
+function getCfg(){
+  try{ return Object.assign({}, CFG_DEFAULTS, JSON.parse(localStorage.getItem(CFG_KEY)||'{}')); }
+  catch(e){ return Object.assign({}, CFG_DEFAULTS); }
+}
+function setCfg(cfg){ try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(e){} }
+
+function setDotStatus(key, status, label){
+  // update cfg modal dots if present
+  const el = document.getElementById('cdot-'+key);
+  if(el) el.className = 'src-dot ' + (status||'');
+}
 
 async function fetchTxt(fileName){
+  // Solicitar el archivo al Worker (autenticado via cookie HttpOnly)
   const r = await fetch(`${WORKER_URL}/data/txt?file=${encodeURIComponent(fileName)}`, {
-    credentials: 'include', cache: 'no-store',
+    credentials: 'include',   // envía la cookie fleet_sid automáticamente
+    cache:       'no-store',
   });
-  if (r.status === 401) { window.location.replace('./index.html'); return ''; }
+  if (r.status === 401) {
+    // Sesión expirada — redirigir al login
+    window.location.replace('./index.html');
+    return '';
+  }
   if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
   return r.text();
 }
 
-// ── dummy to consume old body ──
-
-async function autoloadFiles(){
-  const cfg=getCfg();
-  const KEYS=[
-    {key:'pque',path:CFG_DEF.pque,parser:parsePque},
-    {key:'res', path:cfg.res, parser:parseRes},
-    {key:'tel', path:cfg.tel, parser:parseTel},
-  ];
-  setDot('pque','loading'); setDot('res','loading'); setDot('tel','loading');
-  await Promise.all(KEYS.map(async ({key,path,parser})=>{
-    try{ST[key]=parser(await fetchTxt(path)); setDot(key,'ok');}
-    catch(e){setDot(key,'err'); console.warn('autoload',key,e.message);}
-  }));
-  await loadTiresAccFromRemote();
-  tryRender();
-}
-function openCfg(){
-  const cfg=getCfg();
-  document.getElementById('cfgPque').value=cfg.pque;
-  document.getElementById('cfgRes').value=cfg.res;
-  document.getElementById('cfgTel').value=cfg.tel;
-  const whEl=document.getElementById('cfgN8nWebhook');
-  if(whEl) whEl.value=cfg.n8nWebhook||'';
-  ['pque','res','tel'].forEach(k=>{
-    const s=document.getElementById('dot-'+k);
-    const d=document.getElementById('cdot-'+k);
-    if(s&&d) d.className=s.className;
-  });
-  document.getElementById('ghPanel').style.display='none';
-  openSheet('cfgSheet');
-}
-function saveCfgAndReload(){
-  const whEl=document.getElementById('cfgN8nWebhook');
-  setCfg({
-    pque:       document.getElementById('cfgPque').value.trim()||CFG_DEF.pque,
-    res:        document.getElementById('cfgRes').value.trim() ||CFG_DEF.res,
-    tel:        document.getElementById('cfgTel').value.trim() ||CFG_DEF.tel,
-    n8nWebhook: whEl?whEl.value.trim():'',
-  });
-  closeSheet('cfgSheet');
-  ST={pque:null,res:null,tel:null};
-  autoloadFiles();
-}
-function resetLocal(){
-  document.getElementById('cfgPque').value=CFG_DEF.pque;
-  document.getElementById('cfgRes').value=CFG_DEF.res;
-  document.getElementById('cfgTel').value=CFG_DEF.tel;
-  document.getElementById('ghPanel').style.display='none';
-}
-function toggleGhPanel(){
-  const p=document.getElementById('ghPanel');
-  p.style.display=p.style.display==='none'?'block':'none';
-  if(p.style.display==='block') document.getElementById('ghUrl').focus();
-}
-function applyGithubUrl(){
-  let base=document.getElementById('ghUrl').value.trim();
-  if(!base) return;
-  if(!base.endsWith('/')) base+='/';
-  base=base.replace('https://github.com/','https://raw.githubusercontent.com/').replace('/blob/','/').replace('/tree/','/');
-  document.getElementById('cfgPque').value=base+'Pque.txt';
-  document.getElementById('cfgRes').value =base+'scraped_data.txt';
-  document.getElementById('cfgTel').value =base+'TelemGts_data.txt';
-  document.getElementById('ghPanel').style.display='none';
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// EMBEDDED DATA
-// ═══════════════════════════════════════════════════════════════════════
-(function(){
-  ST.pque=parsePque(`18723 Toyota Corolla HV AT AI239SV\tSEDAN\t43
-10914 Toyota SW4 4x4 7A AT AG269JN\tSUV\t80
-11131 Toyota Etios SD AT AG350QD\tHATCHBACK\t45
-11182 Toyota ETIOS HB A/T AG350QF\tHATCHBACK\t45
-11181 Toyota ETIOS HB A/T AG350QE\tHATCHBACK\t45
-12469 Toyota Yaris HB AT AG500BY\tHATCHBACK\t42
-12684 Toyota Yaris HB AT AG708YK\tHATCHBACK\t42
-12685 Toyota Yaris HB AT AG708YJ\tHATCHBACK\t42
-12877 Toyota Corolla Cross HV AT AG765WS\tSUV2\t36
-13131 Toyota Hilux 4x4 DC AT AG838JY\tPICKUP\t80`);
-  ST.res=parseRes([
-    'yevw52d\tService\tToyota Corolla HV AT AG192XC\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent',
-    'l8mz66g\tNicolas Dominguez\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t12:00 PM  May 27, 2026\t11:00 AM  Jun 30, 2026\tCurrent',
-    'ymzn137\tTeresa Perkins\tToyota Yaris HB AT AG708YK\tRetiro\t--\t4:00 PM  May 29, 2026\t10:00 AM  Jun 16, 2026\tCurrent',
-    'lr181ez\tCUSTOMER SERVICE 21\tToyota Yaris HB AT AG500BY\tRetiro\t--\t4:45 PM  Jun 1, 2026\t6:00 PM  Jun 12, 2026\tCurrent',
-    'kvx36xo\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t9:00 AM  Jun 8, 2026\t9:00 AM  Jun 16, 2026\tCurrent',
-    'k33zx7m\tNicolas Mammone\tToyota Yaris HB AT AG708YJ\tRetiro\t--\t3:00 PM  Jun 8, 2026\t4:00 PM  Jun 13, 2026\tCurrent',
-    'lwq3dem\tSolange Molina\tToyota ETIOS HB A/T AG350QF\tRetiro\t--\t1:00 PM  Jun 12, 2026\t6:00 PM  Jun 16, 2026\tNew',
-    'lwq369e\tGustavo Maquince\tToyota ETIOS HB A/T AG350QE\tRetiro\t--\t6:00 PM  Jun 12, 2026\t6:00 PM  Jun 16, 2026\tNew',
-    'l8mj55g\tService\tToyota Yaris HB AT AG500BY\tRetiro\t--\t9:20 AM  Jun 15, 2026\t1:20 PM  Jun 19, 2026\tNew',
-    'kgdxj1q\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t2:00 PM  Jul 13, 2026\t2:00 PM  Jul 20, 2026\tNew',
-    'y7dozog\tMarcos Dormal\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t6:00 PM  Jul 17, 2026\t9:00 AM  Jul 27, 2026\tNew'
-  ].join('\n'));
-  ST.tel=parseTel([
-    '10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED',
-    '11131\t-34.61351, -58.373844\t73,106\t40\tToyota Etios SD AT AG350QD\tPERU',
-    '11182\t-34.613323, -58.374226\t57,335\t38\tToyota ETIOS HB A/T AG350QF\tPERU',
-    '11181\t-34.613499, -58.373867\t75,900\t40\tToyota ETIOS HB A/T AG350QE\tPERU',
-    '12469\t-34.9007, -57.955624\t60,642\t24\tToyota Yaris HB AT AG500BY\tBOOKED',
-    '12684\t-34.593182, -58.43074\t62,840\t19\tToyota Yaris HB AT AG708YK\tBOOKED',
-    '12685\t-32.695877, -63.442169\t57,514\t38\tToyota Yaris HB AT AG708YJ\tBOOKED',
-    '12877\t-34.597813, -58.380341\t32,284\t-\tToyota Corolla Cross HV AT AG765WS\tBOOKED'
-  ].join('\n'));
-  // ── AUTH CHECK ──────────────────────────────────────────────
-  (async () => {
-    try {
-      const r = await fetch(`${WORKER_URL}/auth/me`, { credentials: 'include' });
-      if (r.status === 401) { window.location.replace('./index.html'); return; }
-      const me = await r.json();
-      const el = document.querySelector('.brand-sub');
-      if (el) el.textContent = me.name;
-    } catch(e) { console.warn('Auth check failed:', e.message); }
-  })();
-  autoloadFiles();
-})();
-
-// ═══════════════════════════════════════════════════════════════════════
-// STORAGE HELPERS
-// ═══════════════════════════════════════════════════════════════════════
-const MAINT_KEY='fleetcal_maint_';
-const TIRE_KEY ='fleetcal_tires_';
-const ACC_KEY  ='fleetcal_acc_';
-function getMaintHistory(p){try{const r=localStorage.getItem(MAINT_KEY+p);return r?JSON.parse(r):[];}catch(e){return[];}}
-function getTireData(p)   {try{const r=localStorage.getItem(TIRE_KEY+p); return r?JSON.parse(r):[];}catch(e){return[];}}
-function getAccData(p)    {try{const r=localStorage.getItem(ACC_KEY+p);  return r?JSON.parse(r):[];}catch(e){return[];}}
-function saveTireDataStore(p,d){ try{ localStorage.setItem(TIRE_KEY+p, JSON.stringify(d)); }catch(e){} }
-function saveAccDataStore(p,d) { try{ localStorage.setItem(ACC_KEY+p,  JSON.stringify(d)); }catch(e){} }
-function getTireNumbers(p) { return getTireData(p).filter(t=>t.numero).map(t=>t.numero); }
-
 /* ── TIRE/ACC CROSS-DEVICE SYNC ── */
 async function loadTiresAccFromRemote() {
+  // Cargar neumáticos de todos los vehículos del parque desde Supabase vía Worker
   if (!ST.pque || !ST.pque.length) return;
   try {
     await Promise.all(ST.pque.map(async veh => {
       const r = await fetch(`${WORKER_URL}/data/tires?plate=${encodeURIComponent(veh.plate)}`, {
-        credentials: 'include', cache: 'no-store',
+        credentials: 'include',
+        cache: 'no-store',
       });
       if (!r.ok) return;
       const data = await r.json();
       if (data.tires)       saveTireDataStore(veh.plate, data.tires);
       if (data.accessories) saveAccDataStore(veh.plate,  data.accessories);
     }));
-    console.log('[sync] tires loaded from Supabase');
-  } catch(e) { console.warn('[sync] tires load failed —', e.message); }
+    console.log('[sync] tires+acc loaded from Supabase for', ST.pque.length, 'vehicles');
+  } catch(e) {
+    console.warn('[sync] tires load failed —', e.message);
+  }
 }
 
 function exportTiresAccJSON() {
@@ -1128,725 +1541,1245 @@ function exportTiresAccJSON() {
 }
 
 async function pushTiresAccToRemote() {
-  if (!tireSheetPlate) return false;
+  if (!tireModalPlate) return false;
   try {
     const r = await fetch(`${WORKER_URL}/data/tires`, {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        plate:       tireSheetPlate,
-        tires:       getTireData(tireSheetPlate),
-        accessories: getAccData(tireSheetPlate),
+      method:      'POST',
+      credentials: 'include',
+      headers:     { 'Content-Type': 'application/json' },
+      body:        JSON.stringify({
+        plate:       tireModalPlate,
+        tires:       getTireData(tireModalPlate),
+        accessories: getAccData(tireModalPlate),
       }),
     });
-    if (!r.ok) throw new Error(r.status);
+    
+    // ── DIAGNÓSTICO: Si da error, leemos el texto que devuelve tu Worker ──
+    if (!r.ok) {
+      const errorData = await r.json().catch(() => ({ error: "Error desconocido sin JSON" }));
+      console.error("-> [DEBUG POST 400] El Worker respondió:", errorData);
+      throw new Error(`Status ${r.status}: ${errorData.error || 'Sin mensaje'}`);
+    }
+    
     return true;
-  } catch(e) { console.warn('[sync] push failed —', e.message); return false; }
-}
-
-function showSyncToast(msg, isErr) {
-  let t = document.getElementById('syncToast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'syncToast';
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
-      'background:var(--s1);border:1px solid var(--bs);border-radius:8px;' +
-      'padding:8px 16px;font-size:12px;font-weight:600;z-index:9999;' +
-      'box-shadow:0 4px 16px rgba(0,0,0,.4);transition:opacity .3s;white-space:nowrap;';
-    document.body.appendChild(t);
+  } catch(e) {
+    console.warn('[sync] push tires failed —', e.message);
+    return false;
   }
-  t.textContent = msg;
-  t.style.color   = isErr ? '#f87171' : 'var(--acc)';
-  t.style.opacity = '1';
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
 }
 
-function maintAlertInfo(kmStr, plate){
-  if(!kmStr||kmStr==='-') return null;
-  const km=parseInt(kmStr.replace(/[.,]/g,''));
-  if(isNaN(km)) return null;
-  const next=Math.ceil((km+1)/10000)*10000;
-  const rem=next-km;
-  if(rem<=2000){
-    if(getMaintHistory(plate).some(h=>h.clearedMultiple===next)) return null;
-    return {km,nextMultiple:next,remaining:rem};
-  }
-  return null;
-}
 
-// ═══════════════════════════════════════════════════════════════════════
-// RES UTILS
-// ═══════════════════════════════════════════════════════════════════════
-function resOnDate(res, d){
-  const dt=new Date(d); dt.setHours(0,0,0,0);
-  const s=new Date(res.start); s.setHours(0,0,0,0);
-  const e=new Date(res.end);   e.setHours(0,0,0,0);
-  return dt>=s && dt<=e;
+// ── REEMPLAZO COMPLETO DE VARIABLES DE CARGA (A partir de línea 1160 / 1280) ──
+
+
+ 
+    // Usamos nombres de variables únicos dentro de un entorno aislado (función autoejecutable)
+    // para que jamás choquen con otras constantes globales de tu frontend
+
+
+<!-- REEMPLAZO ABSOLUTO, LIMPIO Y DEFINITIVO DE CARGA AUTOMÁTICA -->
+
+// ── REEMPLAZO ABSOLUTO, SEGURO Y COMPILADO PARA TU DASHBOARD ──
+function sincronizarFlotaCDN() {
+  console.log("Iniciando carga automática de datos desde CDN...");
+
+  var tokenBuster = Date.now();
+  // El dominio oficial, completo e infalible de jsDelivr con todas sus barras exactas
+  var cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
+
+  var urlPque = cdnRaiz + "Pque.txt?v=" + tokenBuster;
+  //var urlTel  = cdnRaiz + "TelemGts_data.txt?v=" + tokenBuster;
+  //var urlRes  = cdnRaiz + "scraped_data.txt?v=" + tokenBuster;
+  var urlRes = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/scraped_data.txt?v=" + tokenBuster;
+  // 2. ── CURA DEFINITIVA PARA LA CACHÉ DE TELEMETRÍA CADA 1 HORA ──
+  // Cambiamos '@main/' por el token dinámico directamente en la estructura de jsDelivr.
+  // Esto obliga al CDN a ir a buscar físicamente el archivo recién subido a GitHub.
+  //var urlTel = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager@" + tokenBuster + "/TelemGts_data.txt";
+   var urlTel = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/TelemGts_data.txt?=" + tokenBuster;
+  console.log("-> [Ruta Telemetría Purgada] URL: " + urlTel);
+  console.log("-> [Rutas Generadas] URL Parque: " + urlPque);
+
+   // 1. CARGAR RESERVAS (scraped_data.txt)
+  fetch(urlRes)
+    .then(function(res) {
+      if (!res.ok) throw new Error("Error al descargar reservas");
+      return res.text(); // Obtenemos el texto plano tabulado (\t)
+    })
+    .then(function(data) {
+      // Usamos tu función parseRes para procesar el archivo del servidor
+      ST.res = parseRes(data); 
+      console.log("¡Éxito! Reservas actualizadas desde el CDN:", ST.res.length);
+      
+      // Forzamos el redibujado inmediato del calendario con los datos nuevos
+      if (typeof tryRender === "function") tryRender(); 
+    })
+    .catch(function(err) { console.error("Fallo al cargar Reservas:", err); });
+
+  // 2. CARGAR PARQUE AUTOMOTOR (Pque.txt)
+  fetch(urlPque)
+    .then(function(res) {
+      if (!res.ok) throw new Error("Error al descargar Parque");
+      return res.text();
+    })
+    .then(function(data) {
+      if (typeof parsePque === "function") {
+        ST.pque = parsePque(data);
+        console.log("¡Éxito! Parque actualizado desde el CDN:", ST.pque.length);
+        if (typeof tryRender === "function") tryRender();
+      }
+    })
+    .catch(function(err) { console.error("Fallo al cargar Parque:", err); });
+
+  // 3. CARGAR TELEMETRÍA (TelemGts_data.txt)
+  fetch(urlTel)
+    .then(function(res) {
+      if (!res.ok) throw new Error("Error al descargar Telemetría");
+      return res.text();
+    })
+    .then(function(data) {
+      if (typeof parseTel === "function") {
+        ST.tel = parseTel(data);
+        console.log("¡Éxito! Telemetría actualizada desde el CDN.");
+        if (typeof tryRender === "function") tryRender();
+      }
+    })
+    .catch(function(err) { console.error("Fallo al cargar Telemetría:", err); });
 }
-function resColor(res){
-  if(res.renter==='Service') return {c:'var(--c-svc)',cl:'var(--cl-svc)'};
-  if(res.status==='Current') return {c:'var(--c-ok)', cl:'var(--cl-ok)'};
-  const s=new Date(res.start); s.setHours(0,0,0,0);
-  if(s>TODAY) return {c:'var(--c-fut)',cl:'var(--cl-fut)'};
-  return {c:'var(--c-new)',cl:'var(--cl-new)'};
-}
-function resBadgeLabel(res){
-  if(res.renter==='Service') return 'Service';
-  if(res.status==='Current') return 'Activa';
-  const s=new Date(res.start); s.setHours(0,0,0,0);
-  if(s>TODAY) return 'Futura';
-  return 'Nueva';
-}
-function transferAlert(plate){
-  const TOMORROW=new Date(TODAY); TOMORROW.setDate(TOMORROW.getDate()+1);
-  const tel=ST.tel?ST.tel[plate]:null;
-  if(!tel||tel.loc!=='PERU') return false;
-  return (ST.res||[]).some(r=>{
-    if(r.plate!==plate||!r.start) return false;
-    const s=new Date(r.start); s.setHours(0,0,0,0);
-    return s.getTime()===TOMORROW.getTime();
+// Ejecución automática al final de la carga (Línea 1414)
+
+
+// Esto solucionará el "autoloadFiles is not defined"
+
+
+
+window.openCfgModal=function(){
+  const cfg=getCfg();
+  document.getElementById('cfgPque').value=cfg.pque||CFG_DEFAULTS.pque;
+  document.getElementById('cfgRes').value =cfg.res ||CFG_DEFAULTS.res;
+  document.getElementById('cfgTel').value =cfg.tel ||CFG_DEFAULTS.tel;
+  const whEl=document.getElementById('cfgN8nWebhook');
+  if(whEl) whEl.value=cfg.n8nWebhook||'';
+  ['pque','res','tel'].forEach(k=>{
+    const s=document.getElementById('dot-'+k);
+    const d=document.getElementById('cdot-'+k);
+    if(s&&d) d.className=s.className;
+    document.getElementById('cst-'+k).innerHTML='';
   });
-}
+  const ghp=document.getElementById('ghPresetPanel');
+  if(ghp) ghp.style.display='none';
+  document.getElementById('cfgOverlay').style.display='flex';
+};
 
-// ═══════════════════════════════════════════════════════════════════════
-// STATS
-// ═══════════════════════════════════════════════════════════════════════
-function tryRender(){
-  if(!ST.pque||!ST.res) return;
-  updateStats(); renderView();
-}
-function updateStats(){
-  const tot=ST.pque.length;
-  const act=ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY).length;
-  const plates=new Set(ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY).map(r=>r.plate));
-  const avl=ST.pque.filter(v=>!plates.has(v.plate)).length;
-  let ma=0;
-  ST.pque.forEach(v=>{
-    const t=ST.tel?ST.tel[v.plate]:null;
-    if(t&&maintAlertInfo(t.km,v.plate)) ma++;
-  });
-  document.getElementById('st-total').textContent=tot;
-  document.getElementById('st-active').textContent=act;
-  document.getElementById('st-avail').textContent=avl;
-  document.getElementById('st-maint').textContent=ma;
-}
+window.closeCfgModal=function(e){
+  if(e&&e.target!==document.getElementById('cfgOverlay')) return;
+  document.getElementById('cfgOverlay').style.display='none';
+};
 
-// ═══════════════════════════════════════════════════════════════════════
-// VIEW SWITCHING
-// ═══════════════════════════════════════════════════════════════════════
-function switchView(v){
-  curView=v;
-  ['month','week','day','list'].forEach(x=>{
-    const el=document.getElementById('vtab-'+x);
-    if(el) el.classList.toggle('active',x===v);
-  });
-  const mn=document.getElementById('monthNav');
-  if(mn) mn.style.display=v==='list'?'none':'flex';
-  // FAB: show on day view when there are reservations
-  document.getElementById('fabBtn').classList.remove('show');
-  renderView();
-}
-function navigate(d){
-  if(curView==='month'){
-    vMonth+=d; if(vMonth>11){vMonth=0;vYear++;} if(vMonth<0){vMonth=11;vYear--;}
-  } else if(curView==='week'){
-    const dt=new Date(vYear,vMonth,vDay); dt.setDate(dt.getDate()+d*7);
-    vYear=dt.getFullYear(); vMonth=dt.getMonth(); vDay=dt.getDate();
-  } else {
-    const dt=new Date(vYear,vMonth,vDay); dt.setDate(dt.getDate()+d);
-    vYear=dt.getFullYear(); vMonth=dt.getMonth(); vDay=dt.getDate();
-  }
-  renderView();
-}
-function goToday(){vYear=TODAY.getFullYear();vMonth=TODAY.getMonth();vDay=TODAY.getDate();renderView();}
-function renderView(){
-  if(curView==='month')     renderMonth();
-  else if(curView==='week') renderWeek();
-  else if(curView==='day')  renderDay();
-  else                      renderList();
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// MONTH VIEW
-// ═══════════════════════════════════════════════════════════════════════
-function renderMonth(){
-  document.getElementById('monthTitle').textContent=MONTHS[vMonth]+' '+vYear;
-  const firstDow = new Date(vYear,vMonth,1).getDay();
-  const daysInMo = new Date(vYear,vMonth+1,0).getDate();
-  const prevDays  = new Date(vYear,vMonth,0).getDate();
-
-  let cells=[];
-  // prev month padding
-  for(let i=0;i<firstDow;i++){
-    cells.push(`<div class="cal-day other"><div class="day-num">${prevDays-firstDow+i+1}</div></div>`);
-  }
-  // current month
-  for(let day=1;day<=daysInMo;day++){
-    const date=new Date(vYear,vMonth,day);
-    const dow=date.getDay();
-    const isToday=date.getTime()===TODAY.getTime();
-    const isWk=dow===0||dow===6;
-    const allRes=(ST.res||[]).filter(r=>resOnDate(r,date));
-    // Build up to 3 pips
-    const pips=allRes.slice(0,3).map(r=>{
-      const{c}=resColor(r);
-      return `<span class="pip" style="background:${c}"></span>`;
-    }).join('');
-    const more=allRes.length>3?`<span class="day-more">+${allRes.length-3}</span>`:'';
-    cells.push(`<div class="cal-day${isToday?' today':''}${isWk?' weekend':''}" onclick="openDaySheet(${vYear},${vMonth},${day})">
-      <div class="day-num">${day}</div>
-      <div class="day-pips">${pips}</div>
-      ${more}
-    </div>`);
-  }
-  // next month padding
-  const total=cells.length;
-  const remainder=(7-total%7)%7;
-  for(let i=1;i<=remainder;i++){
-    cells.push(`<div class="cal-day other"><div class="day-num">${i}</div></div>`);
-  }
-
-  document.getElementById('viewContent').innerHTML=`
-    <div class="month-wrap">
-      <div class="dow-row">${DOW_S.map(d=>`<div class="dow-lbl">${d}</div>`).join('')}</div>
-      <div class="cal-grid">${cells.join('')}</div>
-    </div>`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// DAY SHEET (from month)
-// ═══════════════════════════════════════════════════════════════════════
-function openDaySheet(y,m,d){
-  vYear=y; vMonth=m; vDay=d;
-  const date=new Date(y,m,d);
-  document.getElementById('ds-title').textContent=
-    DOW_L[date.getDay()]+' '+d+' de '+MONTHS[m]+' '+y;
-  const allRes=(ST.res||[]).filter(r=>resOnDate(r,date));
-  let body='';
-  if(!allRes.length){
-    body='<div class="no-res" style="padding:16px 0">Sin reservas este día</div>';
-  } else {
-    allRes.forEach(res=>{
-      const{c,cl}=resColor(res);
-      const enc=encodeURIComponent(JSON.stringify(res));
-      body+=`<div class="res-row" style="background:${cl}" data-enc="${enc}" data-close-day="1">
-        <div class="res-stripe" style="background:${c}"></div>
-        <div class="res-info">
-          <div class="res-name">${esc(res.renter)}</div>
-          <div class="res-dates">${res.plate} · ${res.startTime}→${res.endTime}</div>
-        </div>
-        <span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(res)}</span>
-      </div>`;
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    ['cfgOverlay','modalOverlay','tireModalOverlay'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.style.display='none';
     });
+    document.getElementById('mapOverlay')?.classList.remove('open');
   }
-  document.getElementById('ds-body').innerHTML=body;
-  openSheet('daySheet');
-}
+});
 
-// ═══════════════════════════════════════════════════════════════════════
-// WEEK VIEW  (FIX: events span correctly, no broken onclick)
-// ═══════════════════════════════════════════════════════════════════════
-function renderWeek(){
-  const cur=new Date(vYear,vMonth,vDay);
-  const dow=cur.getDay();
-  const mon=new Date(cur);
-  mon.setDate(cur.getDate()-(dow===0?6:dow-1));
-  document.getElementById('monthTitle').textContent=
-    MONTHS[mon.getMonth()]+' '+mon.getFullYear();
-
-  const days=[];
-  for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);days.push(d);}
-
-  const HOURS=[7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
-
-  // header
-  let head='<div class="week-head"><div></div>';
-  days.forEach(d=>{
-    const isT=d.getTime()===TODAY.getTime();
-    head+=`<div class="wh-col${isT?' today':''}">
-      <div class="wh-dow">${DOW_S[d.getDay()]}</div>
-      <div class="wh-num">${d.getDate()}</div>
-    </div>`;
-  });
-  head+='</div>';
-
-  // body — one row per hour, 7 columns
-  let body='<div class="week-body">';
-  HOURS.forEach(h=>{
-    body+=`<div class="h-lbl">${String(h).padStart(2,'0')}</div>`;
-    days.forEach((d,di)=>{
-      const isT=d.getTime()===TODAY.getTime();
-      // find reservations that START at this hour on this day
-      const events=(ST.res||[]).filter(r=>{
-        if(!resOnDate(r,d)) return false;
-        const sh=r.start?r.start.getHours():0;
-        return sh===h;
-      });
-      let evHTML='';
-      events.forEach(res=>{
-        const{c,cl}=resColor(res);
-        const enc=encodeURIComponent(JSON.stringify(res));
-        evHTML+=`<div class="w-event" style="background:${cl};color:${c};border-left:2px solid ${c}"
-          data-enc="${enc}">${esc(res.renter).slice(0,8)}</div>`;
-      });
-      body+=`<div class="w-slot${isT?' today-col':''}">${evHTML}</div>`;
-    });
-  });
-  body+='</div>';
-
-  document.getElementById('viewContent').innerHTML=
-    `<div class="week-wrap">${head}${body}</div>`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// DAY VIEW
-// ═══════════════════════════════════════════════════════════════════════
-function renderDay(){
-  const date=new Date(vYear,vMonth,vDay);
-  document.getElementById('monthTitle').textContent=
-    DOW_L[date.getDay()]+', '+vDay+' '+MONTHS[vMonth]+' '+vYear;
-
-  if(!ST.pque){
-    document.getElementById('viewContent').innerHTML=
-      '<div class="empty"><span class="material-icons">folder_open</span><p>Cargá los archivos .txt para ver los datos</p></div>';
-    return;
-  }
-
-  let html='<div class="day-wrap">';
-  ST.pque.forEach(veh=>{
-    const tel=ST.tel?ST.tel[veh.plate]:null;
-    const vRes=(ST.res||[]).filter(r=>r.plate===veh.plate&&resOnDate(r,date));
-    const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
-    const trans=transferAlert(veh.plate);
-
-    // fuel
-    let fuelPct=0, fuelColor='var(--c-ok)', fuelLabel='—';
-    if(tel&&tel.fuel&&tel.fuel!=='-'){
-      const lit=parseInt(tel.fuel)||0;
-      fuelPct=veh.tankCap>0?Math.min(100,Math.round(lit/veh.tankCap*100)):lit;
-      fuelLabel=veh.tankCap>0?`${lit}L/${veh.tankCap}L`:`${lit}L`;
-      if(fuelPct<=25) fuelColor='var(--c-err)';
-      else if(fuelPct<=50) fuelColor='var(--c-svc)';
-    }
-
-    // reservations
-    let resList='';
-    if(vRes.length){
-      vRes.forEach(res=>{
-        const{c,cl}=resColor(res);
-        const enc=encodeURIComponent(JSON.stringify(res));
-        resList+=`<div class="res-row" style="background:${cl}" data-enc="${enc}">
-          <div class="res-stripe" style="background:${c}"></div>
-          <div class="res-info">
-            <div class="res-name">${esc(res.renter)}</div>
-            <div class="res-dates">${fmtDate(res.start)} ${res.startTime} → ${fmtDate(res.end)} ${res.endTime}</div>
-          </div>
-          <span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(res)}</span>
-          <button class="cta-btn" data-enc="${enc}" data-cta="1">
-            <span class="material-icons">assignment_turned_in</span>
-          </button>
-        </div>`;
-      });
-    } else {
-      resList='<div class="no-res">Sin reservas</div>';
-    }
-
-    html+=`<div class="veh-card">
-      <div class="veh-head">
-        <div style="flex:1;min-width:0">
-          <div class="veh-model">${esc(veh.model)}</div>
-          <div class="badge-row">
-            <span class="plate-chip">${veh.plate}</span>
-            ${tel?`<span style="font-size:9px;color:var(--t3)">${esc(tel.loc)}</span>`:''}
-            ${alert?`<span class="badge badge-maint"><span class="material-icons" style="font-size:10px">warning</span> Service</span>`:''}
-            ${trans?`<span class="badge badge-transfer"><span class="material-icons" style="font-size:10px">local_shipping</span> Traslado</span>`:''}
-          </div>
-        </div>
-        ${tel&&tel.fuel&&tel.fuel!=='-'?`<div class="fuel-row">
-          <div class="fbar"><div class="fbar-f" style="width:${fuelPct}%;background:${fuelColor}"></div></div>
-          <span class="fuel-txt" style="color:${fuelColor}">${fuelLabel}</span>
-        </div>`:''}
-      </div>
-      <div class="veh-body">${resList}</div>
-    </div>`;
-  });
-  html+='</div>';
-  document.getElementById('viewContent').innerHTML=html;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// FLEET LIST
-// ═══════════════════════════════════════════════════════════════════════
-function renderList(){
-  if(!ST.pque){
-    document.getElementById('viewContent').innerHTML=
-      '<div class="empty"><span class="material-icons">folder_open</span><p>Cargá los archivos .txt para ver la flota</p></div>';
-    return;
-  }
-  let html='<div class="fleet-wrap" style="padding-top:12px">';
-  ST.pque.forEach(veh=>{
-    const tel=ST.tel?ST.tel[veh.plate]:null;
-    const activeRes=(ST.res||[]).filter(r=>r.plate===veh.plate&&r.start<=TODAY&&r.end>=TODAY);
-    const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
-    const trans=transferAlert(veh.plate);
-    let stC='var(--t3)',stB='var(--s2)',stL='Libre';
-    if(activeRes.length){stC='var(--c-ok)';stB='var(--cl-ok)';stL='Activa';}
-    if(alert){stC='var(--c-err)';stB='var(--cl-err)';stL='Service';}
-    const vdata={plate:veh.plate,model:veh.model,bodyType:veh.bodyType,tankCap:veh.tankCap};
-    const enc=encodeURIComponent(JSON.stringify(vdata));
-    html+=`<div class="fl-item" onclick="openVehicleSheet('${enc}')">
-      <div class="fl-avatar"><span class="material-icons">directions_car</span></div>
-      <div class="fl-info">
-        <div class="fl-model">${esc(veh.model)}</div>
-        <div class="fl-sub">
-          <span class="plate-chip" style="font-size:9px">${veh.plate}</span>
-          ${tel?`<span>${esc(tel.loc)}</span>`:''}
-          ${tel&&tel.km?`<span>${tel.km} km</span>`:''}
-          ${trans?`<span style="color:#FFD740">⚡ traslado</span>`:''}
-        </div>
-      </div>
-      <div>
-        <span class="fl-status" style="color:${stC};background:${stB}">${stL}</span>
-        ${activeRes.length?`<div style="font-size:9px;color:var(--t3);margin-top:3px;text-align:right">${activeRes[0].renter.slice(0,12)}</div>`:''}
-      </div>
-    </div>`;
-  });
-  html+='</div>';
-  document.getElementById('viewContent').innerHTML=html;
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// SHEETS
-// ═══════════════════════════════════════════════════════════════════════
-function openSheet(id){document.getElementById(id).classList.add('open');}
-function closeSheet(id){document.getElementById(id).classList.remove('open');}
-
-// FIX: all res data passed via encodeURIComponent to avoid HTML attr quote issues
-function openResSheetEnc(enc){
+window.testPath=async function(key){
+  const ids={pque:'cfgPque',res:'cfgRes',tel:'cfgTel'};
+  const path=document.getElementById(ids[key]).value.trim();
+  const stEl=document.getElementById('cst-'+key);
+  const dEl=document.getElementById('cdot-'+key);
+  if(!path){stEl.innerHTML='<span style="color:var(--text3)">Ingresá una ruta</span>'; return;}
+  stEl.innerHTML='<span style="color:#f59e0b">Probando…</span>';
+  dEl.className='src-dot loading';
   try{
-    const res=JSON.parse(decodeURIComponent(enc));
-    openResSheet(res);
-  }catch(e){console.error('openResSheetEnc',e);}
-}
-function openResSheet(res){
-  sheetRes=res;
-  const{c,cl}=resColor(res);
-  document.getElementById('sh-title').textContent=esc(res.renter);
-  document.getElementById('sh-sub').textContent=res.plate+' · #'+res.code;
-  const veh=ST.pque?ST.pque.find(v=>v.plate===res.plate):null;
-  const tel=ST.tel?ST.tel[res.plate]:null;
-  let fuelLine='';
-  if(tel&&tel.fuel&&tel.fuel!=='-'&&veh){
-    fuelLine=`<div class="detail-row"><span class="detail-lbl">Combustible</span>
-      <span class="detail-val">${tel.fuel}L / ${veh.tankCap}L</span></div>`;
+    await fetchTxt(path);
+    stEl.innerHTML='<span style="color:#22c55e"><i class="ti ti-check" style="font-size:10px"></i> Accesible</span>';
+    dEl.className='src-dot ok';
+  }catch(e){
+    stEl.innerHTML='<span style="color:#ef4444"><i class="ti ti-x" style="font-size:10px"></i> '+e.message+'</span>';
+    dEl.className='src-dot err';
   }
-  document.getElementById('sh-body').innerHTML=`
-    <div class="detail-row">
-      <span class="detail-lbl">Estado</span>
-      <span class="detail-val"><span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(res)}</span></span>
-    </div>
-    <div class="detail-row"><span class="detail-lbl">Vehículo</span><span class="detail-val">${res.vehicle}</span></div>
-    <div class="detail-row"><span class="detail-lbl">Retiro</span><span class="detail-val mono">${fmtDate(res.start)}  ${res.startTime||''}</span></div>
-    <div class="detail-row"><span class="detail-lbl">Entrega</span><span class="detail-val mono">${fmtDate(res.end)}  ${res.endTime||''}</span></div>
-    ${tel?`<div class="detail-row"><span class="detail-lbl">Km</span><span class="detail-val mono">${tel.km} km</span></div>`:''}
-    ${tel?`<div class="detail-row"><span class="detail-lbl">Ubicación</span><span class="detail-val">${esc(tel.loc)}</span></div>`:''}
-    ${fuelLine}
-    <div class="detail-row"><span class="detail-lbl">Código</span><span class="detail-val mono">${res.code}</span></div>`;
-  const btn = document.getElementById('sh-checklist');
-  btn.style.display = 'flex';
-  btn.innerHTML = '<span class="material-icons">assignment_turned_in</span> Abrir Check List';
-  btn.onclick = launchChecklistFromSheet;
-  openSheet('resSheet');
-}
+};
 
-function openVehicleSheet(enc){
-  try{
-    const v=JSON.parse(decodeURIComponent(enc));
-    const tel=ST.tel?ST.tel[v.plate]:null;
-    const vRes=(ST.res||[]).filter(r=>r.plate===v.plate);
-    const activeRes=vRes.filter(r=>r.start<=TODAY&&r.end>=TODAY);
-    sheetRes=null;
-    document.getElementById('sh-title').textContent=esc(v.model);
-    document.getElementById('sh-sub').textContent=v.plate+(v.bodyType?' · '+v.bodyType:'');
-    let body=`
-      ${tel?`<div class="detail-row"><span class="detail-lbl">Km</span><span class="detail-val mono">${tel.km}</span></div>`:''}
-      ${tel?`<div class="detail-row"><span class="detail-lbl">Ubicación</span><span class="detail-val">${esc(tel.loc)}</span></div>`:''}
-      ${tel&&tel.fuel&&tel.fuel!=='-'?`<div class="detail-row"><span class="detail-lbl">Combustible</span><span class="detail-val">${tel.fuel}L / ${v.tankCap}L</span></div>`:''}
-      <div class="detail-row"><span class="detail-lbl">Tanque</span><span class="detail-val">${v.tankCap}L</span></div>
-      <div class="detail-row"><span class="detail-lbl">Reservas activas</span><span class="detail-val">${activeRes.length}</span></div>`;
-    if(vRes.length){
-      body+=`<div style="margin-top:10px;font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Próximas reservas</div>`;
-      vRes.slice(0,3).forEach(r=>{
-        const{c,cl}=resColor(r);
-        const enc2=encodeURIComponent(JSON.stringify(r));
-        body+=`<div style="background:${cl};border-radius:8px;padding:8px 10px;margin-bottom:5px;display:flex;align-items:center;gap:8px;cursor:pointer"
-          data-enc2="${enc2}">
-          <div style="width:3px;align-self:stretch;background:${c};border-radius:2px;flex-shrink:0"></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:600">${esc(r.renter)}</div>
-            <div style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:2px">${fmtDate(r.start)} → ${fmtDate(r.end)}</div>
-          </div>
-          <span class="status-chip" style="background:${cl};color:${c}">${resBadgeLabel(r)}</span>
-        </div>`;
-      });
-    }
-    document.getElementById('sh-body').innerHTML=body;
-    // Repurpose primary action button to open tire/accessory management for this vehicle
-    const btn = document.getElementById('sh-checklist');
-    btn.style.display = 'flex';
-    btn.innerHTML = '<span class="material-icons">tire_repair</span> Neumáticos y accesorios';
-    btn.onclick = function() { closeSheet('resSheet'); setTimeout(()=>openTireSheet(v.plate), 150); };
-    openSheet('resSheet');
-  }catch(e){console.error('openVehicleSheet',e);}
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// CHECKLIST LAUNCH
-// ═══════════════════════════════════════════════════════════════════════
-function launchChecklistFromSheet(){
-  if(!sheetRes) return;
-  const res=sheetRes;
-  const veh=ST.pque?ST.pque.find(v=>v.plate===res.plate):null;
-  const tel=ST.tel?ST.tel[res.plate]:null;
-  const payload={
-    plate:     res.plate,
-    resid:     res.code,
-    renter:    res.renter,
-    startDate: fmtDate(res.start),
-    startTime: res.startTime,
-    endDate:   fmtDate(res.end),
-    endTime:   res.endTime,
-    km:        tel?tel.km:'—',
-    tankCap:   veh?veh.tankCap:0,
-    bodyType:  veh?veh.bodyType:'HATCHBACK',
-    tires:     getTireData(res.plate),
-    tireNums:  getTireData(res.plate).filter(t=>t.numero).map(t=>t.numero),
-    accesorios:getAccData(res.plate),
+window.saveCfgAndReload=function(){
+  const cfg={
+    pque:         document.getElementById('cfgPque').value.trim()       ||CFG_DEFAULTS.pque,
+    res:          document.getElementById('cfgRes').value.trim()        ||CFG_DEFAULTS.res,
+    tel:          document.getElementById('cfgTel').value.trim()        ||CFG_DEFAULTS.tel,
+    n8nWebhook:   (document.getElementById('cfgN8nWebhook')||{}).value?.trim()||'',
   };
-  localStorage.setItem('fleetcal_checklist_data',JSON.stringify(payload));
-  closeSheet('resSheet');
-  window.open('checklist_mobile.html','_blank');
-}
-function fabAction(){launchChecklistFromSheet();}
+  setCfg(cfg);
+  document.getElementById('cfgOverlay').style.display='none';
+  ST={pque:null,res:null,tel:null};
+  
+cargarDatosFlota();
+};
 
-// ═══════════════════════════════════════════════════════════════════════
-// NAV SELECT
-// ═══════════════════════════════════════════════════════════════════════
-function navSelect(t){
-  ['cal','fleet','day','cfg'].forEach(x=>{
-    document.getElementById('nav-'+x)?.classList.toggle('active',x===t);
+window.testN8nWebhook = async function(){
+  const url = (document.getElementById('cfgN8nWebhook')||{}).value?.trim();
+  const stEl = document.getElementById('cst-n8n');
+  if(!url){ if(stEl) stEl.innerHTML='<span style="color:var(--text3)">Ingresá la URL del webhook</span>'; return; }
+  if(stEl) stEl.innerHTML='<span style="color:#f59e0b">Probando…</span>';
+  try {
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({test:true, filename:'fleet_tires_acc.json', content:'{}'}),
+    });
+    if(stEl) stEl.innerHTML = r.ok
+      ? '<span style="color:#22c55e">✅ Webhook accesible</span>'
+      : `<span style="color:#ef4444">❌ HTTP ${r.status}</span>`;
+  } catch(e) {
+    if(stEl) stEl.innerHTML=`<span style="color:#ef4444">❌ ${e.message}</span>`;
+  }
+};
+
+window.applyGithubPreset=function(){
+  const p=document.getElementById('ghPresetPanel');
+  p.style.display=p.style.display==='none'?'block':'none';
+  if(p.style.display==='block') document.getElementById('ghBaseUrl').focus();
+};
+
+window.applyLocalPreset=function(){
+  document.getElementById('cfgPque').value=CFG_DEFAULTS.pque;
+  document.getElementById('cfgRes').value =CFG_DEFAULTS.res;
+  document.getElementById('cfgTel').value =CFG_DEFAULTS.tel;
+  const p=document.getElementById('ghPresetPanel');
+  if(p) p.style.display='none';
+  ['pque','res','tel'].forEach(k=>{
+    document.getElementById('cst-'+k).innerHTML=
+      '<span style="color:var(--text3);font-size:10px">Listo — Guardá para aplicar</span>';
   });
-}
+};
+// ── CAMBIO DIRECTO EN EL JAVASCRIPT DE GITHUB PAGES ──
 
-// ═══════════════════════════════════════════════════════════════════════
-// TIRE / ACCESSORY SHEET — mobile management UI
-// Uses SAME localStorage keys as fleet_calendar (fleetcal_tires_* / fleetcal_acc_*)
-// so data loaded here appears in fleet_calendar and vice versa.
-// ═══════════════════════════════════════════════════════════════════════
-const TIRE_POSITIONS_M = [
+
+
+
+// ── EMBEDDED DATA ──
+// ── AUTH CHECK — verificar sesión activa al cargar ──────────────────────────
+(async function checkAuthOnLoad() {
+  try {
+    const r = await fetch(`${WORKER_URL}/auth/me`, { credentials: 'include' });
+    if (r.status === 401) {
+      window.location.replace('./index.html');
+      return;
+    }
+    const me = await r.json();
+    // Mostrar nombre del usuario logueado
+    const brandEl = document.querySelector('.brand-sub');
+    if (brandEl) brandEl.textContent = me.name + ' · ' + me.role;
+  } catch(e) {
+    console.warn('Auth check failed:', e.message);
+    // Si falla la red, continuar con datos embebidos
+  }
+})();
+
+(function(){
+  ST.pque=parsePque(`18723 Toyota Corolla HV AT AI239SV	SEDAN	43
+10914 Toyota SW4 4x4 7A AT AG269JN	SUV	80
+11131 Toyota Etios SD AT AG350QD	HATCHBACK	45
+11182 Toyota ETIOS HB A/T AG350QF	HATCHBACK	45
+11181 Toyota ETIOS HB A/T AG350QE	HATCHBACK	45
+12469 Toyota Yaris HB AT AG500BY	HATCHBACK	42
+12684 Toyota Yaris HB AT AG708YK	HATCHBACK	42
+12685 Toyota Yaris HB AT AG708YJ	HATCHBACK	42
+12877 Toyota Corolla Cross HV AT AG765WS	SUV2	36
+13131 Toyota Hilux 4x4 DC AT AG838JY	PICKUP	80`);
+  ST.res=parseRes([
+    'yevw52d\tService\tToyota Corolla HV AT AG192XC\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent',
+    'l8mz66g\tNicolas Dominguez\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t12:00 PM  May 27, 2026\t11:00 AM  Jun 30, 2026\tCurrent',
+    'ymzn137\tTeresa Perkins\tToyota Yaris HB AT AG708YK\tRetiro\t--\t4:00 PM  May 29, 2026\t10:00 AM  Jun 16, 2026\tCurrent',
+    'lr181ez\tCUSTOMER SERVICE 21\tToyota Yaris HB AT AG500BY\tRetiro\t--\t4:45 PM  Jun 1, 2026\t6:00 PM  Jun 12, 2026\tCurrent',
+    'kvx36xo\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t9:00 AM  Jun 8, 2026\t9:00 AM  Jun 16, 2026\tCurrent',
+    'k33zx7m\tNicolas Ezequiel Mammone\tToyota Yaris HB AT AG708YJ\tRetiro\t--\t3:00 PM  Jun 8, 2026\t4:00 PM  Jun 13, 2026\tCurrent',
+    'lwq3dem\tSolange Molina\tToyota ETIOS HB A/T AG350QF\tRetiro\t--\t1:00 PM  Jun 12, 2026\t6:00 PM  Jun 16, 2026\tNew',
+    'lwq369e\tGustavo Maquince\tToyota ETIOS HB A/T AG350QE\tRetiro\t--\t6:00 PM  Jun 12, 2026\t6:00 PM  Jun 16, 2026\tNew',
+    'l8mj55g\tService\tToyota Yaris HB AT AG500BY\tRetiro\t--\t9:20 AM  Jun 15, 2026\t1:20 PM  Jun 19, 2026\tNew',
+    'kgdxj1q\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t2:00 PM  Jul 13, 2026\t2:00 PM  Jul 20, 2026\tNew',
+    'y7dozog\tMarcos Dormal\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t6:00 PM  Jul 17, 2026\t9:00 AM  Jul 27, 2026\tNew'
+  ].join('\n'));
+  ST.tel=parseTel([
+    '10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED',
+    '11131\t-34.61351, -58.373844\t73,106\t40\tToyota Etios SD AT AG350QD\tPERU',
+    '11182\t-34.613323, -58.374226\t57,335\t38\tToyota ETIOS HB A/T AG350QF\tPERU',
+    '11181\t-34.613499, -58.373867\t75,900\t40\tToyota ETIOS HB A/T AG350QE\tPERU',
+    '12469\t-34.9007, -57.955624\t60,642\t24\tToyota Yaris HB AT AG500BY\tBOOKED',
+    '12684\t-34.593182, -58.43074\t62,840\t19\tToyota Yaris HB AT AG708YK\tBOOKED',
+    '12685\t-32.695877, -63.442169\t57,514\t38\tToyota Yaris HB AT AG708YJ\tBOOKED',
+    '12877\t-34.597813, -58.380341\t32,284\t-\tToyota Corolla Cross HV AT AG765WS\tBOOKED',
+    '13131\t-34.593182, -58.43074\t59,250\t71\tToyota Hilux 4x4 DC AT AG838JY\tPERU'
+  ].join('\n'));
+  // render immediately with embedded data
+  tryRender();
+  // then try to load fresh data from server/github (overwrites if reachable)
+  
+
+sincronizarFlotaCDN();
+})();
+
+// ── NAV ──
+window.shiftMonth=function(d){
+  vMonth+=d;
+  if(vMonth>11){vMonth=0;vYear++;} if(vMonth<0){vMonth=11;vYear--;}
+  renderCal();
+};
+window.goToday=function(){vYear=TODAY.getFullYear();vMonth=TODAY.getMonth();renderCal();};
+
+/* ── FLEET MAP ── */
+let _leafletMap     = null;
+let _leafletMarker  = null;
+let _mapInitialized = false;
+
+window.openVehMap = function(plate) {
+// LÍNEA NUEVA: Guardamos de forma global la patente activa en el mapa
+  window.currentMapPlate = plate; 
+
+  
+  const tel = ST.tel ? ST.tel[plate] : null;
+  const veh = ST.pque ? ST.pque.find(v => v.plate === plate) : null;
+  if (!tel || !tel.coords || tel.coords === '-') {
+    alert('Sin coordenadas de telemetría para ' + plate);
+    return;
+  }
+
+  // Parse coords: "-34.606693, -58.427342"
+  const parts = tel.coords.split(',').map(s => parseFloat(s.trim()));
+  if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) {
+    alert('Coordenadas inválidas: ' + tel.coords);
+    return;
+  }
+  const lat = parts[0], lng = parts[1];
+
+  // Set header info
+  document.getElementById('mapTitle').textContent = 'Ubicación · ' + plate;
+  document.getElementById('mapSub').textContent   =
+    (veh ? veh.model + ' · ' : '') + tel.km + ' km · ' + tel.loc;
+  document.getElementById('mapCoords').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+  document.getElementById('mapOsmLink').href =
+    'https://www.openstreetmap.org/?mlat=' + lat + '&mlon=' + lng + '&zoom=15';
+
+  // Open modal first so container gets real dimensions
+  document.getElementById('mapOverlay').classList.add('open');
+
+  // Use setTimeout to ensure DOM paint completes before Leaflet measures container
+  setTimeout(function initMap() {
+    if (!_mapInitialized) {
+      _leafletMap = L.map('fleetMapContainer', {
+        zoomControl: true,
+        preferCanvas: true,
+      }).setView([lat, lng], 15);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(_leafletMap);
+      _mapInitialized = true;
+    } else {
+      if (_leafletMarker) { _leafletMap.removeLayer(_leafletMarker); _leafletMarker = null; }
+      _leafletMap.setView([lat, lng], 15);
+    }
+
+    // Custom colored icon based on location status
+    const color = tel.loc === 'BOOKED' ? '#1e40af' :
+                  tel.loc === 'PERU'   ? '#d97706' : '#166534';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        background:${color};color:#fff;border-radius:50% 50% 50% 0;
+        width:32px;height:32px;
+        transform:rotate(-45deg);
+        border:2px solid #fff;
+        box-shadow:0 2px 8px rgba(0,0,0,.35);
+        display:flex;align-items:center;justify-content:center;
+      "><span style="transform:rotate(45deg);font-size:14px">🚗</span></div>`,
+      iconSize:   [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor:[0, -36],
+    });
+
+    _leafletMarker = L.marker([lat, lng], { icon })
+      .addTo(_leafletMap)
+      .bindPopup(`
+        <div style="font-family:system-ui;min-width:160px">
+          <div style="font-weight:700;font-size:13px;margin-bottom:4px">${esc(plate)}</div>
+          <div style="font-size:11px;color:#555;margin-bottom:6px">${veh ? esc(veh.model) : ''}</div>
+          <div style="font-size:11px"><b>Km:</b> ${esc(tel.km)}</div>
+          <div style="font-size:11px"><b>Combustible:</b> ${esc(tel.fuel)} L</div>
+          <div style="font-size:11px"><b>Estado:</b>
+            <span style="font-weight:600;color:${color}">${esc(tel.loc)}</span>
+          </div>
+          <div style="font-size:10px;color:#999;margin-top:4px">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+        </div>
+      `, { maxWidth: 220 })
+      .openPopup();
+
+    // Force Leaflet to recalculate container size after render
+    _leafletMap.invalidateSize({ animate: false });
+    // Second invalidate after tiles load
+    setTimeout(() => { if(_leafletMap) _leafletMap.invalidateSize({ animate:false }); }, 300);
+  }, 80); // 80ms gives browser time to paint the flex container
+};
+
+window.closeMapModal = function(e) {
+  if (e && e.target !== document.getElementById('mapOverlay')) return;
+  document.getElementById('mapOverlay').classList.remove('open');
+};
+
+/* ── OPEN CHECKLIST ── */
+/* ── TIRES & ACCESSORIES STORAGE & UI ─────────────────────────────────────── */
+const TIRE_PREFIX = 'fleetcal_tires_';
+const ACC_PREFIX  = 'fleetcal_acc_';
+
+const TIRE_POSITIONS = [
   'Delantera Izq','Delantera Der','Trasera Izq','Trasera Der',
   'Trasera Int Izq','Trasera Int Der','Auxilio/Repuesto',
   'Eje medio Izq','Eje medio Der'
 ];
-const ACC_TYPES_M = [
+
+// Standard 5-tire set for quick load
+const TIRE_5_STANDARD = [
+  {posicion:'Delantera Izq',  numero:'', marca:'', rodado:'', dot:'', fecha:'', km:''},
+  {posicion:'Delantera Der',  numero:'', marca:'', rodado:'', dot:'', fecha:'', km:''},
+  {posicion:'Trasera Izq',    numero:'', marca:'', rodado:'', dot:'', fecha:'', km:''},
+  {posicion:'Trasera Der',    numero:'', marca:'', rodado:'', dot:'', fecha:'', km:''},
+  {posicion:'Auxilio/Repuesto',numero:'',marca:'', rodado:'', dot:'', fecha:'', km:''},
+];
+const ACC_TYPES = [
   'Matafuego','Balizas','Botiquín','Chaleco','Crique',
   'Llave de rueda','Cable de arranque','Triángulo','Linterna','Otro'
 ];
 
-let tireSheetPlate = null;
-let tireSheetTab   = 'tires';
-let tireWorkM = [];
-let accWorkM  = [];
+let tireModalPlate = null;
+let tireModalModel = null;
+let tireTab = 'tires';
+let tireWorkingCopy = [];
+let accWorkingCopy  = [];
 
-window.openTireSheet = function(plate) {
-  if (!plate) {
-    // show vehicle picker
-    if (!ST.pque || !ST.pque.length) { alert('Cargá primero los datos de la flota'); return; }
-    tireSheetPlate = null;
-    document.getElementById('tireSheetTitle').textContent = 'Seleccioná un vehículo';
-    document.getElementById('tireSheetSub').textContent = 'Elegí para gestionar neumáticos y accesorios';
-    document.getElementById('tireSheetTabs').style.display = 'none';
-    document.getElementById('tireSheetActions').style.display = 'none';
-    const body = document.getElementById('tireSheetBody');
-    body.innerHTML = '<div class="tsheet-vpicker">' + ST.pque.map(v =>
-      `<button class="tsheet-vitem" onclick="openTireSheet('${v.plate}')">
-        <span class="vplate">${esc(v.plate)}</span>
-        <span>${esc(v.model)}</span>
-      </button>`
-    ).join('') + '</div>';
-    openSheet('tireSheet');
+function getTireData(plate){
+  try{ const r=localStorage.getItem(TIRE_PREFIX+plate); return r?JSON.parse(r):[]; }catch(e){ return []; }
+}
+function saveTireDataStore(plate,data){
+  try{ localStorage.setItem(TIRE_PREFIX+plate,JSON.stringify(data)); }catch(e){}
+}
+function getAccData(plate){
+  try{ const r=localStorage.getItem(ACC_PREFIX+plate); return r?JSON.parse(r):[]; }catch(e){ return []; }
+}
+function saveAccDataStore(plate,data){
+  try{ localStorage.setItem(ACC_PREFIX+plate,JSON.stringify(data)); }catch(e){}
+}
+function getTireNumbers(plate){
+  return getTireData(plate).filter(t=>t.numero).map(t=>t.numero);
+}
+//PROCESO DE DAÑOS//
+  // ── FUNCIÓN: ENVIAR NUEVO GOLPE MARCADO A SUPABASE ──
+async function pushNewDamageToRemote(x, y, viewNum, type, notes = "") {
+  if (!tireModalPlate) { // Asumiendo que usas la variable global de la patente activa
+    alert("Selecciona un vehículo primero.");
+    return null;
+  }
+
+  console.log(`-> [Sync] Registrando daño en vista ${viewNum} para ${tireModalPlate}...`);
+
+  try {
+    const res = await fetch(`${WORKER_URL}/data/damages`, {
+      method: 'POST',
+      credentials: 'include', // Envía la cookie 'fleet_sid' para validar en verifySession()
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plate:        tireModalPlate,
+        view_num:     parseInt(viewNum, 10),
+        x:            parseFloat(x),
+        y:            parseFloat(y),
+        type:         type, // Ej: "Rayón", "Abolladura"
+        notes:        notes,
+        checklist_id: null  // Vincula un ID de checklist si lo manejas
+      })
+    });
+
+    const reply = await res.json();
+
+    if (!res.ok) {
+      throw new Error(reply.error || "Fallo desconocido en el servidor");
+    }
+
+    console.log("¡Daño guardado con éxito en Supabase!", reply.data);
+    return reply.data; // Devuelve el registro guardado con su ID/UUID generado por Supabase
+
+  } catch (error) {
+    console.error("[Sync] Error al empujar daño:", error.message);
+    alert("No se pudo guardar el daño: " + error.message);
+    return null;
+  }
+}
+
+// ── FUNCIÓN: MARCAR DAÑO REPARADO (PATCH /data/damages/:id) ──
+async function markDamageAsRepairedRemote(damageId, repairNotes = "") {
+  console.log(`-> [Sync] Marcando daño ${damageId} como reparado...`);
+
+  try {
+    const res = await fetch(`${WORKER_URL}/data/damages/${damageId}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes: repairNotes })
+    });
+
+    const reply = await res.json();
+    if (!res.ok) throw new Error(reply.error || "Error al actualizar");
+
+    console.log("Daño marcado como reparado.");
+    return true;
+  } catch (error) {
+    console.error("Fallo al reparar daño:", error.message);
+    return false;
+  }
+}
+
+/* ── MODAL OPEN / CLOSE ── */
+/* ── MODAL OPEN / CLOSE (CORREGIDO ORDEN DEL DOM) ── */
+window.openTireModal = function(plate, modelName){
+  tireModalPlate = plate;
+  tireModalModel = modelName;
+  
+  if(!plate){
+    buildVehiclePicker(); return;
+  }
+
+  // 1. PRIMERO HACEMOS VISIBLE EL MODAL EN EL DOM
+  document.getElementById('tireModalOverlay').style.display = 'flex';
+  document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
+  document.getElementById('tireModalSub').textContent   = modelName || '';
+  
+  // Aseguramos que las pestañas muestren el panel correcto
+  switchTireTab('tires');
+  
+  // 2. AHORA SÍ EJECUTAMOS EL RENDER (El contenedor #tireCards ya existe y es visible)
+  renderTireCards(plate);
+  renderAccRows(plate);
+};
+
+function buildVehiclePicker(){
+  if(!ST.pque||!ST.pque.length){ alert('Cargá primero el archivo Parque.txt'); return; }
+  
+  // 1. HACEMOS VISIBLE EL MODAL PRIMERO
+  document.getElementById('tireModalOverlay').style.display = 'flex';
+  document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
+  document.getElementById('tireModalSub').textContent   = 'Elegí un vehículo para gestionar neumáticos y accesorios';
+  
+  const panel = document.getElementById('panelTires');
+  panel.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px">' +
+    ST.pque.map(v=>`<button onclick="selectVehicleForTires('${v.plate}','${v.model.replace(/'/g,"\\'")}')"
+      style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:7px;
+      padding:9px 13px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;color:var(--text);transition:background .12s"
+      onmouseover="this.style.background='var(--surface3)'" onmouseout="this.style.background='var(--surface2)'">
+      <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--c-booked)">${v.plate}</span>
+      <span style="color:var(--text2);margin-left:8px">${v.model}</span>
+    </button>`).join('') +
+  '</div>';
+  
+  document.getElementById('tabTires').classList.add('active');
+  document.getElementById('tabAcc').classList.remove('active');
+  document.getElementById('panelAcc').style.display = 'none';
+}
+
+window.selectVehicleForTires = function(plate, model){
+  tireModalPlate = plate;
+  tireModalModel = model;
+  
+  // 1. RECONSTRUIR EL CONTENEDOR HTML NATIVO DEL PANEL
+  // Como buildVehiclePicker() borró el div '#tireCards' al inyectar los botones,
+  // debemos restaurar la estructura original antes de llamar al render.
+  const panel = document.getElementById('panelTires');
+  panel.innerHTML = `
+    <div id="tireCards"></div>
+    <button class="add-tire-btn" onclick="addTireCard()">
+      <i class="ti ti-plus" style="font-size:11px"></i> Agregar neumático
+    </button>
+  `;
+
+  document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
+  document.getElementById('tireModalSub').textContent   = model;
+  
+  switchTireTab('tires');
+  
+  // 2. RENDERIZAR AHORA QUE EL CONTENEDOR FUE RESTAURADO EN EL DOM
+  renderTireCards(plate);
+  renderAccRows(plate);
+};
+
+window.closeTireModal = function(e){
+  if(e && e.target!==document.getElementById('tireModalOverlay')) return;
+  document.getElementById('tireModalOverlay').style.display='none';
+};
+
+/* ── TABS ── */
+window.switchTireTab = function(tab){
+  tireTab = tab;
+  document.getElementById('tabTires').classList.toggle('active',  tab==='tires');
+  document.getElementById('tabQuick').classList.toggle('active',  tab==='quick');
+  document.getElementById('tabAcc').classList.toggle('active',    tab==='acc');
+  document.getElementById('panelTires').style.display  = tab==='tires' ?'block':'none';
+  document.getElementById('panelQuick').style.display  = tab==='quick' ?'block':'none';
+  document.getElementById('panelAcc').style.display    = tab==='acc'   ?'block':'none';
+  if(tab==='quick') renderQuickTireGrid(tireModalPlate);
+};
+
+/* ── TIRE CARDS ── */
+function renderTireCards(plate){
+  tireWorkingCopy = JSON.parse(JSON.stringify(getTireData(plate)));
+  rebuildTireCards();
+}
+
+function rebuildTireCards(){
+  const container = document.getElementById('tireCards');
+  
+  // ── CONTROL DE SEGURIDAD BLINDADO (Evita el TypeError de null) ──
+  if (!container) {
+    console.warn("Aviso: El contenedor HTML '#tireCards' no está presente en la pantalla actual.");
+    return; // Aborta la ejecución limpiamente sin tirar una excepción
+  }
+
+  if(!tireWorkingCopy.length){
+    container.innerHTML='<p style="font-size:11px;color:var(--text3);margin-bottom:10px;padding:4px 0">Sin neumáticos registrados para este vehículo.</p>';
     return;
   }
-
-  tireSheetPlate = plate;
-  const veh = ST.pque ? ST.pque.find(v => v.plate === plate) : null;
-  document.getElementById('tireSheetTitle').textContent = 'Neumáticos · ' + plate;
-  document.getElementById('tireSheetSub').textContent = veh ? veh.model : '';
-  document.getElementById('tireSheetTabs').style.display = 'flex';
-  document.getElementById('tireSheetActions').style.display = 'flex';
-  switchTireSheetTab('tires');
-  openSheet('tireSheet');
-};
-
-window.switchTireSheetTab = function(tab) {
-  tireSheetTab = tab;
-  document.getElementById('ttab-tires').classList.toggle('active', tab === 'tires');
-  document.getElementById('ttab-acc').classList.toggle('active',   tab === 'acc');
-  if (tab === 'tires') renderTireSheetTires();
-  else renderTireSheetAcc();
-};
-
-function renderTireSheetTires() {
-  tireWorkM = JSON.parse(JSON.stringify(getTireData(tireSheetPlate)));
-  rebuildTireSheetTires();
+  container.innerHTML = tireWorkingCopy.map((t,i)=>buildTireCardHTML(t,i)).join('');
 }
 
-function rebuildTireSheetTires() {
-  const body = document.getElementById('tireSheetBody');
-  let html = '';
-  if (!tireWorkM.length) {
-    html += '<div class="tno-data">Sin neumáticos registrados</div>';
-  } else {
-    tireWorkM.forEach((t, i) => { html += buildTireCardM(t, i); });
-  }
-  html += '<button class="tadd-btn" onclick="addTireCardM()"><span class="material-icons" style="font-size:14px">add</span> Agregar neumático</button>';
-  body.innerHTML = html;
-}
 
-function buildTireCardM(t, i) {
-  const posOpts = TIRE_POSITIONS_M.map(p => `<option value="${p}" ${t.posicion===p?'selected':''}>${p}</option>`).join('');
-  return `<div class="tcard-m" id="tcm-${i}">
-    <div class="tcard-m-head">
-      <span class="tcard-m-badge">${esc(t.posicion || 'Sin posición')}</span>
-      <button class="tcard-m-del" onclick="removeTireCardM(${i})"><span class="material-icons" style="font-size:16px">delete</span></button>
+function buildTireCardHTML(t,i){
+  const posOpts = TIRE_POSITIONS.map(p=>`<option value="${p}" ${t.posicion===p?'selected':''}>${p}</option>`).join('');
+  return `<div class="tire-card" id="tc-${i}">
+    <div class="tire-card-head">
+      <span class="tire-pos-badge"><i class="ti ti-tire" style="font-size:10px"></i> ${t.posicion||'Sin posición'}</span>
+      <button class="tire-remove" onclick="removeTireCard(${i})" title="Eliminar">
+        <i class="ti ti-trash" style="font-size:11px"></i>
+      </button>
     </div>
-    <div class="tcard-m-row">
-      <div><label>Posición</label>
-        <select onchange="updateTireFieldM(${i},'posicion',this.value)">${posOpts}</select></div>
-      <div><label>Número / ID</label>
-        <input type="text" placeholder="TI-001" value="${esc(t.numero||'')}" onchange="updateTireFieldM(${i},'numero',this.value)"></div>
+    <div class="tire-row">
+      <div class="tire-field"><label>Posición</label>
+        <select onchange="updateTireField(${i},'posicion',this.value)">${posOpts}</select></div>
+      <div class="tire-field"><label>Número / ID</label>
+        <input type="text" placeholder="ej: TI-001" value="${t.numero||''}"
+          onchange="updateTireField(${i},'numero',this.value)"></div>
     </div>
-    <div class="tcard-m-row three">
-      <div><label>Marca</label>
-        <input type="text" placeholder="Michelin" value="${esc(t.marca||'')}" onchange="updateTireFieldM(${i},'marca',this.value)"></div>
-      <div><label>Rodado</label>
-        <input type="text" placeholder="205/55R16" value="${esc(t.rodado||'')}" onchange="updateTireFieldM(${i},'rodado',this.value)"></div>
-      <div><label>DOT</label>
-        <input type="text" placeholder="2823" value="${esc(t.dot||'')}" onchange="updateTireFieldM(${i},'dot',this.value)"></div>
+    <div class="tire-row three">
+      <div class="tire-field"><label>Marca</label>
+        <input type="text" placeholder="Michelin…" value="${t.marca||''}"
+          onchange="updateTireField(${i},'marca',this.value)"></div>
+      <div class="tire-field"><label>Rodado</label>
+        <input type="text" placeholder="205/55R16" value="${t.rodado||''}"
+          onchange="updateTireField(${i},'rodado',this.value)"></div>
+      <div class="tire-field"><label>DOT</label>
+        <input type="text" placeholder="2823" value="${t.dot||''}"
+          onchange="updateTireField(${i},'dot',this.value)"></div>
     </div>
-    <div class="tcard-m-row">
-      <div><label>Fecha montaje</label>
-        <input type="date" value="${t.fecha||''}" onchange="updateTireFieldM(${i},'fecha',this.value)"></div>
-      <div><label>Km al montar</label>
-        <input type="text" placeholder="70.000" value="${esc(t.km||'')}" onchange="updateTireFieldM(${i},'km',this.value)"></div>
+    <div class="tire-row">
+      <div class="tire-field"><label>Fecha montaje</label>
+        <input type="date" value="${t.fecha||''}"
+          onchange="updateTireField(${i},'fecha',this.value)"></div>
+      <div class="tire-field"><label>Km al montar</label>
+        <input type="text" placeholder="70.000" value="${t.km||''}"
+          onchange="updateTireField(${i},'km',this.value)"></div>
     </div>
   </div>`;
 }
 
-window.updateTireFieldM = function(i, field, val) {
-  if (tireWorkM[i]) tireWorkM[i][field] = val;
-  if (field === 'posicion') {
-    const badge = document.querySelector('#tcm-' + i + ' .tcard-m-badge');
-    if (badge) badge.textContent = val;
+window.updateTireField = function(i, field, val){
+  if(!tireWorkingCopy[i]) return;
+  tireWorkingCopy[i][field] = val;
+  if(field==='posicion'){
+    const badge = document.querySelector('#tc-'+i+' .tire-pos-badge');
+    if(badge) badge.innerHTML = '<i class="ti ti-tire" style="font-size:10px"></i> ' + val;
   }
 };
-window.addTireCardM = function() {
-  tireWorkM.push({posicion:'',numero:'',marca:'',rodado:'',dot:'',fecha:'',km:''});
-  rebuildTireSheetTires();
-};
-window.removeTireCardM = function(i) {
-  tireWorkM.splice(i, 1);
-  rebuildTireSheetTires();
+
+window.addTireCard = function(){
+  tireWorkingCopy.push({posicion:'',numero:'',marca:'',rodado:'',dot:'',fecha:'',km:''});
+  rebuildTireCards();
+  // scroll to bottom of panel
+  const p = document.getElementById('panelTires');
+  setTimeout(()=>{ p.scrollTop = p.scrollHeight; }, 50);
 };
 
-function renderTireSheetAcc() {
-  accWorkM = JSON.parse(JSON.stringify(getAccData(tireSheetPlate)));
-  rebuildTireSheetAcc();
-}
-function rebuildTireSheetAcc() {
-  const body = document.getElementById('tireSheetBody');
-  let html = '';
-  if (!accWorkM.length) {
-    html += '<div class="tno-data">Sin accesorios registrados</div>';
-  } else {
-    accWorkM.forEach((a, i) => {
-      const typeOpts = ACC_TYPES_M.map(t => `<option value="${t}" ${a.tipo===t?'selected':''}>${t}</option>`).join('');
-      html += `<div class="acc-row-m">
-        <select onchange="updateAccFieldM(${i},'tipo',this.value)"><option value="">— Tipo —</option>${typeOpts}</select>
-        <input type="text" placeholder="Número/desc" value="${esc(a.numero||'')}" onchange="updateAccFieldM(${i},'numero',this.value)">
-        <button onclick="removeAccRowM(${i})"><span class="material-icons" style="font-size:15px">close</span></button>
-      </div>`;
+window.removeTireCard = function(i){
+  tireWorkingCopy.splice(i,1);
+  rebuildTireCards();
+};
+
+/* ── QUICK 5-TIRE LOADER ── */
+let quickTireData = []; // working copy for quick panel
+
+function renderQuickTireGrid(plate) {
+  // Seed with existing tires or standard 5
+  const existing = getTireData(plate || '');
+  quickTireData = TIRE_5_STANDARD.map((std, i) => {
+    const found = existing.find(t => t.posicion === std.posicion) || existing[i] || {};
+    return Object.assign({}, std, {
+      numero: found.numero || '',
+      marca:  found.marca  || '',
+      rodado: found.rodado || '',
+      dot:    found.dot    || '',
+      fecha:  found.fecha  || '',
+      km:     found.km     || '',
     });
-  }
-  html += '<button class="tadd-btn" onclick="addAccRowM()"><span class="material-icons" style="font-size:14px">add</span> Agregar accesorio</button>';
-  body.innerHTML = html;
+  });
+  rebuildQuickGrid();
 }
-window.updateAccFieldM = function(i, field, val) { if (accWorkM[i]) accWorkM[i][field] = val; };
-window.addAccRowM = function() { accWorkM.push({tipo:'',numero:''}); rebuildTireSheetAcc(); };
-window.removeAccRowM = function(i) { accWorkM.splice(i, 1); rebuildTireSheetAcc(); };
 
-window.saveTireSheetData = function() {
-  if (!tireSheetPlate) { alert('No hay vehículo seleccionado'); return; }
-  saveTireDataStore(tireSheetPlate, tireWorkM);
-  saveAccDataStore(tireSheetPlate, accWorkM);
-  closeSheet('tireSheet');
-  renderView();
+function rebuildQuickGrid() {
+  const container = document.getElementById('quickTireGrid');
+  if (!container) return;
+  container.innerHTML = `
+    <table class="qtire-table">
+      <thead>
+        <tr>
+          <th>Posición</th>
+          <th>N° / ID</th>
+          <th>Marca</th>
+          <th>Rodado</th>
+          <th>DOT</th>
+          <th>Fecha montaje</th>
+          <th>Km</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${quickTireData.map((t, i) => `
+          <tr>
+            <td><span class="qtire-pos-badge">${t.posicion}</span></td>
+            <td><input class="qtire-input wide" data-qi="${i}" data-qf="numero"
+              placeholder="TI-00${i+1}" value="${esc(t.numero)}"
+              oninput="updateQuickField(${i},'numero',this.value)"></td>
+            <td><input class="qtire-input wide" data-qi="${i}" data-qf="marca"
+              placeholder="Michelin" value="${esc(t.marca)}"
+              oninput="updateQuickField(${i},'marca',this.value)"></td>
+            <td><input class="qtire-input" data-qi="${i}" data-qf="rodado"
+              placeholder="205/55R16" value="${esc(t.rodado)}"
+              oninput="updateQuickField(${i},'rodado',this.value)"></td>
+            <td><input class="qtire-input" data-qi="${i}" data-qf="dot"
+              placeholder="2823" value="${esc(t.dot)}"
+              oninput="updateQuickField(${i},'dot',this.value)"
+              style="max-width:56px"></td>
+            <td><input class="qtire-input" type="date" data-qi="${i}" data-qf="fecha"
+              value="${t.fecha || ''}"
+              oninput="updateQuickField(${i},'fecha',this.value)"
+              style="max-width:130px"></td>
+            <td><input class="qtire-input" data-qi="${i}" data-qf="km"
+              placeholder="70.000" value="${esc(t.km)}"
+              oninput="updateQuickField(${i},'km',this.value)"
+              style="max-width:74px"></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+window.updateQuickField = function(i, field, val) {
+  if (quickTireData[i]) quickTireData[i][field] = val;
+};
+
+window.applyCommonFields = function() {
+  if (!quickTireData.length) return;
+  const first = quickTireData[0];
+  const marca  = first.marca;
+  const rodado = first.rodado;
+  const dot    = first.dot;
+  if (!marca && !rodado && !dot) {
+    alert('Completá al menos Marca, Rodado o DOT en el primer neumático para replicar.');
+    return;
+  }
+  quickTireData = quickTireData.map(t => Object.assign({}, t,
+    { marca:  marca  || t.marca,
+      rodado: rodado || t.rodado,
+      dot:    dot    || t.dot }
+  ));
+  rebuildQuickGrid();
+};
+
+/* Override saveTireData to also persist quickTireData when on quick tab */
+const _origSaveTireData = window.saveTireData;
+window.saveTireData = function() {
+  if (tireTab === 'quick') {
+    if (!tireModalPlate) { alert('No hay vehículo seleccionado'); return; }
+    // Merge quick data into tireWorkingCopy
+    // Keep any existing tires not in the standard 5 positions
+    const stdPositions = new Set(TIRE_5_STANDARD.map(t => t.posicion));
+    const extras = (getTireData(tireModalPlate) || []).filter(t => !stdPositions.has(t.posicion));
+    const merged = [...quickTireData.filter(t => t.numero || t.marca || t.rodado), ...extras];
+    saveTireDataStore(tireModalPlate, merged);
+    saveAccDataStore(tireModalPlate, accWorkingCopy);
+    document.getElementById('tireModalOverlay').style.display = 'none';
+    renderCal();
+    return;
+  }
+  if (_origSaveTireData) _origSaveTireData();
+};
+
+/* ── ACCESSORIES ── */
+function renderAccRows(plate){
+  accWorkingCopy = JSON.parse(JSON.stringify(getAccData(plate)));
+  rebuildAccTable();
+}
+
+function rebuildAccTable(){
+  const tbody = document.getElementById('accRows');
+  if(!accWorkingCopy.length){
+    tbody.innerHTML='<tr><td colspan="3" class="no-data-row">Sin accesorios registrados.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = accWorkingCopy.map((a,i)=>{
+    const typeOpts = ACC_TYPES.map(t=>`<option value="${t}" ${a.tipo===t?'selected':''}>${t}</option>`).join('');
+    return `<tr>
+      <td><select onchange="updateAccField(${i},'tipo',this.value)">
+        <option value="">— Tipo —</option>${typeOpts}
+      </select></td>
+      <td><input type="text" placeholder="Número o descripción" value="${a.numero||''}"
+        onchange="updateAccField(${i},'numero',this.value)"></td>
+      <td><button class="acc-del" onclick="removeAccRow(${i})" title="Eliminar">
+        <i class="ti ti-x"></i></button></td>
+    </tr>`;
+  }).join('');
+}
+
+window.updateAccField = function(i,field,val){ if(accWorkingCopy[i]) accWorkingCopy[i][field]=val; };
+window.addAccRow = function(){
+  accWorkingCopy.push({tipo:'',numero:''});
+  rebuildAccTable();
+};
+window.removeAccRow = function(i){ accWorkingCopy.splice(i,1); rebuildAccTable(); };
+
+/* ── SAVE ── */
+window.saveTireData = function(){
+  if(!tireModalPlate){ alert('No hay vehículo seleccionado'); return; }
+  saveTireDataStore(tireModalPlate, tireWorkingCopy);
+  saveAccDataStore(tireModalPlate, accWorkingCopy);
+  document.getElementById('tireModalOverlay').style.display='none';
+  renderCal();
+  // push to remote for cross-device sync
   pushTiresAccToRemote().then(ok => {
-    if (ok) showSyncToast('✅ Sincronizado con GitHub');
-    else    showSyncToast('📱 Guardado localmente');
+    if(ok) showSyncToast('✅ Neumáticos sincronizados con GitHub');
   });
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// SWIPE NAVIGATION
-// ═══════════════════════════════════════════════════════════════════════
-// ── EVENT DELEGATION — all res row / event clicks ──
-document.addEventListener('click', function(e) {
-  // CTA button (clipboard icon) → launch checklist DIRECTLY
-  const cta = e.target.closest('[data-cta]');
-  if (cta) {
-    e.stopPropagation();
-    const enc = cta.dataset.enc;
-    if (enc) {
-      try {
-        const res = JSON.parse(decodeURIComponent(enc));
-        sheetRes = res;            // set sheetRes so launchChecklistFromSheet works
-        launchChecklistFromSheet();
-      } catch(err) { console.error('cta launch error', err); }
-    }
-    return;
-  }
-  // res-row tap → open detail sheet
-  const row = e.target.closest('[data-enc]');
-  if (row && !row.dataset.cta) {
-    const enc = row.dataset.enc;
-    if (enc) {
-      if (row.dataset.closeDay) closeSheet('daySheet');
-      openResSheetEnc(enc);
-    }
-    return;
-  }
-  // vehicle sheet upcoming row
-  const row2 = e.target.closest('[data-enc2]');
-  if (row2) {
-    closeSheet('resSheet');
-    setTimeout(()=>openResSheetEnc(row2.dataset.enc2), 100);
-  }
-});
+window.openChecklist = function(el) {
+  try {
+    var d = JSON.parse(el.dataset.checklist.replace(/&quot;/g, '"'));
+    // find vehicle info from pque
+    var veh = ST.pque ? ST.pque.find(function(v){ return v.plate === d.plate; }) : null;
+    var tel = ST.tel ? ST.tel[d.plate] : null;
+    var payload = {
+      plate:      d.plate,
+      resid:      d.code,
+      renter:     d.renter,
+      startDate:  d.start,
+      startTime:  d.startTime,
+      endDate:    d.end,
+      endTime:    d.endTime,
+      km:         tel ? tel.km : '—',
+      tankCap:    veh ? veh.tankCap : 0,
+      bodyType:   veh ? veh.bodyType : 'HATCHBACK',
+      tires:      getTireData(d.plate),
+      tireNums:   getTireNumbers(d.plate),
+      accesorios: getAccData(d.plate),
+    };
+    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    window.open(isMobile ? 'checklist_mobile.html' : 'checklist_kinto.html', '_blank');
+  } catch(e) { console.error('openChecklist error:', e); }
+};
 
-let tsX=0;
-document.addEventListener('touchstart',e=>{tsX=e.touches[0].clientX;},{passive:true});
-document.addEventListener('touchend',e=>{
-  if(document.querySelector('.sheet-overlay.open')) return;
-  const dx=e.changedTouches[0].clientX-tsX;
-  if(Math.abs(dx)>65) navigate(dx>0?-1:1);
-},{passive:true});
+function tryRender(){
+  // 1. Control de seguridad: Frenar si falta algún archivo crítico del CDN
+  if(!ST.pque || !ST.res || !ST.tel) return;
+  
+  // 2. Redibujar estadísticas y grilla del calendario originales
+  updateStats(); 
+  renderCal();
+  
+  // 3. ── ACTUALIZACIÓN DE TELEMETRÍA EN VIVO ──
+  // Verificamos si el modal de mapas está abierto actualmente en pantalla
+  const mapOverlay = document.getElementById('mapOverlay');
+  const isMapOpen = mapOverlay && mapOverlay.classList.contains('open');
 
-// ═══════════════════════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════════════════════
-renderView();
+  // Si el modal está abierto y tenemos guardada la patente activa, refrescamos el pin
+  if (isMapOpen && window.currentMapPlate) {
+    console.log("-> [Telemetría CDN] Refrescando posición en vivo para: " + window.currentMapPlate);
+    
+    // Ejecutamos tu función nativa pasándole la patente. 
+    // Como ya inicializó el mapa, saltará directo al bloque de actualización e invalidateSize.
+    window.openVehMap(window.currentMapPlate); 
+  }
+}
+
+
+function updateStats(){
+  const total=ST.pque.length;
+  const active=ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY);
+  const nw=ST.res.filter(r=>r.status==='New');
+  const bPlates=new Set(active.map(r=>r.plate));
+  const avail=ST.pque.filter(v=>!bPlates.has(v.plate)).length;
+  let maintAlerts=0;
+  ST.pque.forEach(v=>{
+    const tel=ST.tel[v.plate];
+    if(tel && maintAlertInfo(tel.km, v.plate)) maintAlerts++;
+  });
+  document.getElementById('stT').textContent=total;
+  document.getElementById('stC').textContent=active.length;
+  document.getElementById('stN').textContent=nw.length;
+  document.getElementById('stA').textContent=avail;
+  document.getElementById('stM').textContent=maintAlerts;
+}
+
+function renderCal(){
+  const y=vYear, mo=vMonth;
+  const days=new Date(y,mo+1,0).getDate();
+  const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DOW=['D','L','M','X','J','V','S'];
+  const toD=d=>new Date(y,mo,d);
+
+  function getBarType(res,d){
+    const dd=new Date(y,mo,d); dd.setHours(0,0,0,0);
+    const s=new Date(res.start); s.setHours(0,0,0,0);
+    const e=new Date(res.end); e.setHours(0,0,0,0);
+    if(dd<s||dd>e) return null;
+    const iS=dd.getTime()===s.getTime(), iE=dd.getTime()===e.getTime();
+    if(iS&&iE) return 'bso'; if(iS) return 'bs'; if(iE) return 'be'; return 'bm';
+  }
+  function barCls(res){
+    if(res.renter==='Service') return 'bs2';
+    if(res.status==='Current') return 'bc';
+    const s=new Date(res.start); s.setHours(0,0,0,0);
+    if(s>TODAY) return 'bf';
+    return 'bn';
+  }
+
+  // nav
+  let html=`<div class="mnav">
+    <button class="nbtn" onclick="shiftMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+    <span class="mtitle">${MONTHS[mo]} ${y}</span>
+    <button class="nbtn" onclick="shiftMonth(1)"><i class="ti ti-chevron-right"></i></button>
+    <button class="nbtn tbtn" onclick="goToday()">hoy</button>
+  </div>`;
+
+  // table header
+  html+=`<div class="calwrap"><div class="calscroll"><table class="caltable"><thead><tr>`;
+  html+=`<th class="clth" style="font-size:10px;color:var(--text2);font-weight:400;letter-spacing:.05em">VEHÍCULO</th>`;
+  html+=`<th class="cmth" style="font-size:10px;color:var(--text2);font-weight:400;letter-spacing:.05em">MANTENIMIENTO</th>`;
+  for(let d=1;d<=days;d++){
+    const dt=toD(d); const dow=dt.getDay();
+    const isToday=dt.getFullYear()===TODAY.getFullYear()&&dt.getMonth()===TODAY.getMonth()&&dt.getDate()===TODAY.getDate();
+    html+=`<th class="dayth${dow===0||dow===6?' wk':''}${isToday?' tcol':''}"><span class="dn">${d}</span>${DOW[dow]}</th>`;
+  }
+  html+=`</tr></thead><tbody>`;
+
+  // rows
+  ST.pque.forEach(veh=>{
+    const vRes=ST.res.filter(r=>r.plate===veh.plate);
+    const tel=ST.tel[veh.plate];
+
+    let tdotC='var(--text3)';
+    if(tel){
+      if(tel.loc==='BOOKED') tdotC='var(--c-booked)';
+      else if(tel.loc==='PERU') tdotC='var(--accent)';
+    }
+    let fuelColor='var(--accent)', fuelPct=0, fuelLabel='';
+    if(tel&&tel.fuel&&tel.fuel!=='-'){
+      const fuelLitros=parseInt(tel.fuel)||0;
+      const tankCap=veh.tankCap||0;
+      fuelPct = tankCap>0 ? Math.min(100, Math.round(fuelLitros/tankCap*100)) : fuelLitros;
+      fuelLabel = tankCap>0 ? `${fuelLitros}L / ${tankCap}L` : `${fuelLitros}L`;
+      if(fuelPct<=25) fuelColor='var(--c-new)';
+      else if(fuelPct<=50) fuelColor='var(--c-service)';
+    }
+
+    const TOMORROW=new Date(TODAY); TOMORROW.setDate(TOMORROW.getDate()+1);
+    const transferRes=tel&&tel.loc==='PERU'?vRes.find(r=>{
+      if(!r.start) return false;
+      const rs=new Date(r.start); rs.setHours(0,0,0,0);
+      return rs.getTime()===TOMORROW.getTime();
+    }):null;
+    const needsTransfer=!!transferRes;
+
+    // maintenance
+    const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
+    const lastMaint=getLastMaint(veh.plate);
+    const histCount=getMaintHistory(veh.plate).length;
+
+    const rowCls=needsTransfer?' vrow-alert':'';
+    html+=`<tr class="vrow${rowCls}">`;
+
+    // ── VEHICLE CELL ──
+    html+=`<td class="cltd">
+      <span class="vname" title="${veh.model}">${veh.model}</span>
+      ${needsTransfer?`<span class="transfer-badge"><i class="ti ti-truck-delivery" style="font-size:10px"></i> traslado mañana</span>`:''}
+      <span class="vplate">
+        <span class="plate-tag">${veh.plate}</span>
+        ${tel?`<span class="plate-loc" style="color:${tdotC}">${tel.loc}</span>`:'<span style="color:var(--text3)">sin tel.</span>'}
+        ${tel&&tel.coords&&tel.coords.trim()&&tel.coords!=='-'?`<button class="map-pin-btn" onclick="openVehMap('${veh.plate}')"><i class="ti ti-map-pin" style="font-size:9px"></i> mapa</button>`:''}
+      </span>
+      ${tel?`<span class="vtelrow">
+        <span class="vti"><i class="ti ti-road" style="font-size:10px;margin-right:2px"></i>${tel.km} km</span>
+        <span class="vti" style="display:inline-flex;align-items:center;gap:3px">
+          <i class="ti ti-gas-station" style="font-size:10px"></i>
+          <span class="fbar-track"><span class="fbar-fill" style="width:${fuelPct}%;background:${fuelColor}"></span></span>
+          <span style="color:${fuelColor}">${fuelLabel}</span>
+        </span>
+      </span>`:''}
+      ${needsTransfer?`<span class="transfer-detail"><i class="ti ti-user" style="font-size:9px"></i> ${transferRes.renter}</span>`:''}
+      ${(()=>{const td=getTireData(veh.plate);if(!td.length)return'';return`<span class="tire-badge-row">${td.slice(0,4).map(t=>`<span class="tire-mini"><i class="ti ti-tire" style="font-size:8px"></i>${t.numero||t.posicion||'—'}</span>`).join('')}${td.length>4?`<span class="tire-mini">+${td.length-4}</span>`:''}</span>`;})()}
+    </td>`;
+
+    // ── MAINTENANCE CELL ──
+    const safeModel = veh.model.replace(/'/g,"\\'");
+    if(alert){
+      const kmFmt = alert.km.toLocaleString('es-AR');
+      const nextFmt = alert.nextMultiple.toLocaleString('es-AR');
+      const remFmt = alert.remaining.toLocaleString('es-AR');
+      html+=`<td class="cmtd">
+        <div class="maint-alert" onclick="openMaintModal('${veh.plate}','${safeModel}')">
+          <i class="ti ti-alert-triangle maint-alert-icon"></i>
+          <div class="maint-alert-text">
+            <span class="maint-alert-title">Service próximo</span>
+            <span class="maint-alert-km">${kmFmt} km · faltan ${remFmt}</span>
+            <span class="maint-alert-km">próx. múltiplo: ${nextFmt} km</span>
+          </div>
+        </div>
+        ${lastMaint?`<span class="maint-last"><i class="ti ti-check" style="font-size:9px;color:var(--accent)"></i> Último: ${new Date(lastMaint.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
+        <button class="maint-register-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')">
+          <i class="ti ti-plus" style="font-size:10px"></i> Registrar
+        </button>
+        ${histCount>0?`<button class="maint-hist-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')"><i class="ti ti-history" style="font-size:10px"></i> ${histCount} registro${histCount>1?'s':''}</button>`:''}
+      </td>`;
+    } else {
+      html+=`<td class="cmtd">
+        <span class="maint-ok"><i class="ti ti-circle-check" style="font-size:11px;color:var(--accent)"></i> Al día</span>
+        ${lastMaint?`<span class="maint-last"><i class="ti ti-check" style="font-size:9px;color:var(--accent)"></i> Último: ${new Date(lastMaint.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
+        ${histCount>0?`<button class="maint-hist-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')"><i class="ti ti-history" style="font-size:10px"></i> ${histCount} registro${histCount>1?'s':''}</button>`:''}
+        ${tel&&!alert?`<button class="maint-register-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')"><i class="ti ti-plus" style="font-size:10px"></i></button>`:''}
+      </td>`;
+    }
+
+    // ── DAY CELLS ──
+    for(let d=1;d<=days;d++){
+      const dt=toD(d); const dow=dt.getDay();
+      const isToday=dt.getFullYear()===TODAY.getFullYear()&&dt.getMonth()===TODAY.getMonth()&&dt.getDate()===TODAY.getDate();
+      html+=`<td class="dcell${dow===0||dow===6?' wk':''}${isToday?' tcol':''}">`;
+      vRes.forEach(res=>{
+        const btype=getBarType(res,d);
+        if(!btype) return;
+        const bc=barCls(res);
+        const isStart=btype==='bs'||btype==='bso';
+        const label=isStart?(res.renter.length>12?res.renter.slice(0,11)+'…':res.renter):'';
+        const tipData=JSON.stringify({
+          code:res.code,renter:res.renter,
+          start:res.start?res.start.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}):'',
+          startTime:res.start?res.start.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}):'',
+          end:res.end?res.end.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}):'',
+          endTime:res.end?res.end.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}):'',
+          status:res.status,plate:res.plate
+        }).replace(/"/g,'&quot;');
+        html+=`<div class="bar ${btype} ${bc}" data-tip="${tipData}" data-checklist="${tipData}" onclick="openChecklist(this)">${label}</div>`;
+      });
+      html+=`</td>`;
+    }
+    html+=`</tr>`;
+  });
+
+  html+=`</tbody></table></div></div>`;
+
+  // legend
+  html+=`<div class="legend">
+    <div class="li"><div class="lsw" style="background:var(--c-current)"></div>Reserva activa</div>
+    <div class="li"><div class="lsw" style="background:var(--c-new)"></div>Reserva nueva</div>
+    <div class="li"><div class="lsw" style="background:var(--c-future)"></div>Reserva futura</div>
+    <div class="li"><div class="lsw" style="background:var(--c-service)"></div>Servicio</div>
+    <div class="li"><div class="lsw" style="background:#d97706;height:3px"></div><i class="ti ti-truck-delivery" style="font-size:12px;color:#d97706"></i>Traslado mañana</div>
+    <div class="li"><div class="lsw" style="background:#dc2626;height:3px"></div><i class="ti ti-alert-triangle" style="font-size:12px;color:#dc2626"></i>Alerta mantenimiento</div>
+    <div class="li" style="margin-left:auto;font-size:10px;color:var(--text3)"><i class="ti ti-refresh" style="font-size:12px;margin-right:4px"></i>Actualizar: cargar nuevos .txt</div>
+  </div>`;
+
+  document.getElementById('app').innerHTML=html;
+
+  // tooltip
+  const tip=document.getElementById('tip');
+  document.querySelectorAll('.bar[data-tip]').forEach(el=>{
+    el.addEventListener('mouseenter',e=>{
+      const d=JSON.parse(el.dataset.tip.replace(/&quot;/g,'"'));
+      tip.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--c-booked)">${esc(d.plate)}</span><br><span style="font-weight:600">${esc(d.renter)}</span><br><span style="color:var(--text2);font-size:10px"><i class="ti ti-login" style="font-size:9px"></i> ${esc(d.start)} ${esc(d.startTime)}</span><br><span style="color:var(--text2);font-size:10px"><i class="ti ti-logout" style="font-size:9px"></i> ${esc(d.end)} ${esc(d.endTime)}</span><br><span style="font-size:9px;color:var(--text3);margin-top:2px;display:block">${esc(d.status)} · #${esc(d.code)}</span>`;
+      tip.style.display='block'; moveTip(e);
+    });
+    el.addEventListener('mousemove',moveTip);
+    el.addEventListener('mouseleave',()=>{tip.style.display='none';});
+  });
+  function moveTip(e){
+    let x=e.clientX+12,y=e.clientY-8;
+    if(x+230>window.innerWidth) x=e.clientX-230;
+    tip.style.left=x+'px'; tip.style.top=y+'px';
+  }
+}
 </script>
+
+<!-- ── CONFIG MODAL ── -->
+<div class="cfg-overlay" id="cfgOverlay" style="display:none" onclick="closeCfgModal(event)">
+  <div class="cfg-modal" onclick="event.stopPropagation()">
+    <div class="cfg-head">
+      <div>
+        <div class="cfg-title"><i class="ti ti-settings" style="font-size:13px;margin-right:5px"></i>Fuentes de datos</div>
+        <div class="cfg-sub">Rutas relativas al servidor. Los archivos se cargan automáticamente al abrir la página.</div>
+      </div>
+      <button class="cfg-close" onclick="closeCfgModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="cfg-body">
+      <div class="cfg-section-title">Rutas de archivos .txt en el servidor</div>
+      <div class="cfg-row">
+        <label class="cfg-label"><span class="src-dot" id="cdot-pque"></span> Parque</label>
+        <div class="cfg-input-wrap">
+          <input class="cfg-input" id="cfgPque" placeholder="./Pque.txt" spellcheck="false">
+          <button class="cfg-test-btn" onclick="testPath('pque')"><i class="ti ti-plug" style="font-size:11px"></i> Probar</button>
+        </div>
+        <div class="cfg-status" id="cst-pque"></div>
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label"><span class="src-dot" id="cdot-res"></span> Reservas</label>
+        <div class="cfg-input-wrap">
+          <input class="cfg-input" id="cfgRes" placeholder="./scraped_data.txt" spellcheck="false">
+          <button class="cfg-test-btn" onclick="testPath('res')"><i class="ti ti-plug" style="font-size:11px"></i> Probar</button>
+        </div>
+        <div class="cfg-status" id="cst-res"></div>
+      </div>
+      <div class="cfg-row">
+        <label class="cfg-label"><span class="src-dot" id="cdot-tel"></span> Telemática</label>
+        <div class="cfg-input-wrap">
+          <input class="cfg-input" id="cfgTel" placeholder="./TelemGts_data.txt" spellcheck="false">
+          <button class="cfg-test-btn" onclick="testPath('tel')"><i class="ti ti-plug" style="font-size:11px"></i> Probar</button>
+        </div>
+        <div class="cfg-status" id="cst-tel"></div>
+      </div>
+      <hr class="cfg-divider">
+      <div class="cfg-section-title">Sincronización cross-device (neumáticos)</div>
+      <div class="cfg-row">
+        <label class="cfg-label">Webhook n8n para fleet_tires_acc.json</label>
+        <div class="cfg-input-wrap">
+          <input class="cfg-input" id="cfgN8nWebhook" placeholder="https://tu-n8n.com/webhook/fleet-tires-sync" spellcheck="false">
+          <button class="cfg-test-btn" onclick="testN8nWebhook()"><i class="ti ti-plug" style="font-size:11px"></i> Probar</button>
+        </div>
+        <div class="cfg-status" id="cst-n8n"></div>
+      </div>
+      <hr class="cfg-divider">
+      <div class="cfg-section-title">Fuente rápida</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="cfg-test-btn" onclick="applyGithubPreset()" style="display:flex;align-items:center;gap:5px">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </button>
+        <button class="cfg-test-btn" onclick="applyLocalPreset()" style="display:flex;align-items:center;gap:5px">
+          <i class="ti ti-server" style="font-size:11px"></i> Servidor local
+        </button>
+      </div>
+      <div id="ghPresetPanel" style="display:none;margin-bottom:10px;background:var(--surface2);border:0.5px solid var(--border-s);border-radius:6px;padding:10px 12px">
+        <div style="font-size:10px;color:var(--text2);margin-bottom:6px">
+          Pegá la URL de la carpeta de tu repo en GitHub (rama + carpeta opcional):
+        </div>
+        <code style="font-size:9px;color:var(--text3);display:block;margin-bottom:6px">https://github.com/usuario/repo/tree/main/datos/</code>
+        <div class="cfg-input-wrap" style="margin-bottom:6px">
+          <input class="cfg-input" id="ghBaseUrl" placeholder="https://github.com/usuario/repo/tree/main/" spellcheck="false" style="font-size:11px">
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px">
+          Los archivos deben llamarse exactamente <strong>Pque.txt</strong>, <strong>scraped_data.txt</strong> y <strong>TelemGts_data.txt</strong>
+        </div>
+        <button class="btn-save" style="font-size:11px;padding:5px 14px" onclick="applyGithubUrl()">
+          <i class="ti ti-arrow-right" style="font-size:11px"></i> Aplicar rutas
+        </button>
+      </div>
+
+    </div>
+    <div class="cfg-foot">
+      <span class="cfg-reload-note"><i class="ti ti-refresh" style="font-size:11px"></i> Auto-recarga cada vez que abrís la página</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn-cancel" onclick="closeCfgModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveCfgAndReload()"><i class="ti ti-device-floppy" style="font-size:12px"></i> Guardar y recargar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TIRES / ACCESSORIES MODAL ── -->
+<div class="tmodal-overlay" id="tireModalOverlay" style="display:none" onclick="closeTireModal(event)">
+  <div class="tmodal" onclick="event.stopPropagation()">
+    <div class="tmodal-head">
+      <div>
+        <div class="tmodal-title" id="tireModalTitle">Neumáticos y Accesorios</div>
+        <div class="tmodal-sub" id="tireModalSub"></div>
+      </div>
+      <button class="tmodal-close" onclick="closeTireModal()" aria-label="cerrar"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="tmodal-tabs">
+      <button class="tmodal-tab active" id="tabTires" onclick="switchTireTab('tires')">
+        <i class="ti ti-tire" style="font-size:12px"></i> Neumáticos
+      </button>
+      <button class="tmodal-tab" id="tabQuick" onclick="switchTireTab('quick')">
+        <i class="ti ti-bolt" style="font-size:12px"></i> Carga rápida
+      </button>
+      <button class="tmodal-tab" id="tabAcc" onclick="switchTireTab('acc')">
+        <i class="ti ti-tool" style="font-size:12px"></i> Accesorios
+      </button>
+    </div>
+    <div id="panelTires" class="tmodal-body">
+      <div id="tireCards"></div>
+      <button class="add-tire-btn" onclick="addTireCard()">
+        <i class="ti ti-plus" style="font-size:11px"></i> Agregar neumático
+      </button>
+    </div>
+    <!-- QUICK 5-TIRE PANEL -->
+    <div id="panelQuick" class="tmodal-body" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+        Completá los datos de los <strong>5 neumáticos estándar</strong>. Campos en común (marca, rodado) se aplican a todos si los completás en el primero.
+      </div>
+      <div id="quickTireGrid"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="add-tire-btn" style="flex:1;justify-content:center" onclick="applyCommonFields()">
+          <i class="ti ti-copy" style="font-size:11px"></i> Replicar marca y rodado a todos
+        </button>
+      </div>
+    </div>
+
+    <div id="panelAcc" class="tmodal-body" style="display:none">
+      <table class="acc-table">
+        <thead><tr><th>Tipo</th><th>Número / Descripción</th><th></th></tr></thead>
+        <tbody id="accRows"></tbody>
+      </table>
+      <button class="add-acc-btn" onclick="addAccRow()">
+        <i class="ti ti-plus" style="font-size:10px"></i> Agregar accesorio
+      </button>
+    </div>
+    <div class="tmodal-foot">
+      <button class="btn-cancel" onclick="closeTireModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveTireData()">
+        <i class="ti ti-device-floppy" style="font-size:12px"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ── FLEET MAP MODAL ── -->
+<div class="map-overlay" id="mapOverlay" onclick="closeMapModal(event)">
+  <div class="map-modal" onclick="event.stopPropagation()">
+    <div class="map-head">
+      <div>
+        <div class="map-title" id="mapTitle">Ubicación del vehículo</div>
+        <div class="map-sub"  id="mapSub">—</div>
+      </div>
+      <button class="map-close" onclick="closeMapModal()" aria-label="cerrar">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+    <div id="fleetMapContainer"></div>
+    <div class="map-foot">
+      <span class="map-coords" id="mapCoords">—</span>
+      <a class="map-btn-osm" id="mapOsmLink" href="#" target="_blank" rel="noopener">
+        <i class="ti ti-external-link" style="font-size:11px"></i> Ver en OpenStreetMap
+      </a>
+    </div>
+  </div>
+</div>
 </body>
 </html>
