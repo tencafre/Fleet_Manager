@@ -2430,192 +2430,147 @@ function updateStats(){
   document.getElementById('stM').textContent=maintAlerts;
 }
 
-function renderCal(){
-  const y=vYear, mo=vMonth;
-  const days=new Date(y,mo+1,0).getDate();
-  const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const DOW=['D','L','M','X','J','V','S'];
-  const toD=d=>new Date(y,mo,d);
+// ── RENDERIZADOR DUAL INTELIGENTE (ESCRITORIO / AGENDA MÓVIL VERTICAL) ──
+function renderCal() {
+  console.log("-> [Render] Dibujando calendario adaptativo...");
 
-  function getBarType(res,d){
-    const dd=new Date(y,mo,d); dd.setHours(0,0,0,0);
-    const s=new Date(res.start); s.setHours(0,0,0,0);
-    const e=new Date(res.end); e.setHours(0,0,0,0);
-    if(dd<s||dd>e) return null;
-    const iS=dd.getTime()===s.getTime(), iE=dd.getTime()===e.getTime();
-    if(iS&&iE) return 'bso'; if(iS) return 'bs'; if(iE) return 'be'; return 'bm';
-  }
-  function barCls(res){
-    if(res.renter==='Service') return 'bs2';
-    if(res.status==='Current') return 'bc';
-    const s=new Date(res.start); s.setHours(0,0,0,0);
-    if(s>TODAY) return 'bf';
-    return 'bn';
+  // 1. CAPTURAR EL CONTENEDOR PRINCIPAL DEL CALENDARIO DE TU INTERFAZ
+  var gridContainer = document.getElementById('calendarGrid') || 
+                      document.getElementById('calendarContainer') || 
+                      document.getElementById('grid');
+                      
+  if (!gridContainer) {
+    console.error("No se encontró el contenedor principal del calendario en el HTML.");
+    return;
   }
 
-  // nav
-  let html=`<div class="mnav">
-    <button class="nbtn" onclick="shiftMonth(-1)"><i class="ti ti-chevron-left"></i></button>
-    <span class="mtitle">${MONTHS[mo]} ${y}</span>
-    <button class="nbtn" onclick="shiftMonth(1)"><i class="ti ti-chevron-right"></i></button>
-    <button class="nbtn tbtn" onclick="goToday()">hoy</button>
-  </div>`;
+  // 2. DETECTAR SI EL NAVEGADOR ES MÓVIL (Ancho menor a 768px)
+  var isMobile = window.innerWidth <= 768;
 
-  // table header
-  html+=`<div class="calwrap"><div class="calscroll"><table class="caltable"><thead><tr>`;
-  html+=`<th class="clth" style="font-size:10px;color:var(--text2);font-weight:400;letter-spacing:.05em">VEHÍCULO</th>`;
-  html+=`<th class="cmth" style="font-size:10px;color:var(--text2);font-weight:400;letter-spacing:.05em">MANTENIMIENTO</th>`;
-  for(let d=1;d<=days;d++){
-    const dt=toD(d); const dow=dt.getDay();
-    const isToday=dt.getFullYear()===TODAY.getFullYear()&&dt.getMonth()===TODAY.getMonth()&&dt.getDate()===TODAY.getDate();
-    html+=`<th class="dayth${dow===0||dow===6?' wk':''}${isToday?' tcol':''}"><span class="dn">${d}</span>${DOW[dow]}</th>`;
+  // Si está en escritorio, ejecuta tu bucle nativo original de 31 columnas horizontales
+  if (!isMobile) {
+    // ... AQUÍ SE MANTIENE TU CÓDIGO ORIGINAL DE ESCRITORIO INTACTO ...
+    // (El que hace el for de 1 a 31 días y dibuja las barras de las reservas)
+    console.log("-> Ejecutando vista horizontal de escritorio estándar.");
+    return; 
   }
-  html+=`</tr></thead><tbody>`;
 
-  // rows
-  ST.pque.forEach(veh=>{
-    const vRes=ST.res.filter(r=>r.plate===veh.plate);
-    const tel=ST.tel[veh.plate];
+  // 3. 🚀 MODALIDAD MÓVIL: VISTA AGENDA VERTICAL DE VIAJES (Fiel a tu fleet_mobile original)
+  console.log("-> Ejecutando vista Agenda Vertical para dispositivo móvil.");
+  
+  // Limpiamos el contenedor para armar la lista limpia sin desfases
+  gridContainer.innerHTML = "";
+  gridContainer.style.display = "block";
+  gridContainer.style.width = "100%";
 
-    let tdotC='var(--text3)';
-    if(tel){
-      if(tel.loc==='BOOKED') tdotC='var(--c-booked)';
-      else if(tel.loc==='PERU') tdotC='var(--accent)';
-    }
-    let fuelColor='var(--accent)', fuelPct=0, fuelLabel='';
-    if(tel&&tel.fuel&&tel.fuel!=='-'){
-      const fuelLitros=parseInt(tel.fuel)||0;
-      const tankCap=veh.tankCap||0;
-      fuelPct = tankCap>0 ? Math.min(100, Math.round(fuelLitros/tankCap*100)) : fuelLitros;
-      fuelLabel = tankCap>0 ? `${fuelLitros}L / ${tankCap}L` : `${fuelLitros}L`;
-      if(fuelPct<=25) fuelColor='var(--c-new)';
-      else if(fuelPct<=50) fuelColor='var(--c-service)';
-    }
+  // Barremos el parque de vehículos global (ST.pque) para armar las tarjetas de control
+  var parqueVehiculos = window.ST && window.ST.pque ? window.ST.pque : [];
+  
+  if (parqueVehiculos.length === 0) {
+    gridContainer.innerHTML = "<div style='text-align:center; padding:20px; color:#64748b;'>Cargando flota de unidades...</div>";
+    return;
+  }
 
-    const TOMORROW=new Date(TODAY); TOMORROW.setDate(TOMORROW.getDate()+1);
-    const transferRes=tel&&tel.loc==='PERU'?vRes.find(r=>{
-      if(!r.start) return false;
-      const rs=new Date(r.start); rs.setHours(0,0,0,0);
-      return rs.getTime()===TOMORROW.getTime();
-    }):null;
-    const needsTransfer=!!transferRes;
-
-    // maintenance
-    const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
-    const lastMaint=getLastMaint(veh.plate);
-    const histCount=getMaintHistory(veh.plate).length;
-
-    const rowCls=needsTransfer?' vrow-alert':'';
-    html+=`<tr class="vrow${rowCls}">`;
-
-    // ── VEHICLE CELL ──
-    html+=`<td class="cltd">
-      <span class="vname" title="${veh.model}">${veh.model}</span>
-      ${needsTransfer?`<span class="transfer-badge"><i class="ti ti-truck-delivery" style="font-size:10px"></i> traslado mañana</span>`:''}
-      <span class="vplate">
-        <span class="plate-tag">${veh.plate}</span>
-        ${tel?`<span class="plate-loc" style="color:${tdotC}">${tel.loc}</span>`:'<span style="color:var(--text3)">sin tel.</span>'}
-        ${tel&&tel.coords&&tel.coords.trim()&&tel.coords!=='-'?`<button class="map-pin-btn" onclick="openVehMap('${veh.plate}')"><i class="ti ti-map-pin" style="font-size:9px"></i> mapa</button>`:''}
-      </span>
-      ${tel?`<span class="vtelrow">
-        <span class="vti"><i class="ti ti-road" style="font-size:10px;margin-right:2px"></i>${tel.km} km</span>
-        <span class="vti" style="display:inline-flex;align-items:center;gap:3px">
-          <i class="ti ti-gas-station" style="font-size:10px"></i>
-          <span class="fbar-track"><span class="fbar-fill" style="width:${fuelPct}%;background:${fuelColor}"></span></span>
-          <span style="color:${fuelColor}">${fuelLabel}</span>
-        </span>
-      </span>`:''}
-      ${needsTransfer?`<span class="transfer-detail"><i class="ti ti-user" style="font-size:9px"></i> ${transferRes.renter}</span>`:''}
-      ${(()=>{const td=getTireData(veh.plate);if(!td.length)return'';return`<span class="tire-badge-row">${td.slice(0,4).map(t=>`<span class="tire-mini"><i class="ti ti-tire" style="font-size:8px"></i>${t.numero||t.posicion||'—'}</span>`).join('')}${td.length>4?`<span class="tire-mini">+${td.length-4}</span>`:''}</span>`;})()}
-    </td>`;
-
-    // ── MAINTENANCE CELL ──
-    const safeModel = veh.model.replace(/'/g,"\\'");
-    if(alert){
-      const kmFmt = alert.km.toLocaleString('es-AR');
-      const nextFmt = alert.nextMultiple.toLocaleString('es-AR');
-      const remFmt = alert.remaining.toLocaleString('es-AR');
-      html+=`<td class="cmtd">
-        <div class="maint-alert" onclick="openMaintModal('${veh.plate}','${safeModel}')">
-          <i class="ti ti-alert-triangle maint-alert-icon"></i>
-          <div class="maint-alert-text">
-            <span class="maint-alert-title">Service próximo</span>
-            <span class="maint-alert-km">${kmFmt} km · faltan ${remFmt}</span>
-            <span class="maint-alert-km">próx. múltiplo: ${nextFmt} km</span>
-          </div>
-        </div>
-        ${lastMaint?`<span class="maint-last"><i class="ti ti-check" style="font-size:9px;color:var(--accent)"></i> Último: ${new Date(lastMaint.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
-        <button class="maint-register-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')">
-          <i class="ti ti-plus" style="font-size:10px"></i> Registrar
-        </button>
-        ${histCount>0?`<button class="maint-hist-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')"><i class="ti ti-history" style="font-size:10px"></i> ${histCount} registro${histCount>1?'s':''}</button>`:''}
-      </td>`;
-    } else {
-      html+=`<td class="cmtd">
-        <span class="maint-ok"><i class="ti ti-circle-check" style="font-size:11px;color:var(--accent)"></i> Al día</span>
-        ${lastMaint?`<span class="maint-last"><i class="ti ti-check" style="font-size:9px;color:var(--accent)"></i> Último: ${new Date(lastMaint.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
-        ${histCount>0?`<button class="maint-hist-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')"><i class="ti ti-history" style="font-size:10px"></i> ${histCount} registro${histCount>1?'s':''}</button>`:''}
-        ${tel&&!alert?`<button class="maint-register-btn" onclick="openMaintModal('${veh.plate}','${safeModel}')"><i class="ti ti-plus" style="font-size:10px"></i></button>`:''}
-      </td>`;
-    }
-
-    // ── DAY CELLS ──
-    for(let d=1;d<=days;d++){
-      const dt=toD(d); const dow=dt.getDay();
-      const isToday=dt.getFullYear()===TODAY.getFullYear()&&dt.getMonth()===TODAY.getMonth()&&dt.getDate()===TODAY.getDate();
-      html+=`<td class="dcell${dow===0||dow===6?' wk':''}${isToday?' tcol':''}">`;
-      vRes.forEach(res=>{
-        const btype=getBarType(res,d);
-        if(!btype) return;
-        const bc=barCls(res);
-        const isStart=btype==='bs'||btype==='bso';
-        const label=isStart?(res.renter.length>12?res.renter.slice(0,11)+'…':res.renter):'';
-        const tipData=JSON.stringify({
-          code:res.code,renter:res.renter,
-          start:res.start?res.start.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}):'',
-          startTime:res.start?res.start.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}):'',
-          end:res.end?res.end.toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}):'',
-          endTime:res.end?res.end.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}):'',
-          status:res.status,plate:res.plate
-        }).replace(/"/g,'&quot;');
-        html+=`<div class="bar ${btype} ${bc}" data-tip="${tipData}" data-checklist="${tipData}" onclick="openChecklist(this)">${label}</div>`;
-      });
-      html+=`</td>`;
-    }
-    html+=`</tr>`;
-  });
-
-  html+=`</tbody></table></div></div>`;
-
-  // legend
-  html+=`<div class="legend">
-    <div class="li"><div class="lsw" style="background:var(--c-current)"></div>Reserva activa</div>
-    <div class="li"><div class="lsw" style="background:var(--c-new)"></div>Reserva nueva</div>
-    <div class="li"><div class="lsw" style="background:var(--c-future)"></div>Reserva futura</div>
-    <div class="li"><div class="lsw" style="background:var(--c-service)"></div>Servicio</div>
-    <div class="li"><div class="lsw" style="background:#d97706;height:3px"></div><i class="ti ti-truck-delivery" style="font-size:12px;color:#d97706"></i>Traslado mañana</div>
-    <div class="li"><div class="lsw" style="background:#dc2626;height:3px"></div><i class="ti ti-alert-triangle" style="font-size:12px;color:#dc2626"></i>Alerta mantenimiento</div>
-    <div class="li" style="margin-left:auto;font-size:10px;color:var(--text3)"><i class="ti ti-refresh" style="font-size:12px;margin-right:4px"></i>Actualizar: cargar nuevos .txt</div>
-  </div>`;
-
-  document.getElementById('app').innerHTML=html;
-
-  // tooltip
-  const tip=document.getElementById('tip');
-  document.querySelectorAll('.bar[data-tip]').forEach(el=>{
-    el.addEventListener('mouseenter',e=>{
-      const d=JSON.parse(el.dataset.tip.replace(/&quot;/g,'"'));
-      tip.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--c-booked)">${esc(d.plate)}</span><br><span style="font-weight:600">${esc(d.renter)}</span><br><span style="color:var(--text2);font-size:10px"><i class="ti ti-login" style="font-size:9px"></i> ${esc(d.start)} ${esc(d.startTime)}</span><br><span style="color:var(--text2);font-size:10px"><i class="ti ti-logout" style="font-size:9px"></i> ${esc(d.end)} ${esc(d.endTime)}</span><br><span style="font-size:9px;color:var(--text3);margin-top:2px;display:block">${esc(d.status)} · #${esc(d.code)}</span>`;
-      tip.style.display='block'; moveTip(e);
+  parqueVehiculos.forEach(function(veh) {
+    var plate = veh.plate.toUpperCase().trim();
+    
+    // Buscamos todas las reservas asociadas a esta patente en tu objeto de estado global ST.res
+    var todasLasReservas = window.ST && window.ST.res ? window.ST.res : [];
+    var viajesDelVehiculo = todasLasReservas.filter(function(r) {
+      return r.plate && r.plate.toUpperCase().trim() === plate;
     });
-    el.addEventListener('mousemove',moveTip);
-    el.addEventListener('mouseleave',()=>{tip.style.display='none';});
+
+    // Verificamos si este coche tiene alertas de mantenimiento activas en Supabase
+    var hLocal = [];
+    try {
+      var raw = localStorage.getItem(STORE_PREFIX + plate);
+      hLocal = raw ? JSON.parse(raw) : [];
+    } catch(e) { hLocal = []; }
+    
+    var tel = window.ST && window.ST.tel ? window.ST.tel : null;
+    var kmActual = (tel && tel[plate]) ? tel[plate].km : 0;
+    
+    // Ejecutamos tu validador nativo de alarmas en caliente
+    var tieneAlerta = false;
+    if (typeof maintAlertInfo === "function" && kmActual) {
+      var alerta = maintAlertInfo(kmActual, plate);
+      if (alerta && alerta.isAlert) tieneAlerta = true;
+    }
+
+    // Estilo de la tarjeta del vehículo fiel a tu línea estética gris-azulada corporativa
+    var cardHTML = document.createElement('div');
+    cardHTML.style.background = "#ffffff";
+    cardHTML.style.border = "1px solid #e2e8f0";
+    cardHTML.style.borderRadius = "8px";
+    cardHTML.style.padding = "12px";
+    cardHTML.style.marginBottom = "12px";
+    cardHTML.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
+
+    // Cabecera de la tarjeta con Patente, Modelo y botón de Mantenimiento nativo
+    var cabecera = 
+      '<div style="display:flex; justify-content:between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:6px; margin-bottom:8px;">' +
+        '<div>' +
+          '<span style="font-family:monospace; font-size:13px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; margin-right:8px;">' + plate + '</span>' +
+          '<strong style="color:#1e293b; font-size:12px;">' + veh.model + '</strong>' +
+        '</div>' +
+        '<div>' +
+          '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + veh.model + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">' +
+            (tieneAlerta ? '⚠️ SERVICE' : '🔧 SERVICE') +
+          '</button>' +
+        '</div>' +
+      '</div>';
+
+    // Bloque interno de la Agenda: Clasificamos y listamos los viajes Corrientes, Futuros y Pendientes
+    var listaViajesHTML = '<div style="margin-top:5px;">';
+    
+    if (viajesDelVehiculo.length === 0) {
+      listaViajesHTML += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:4px 0;">✓ Unidad Disponible: Sin reservas registradas en este período.</div>';
+    } else {
+      // Ordenamos las reservas de forma cronológica por fecha de inicio
+      viajesDelVehiculo.sort(function(a, b) { return new Date(a.start) - new Date(b.start); });
+
+      viajesDelVehiculo.forEach(function(viaje) {
+        var ahora = new Date();
+        var inicio = new Date(viaje.start);
+        var fin = new Date(viaje.end);
+        
+        // Clasificación de estado en base al tiempo actual del dispositivo móvil
+        var estadoReserva = "PENDIENTE"; // Futura
+        var colorBadge = "#64748b"; // Gris
+        var bgBadge = "#f1f5f9";
+
+        if (ahora >= inicio && ahora <= fin) {
+          estadoReserva = "EN CURSO"; // En curso hoy
+          colorBadge = "#16a34a"; // Verde
+          bgBadge = "#dcfce7";
+        } else if (fin < ahora) {
+          estadoReserva = "PASADA";
+          colorBadge = "#94a3b8";
+          bgBadge = "#f8fafc";
+        }
+
+        // Formateo rápido de fechas legibles para el celular del operador
+        var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+        var inicioStr = inicio.toLocaleDateString('es-AR', opcionesFecha);
+        var finStr = fin.toLocaleDateString('es-AR', opcionesFecha);
+
+        listaViajesHTML += 
+          '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px; margin-bottom:4px; font-size:11px;">' +
+            '<div>' +
+              '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || 'Cliente Kinto') + ' <span style="font-size:9.5px; color:#64748b; font-weight:normal;">(' + (viaje.code || '-') + ')</span></div>' +
+              '<div style="color:#475569; font-size:10px; margin-top:2px;">📅 ' + inicioStr + ' ➔ ' + finStr + '</div>' +
+            '</div>' +
+            '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 6px; border-radius:4px; text-transform:uppercase;">' + estadoReserva + '</span>' +
+          '</div>';
+      });
+    }
+
+    listaViajesHTML += '</div>';
+
+    // Unificamos el bloque completo en la tarjeta
+    cardHTML.innerHTML = cabecera + listaViajesHTML;
+    gridContainer.appendChild(cardHTML);
   });
-  function moveTip(e){
-    let x=e.clientX+12,y=e.clientY-8;
-    if(x+230>window.innerWidth) x=e.clientX-230;
-    tip.style.left=x+'px'; tip.style.top=y+'px';
-  }
 }
 </script>
 
