@@ -834,6 +834,88 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 </div>
 
 <script>
+//CARGA INICIAL
+// ═══════════════════════════════════════════════════════════════
+// VARIABLES GLOBALES CRÍTICAS — CONTROL DE SEGURIDAD MÓVIL
+// ═══════════════════════════════════════════════════════════════
+if (typeof WORKER_URL === "undefined") {
+  var WORKER_URL = "https://workers.dev";
+}
+if (typeof STORE_PREFIX === "undefined") {
+  var STORE_PREFIX = "fleet_maint_";
+}
+if (typeof TODAY === "undefined") {
+  var TODAY = new Date();
+}
+if (typeof MAINT_TYPES === "undefined") {
+  var MAINT_TYPES = [
+    { label: "Cambio de Aceite" },
+    { label: "Distribución" },
+    { label: "Pastillas de Freno" },
+    { label: "Filtros y Fluidos" },
+    { label: "Revisión General" }
+  ];
+}
+
+// Inicialización forzada del objeto de estado global si está ausente
+if (typeof ST === "undefined" || !ST) {
+  window.ST = { pque: null, tel: null, res: null, maintHistory: {} };
+}
+
+// ── DISPARADOR AUTOMÁTICO DE ARRANQUE INMUNE A CRASHES DE CONSOLA ──
+window.addEventListener('DOMContentLoaded', function() {
+  console.log("-> [Init Mobile] DOM Cargado de forma exitosa. Evaluando parsers...");
+
+  // Intentamos ejecutar tu función nativa de escritorio encargada de jalar el CDN
+  if (typeof initApp === "function") {
+    try {
+      initApp();
+      console.log("-> [Init Mobile] Ejecutada initApp nativa.");
+    } catch(e) { console.warn("Aviso controlado: initApp falló o requiere IDs de escritorio.", e); }
+  } else if (typeof loadData === "function") {
+    try {
+      loadData();
+    } catch(e) { console.warn("Aviso controlado: loadData falló.", e); }
+  }
+
+  // ── LOOP DE COMPROBACIÓN EXCLUSIVO PARA MÓVIL ──
+  // Revisa la memoria cada 300ms. Apenas detecta que el CDN pobló el array, 
+  // borra el cartel de carga y dibuja la agenda con reservas y mantenimientos de forma inmediata.
+  var intentos = 0;
+  var chequearDatosInterval = setInterval(function() {
+    intentos++;
+    
+    // Verificamos si los datos del parque y telemetría ya se encuentran en la memoria global ST
+    var parqueListo = window.ST && window.ST.pque && window.ST.pque.length > 0;
+    
+    if (parqueListo) {
+      clearInterval(chequearDatosInterval);
+      console.log("-> [Init Mobile] ¡Flota detectada en caché/CDN de fondo! Forzando renderizado...");
+      
+      // Ocultamos de forma definitiva cualquier loader o aviso estático "Cargando..."
+      var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
+      if (loader) loader.style.display = 'none';
+
+      // Disparamos nuestra función adaptativa de agenda vertical
+      if (typeof renderCal === "function") {
+        renderCal();
+      }
+    } else if (intentos > 15) {
+      // PLAN DE CONTINGENCIA FINAL: Si pasaron 4.5 segundos y el CDN no respondió, 
+      // forzamos el dibujo usando el LocalStorage de respaldo para que la pantalla no quede en blanco
+      clearInterval(chequearDatosInterval);
+      console.warn("-> [Init Mobile] Tiempo de espera del CDN agotado. Ejecutando renderizado de contingencia.");
+      
+      var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
+      if (loader) loader.style.display = 'none';
+      
+      if (typeof renderCal === "function") {
+        renderCal();
+      }
+    }
+  }, 300);
+});
+
 // ── STORAGE KEY PREFIX ──
 // ── MAINTENANCE SERVICE TYPES ──────────────────────────────────────────────
 const MAINT_TYPES = [
