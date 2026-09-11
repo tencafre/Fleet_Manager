@@ -2546,32 +2546,29 @@ function tryRender(){
 }
 
 window.updateStats = function() {
-  console.log("-> [Mobile UI] Calculando índices de panel superior con autoinyección...");
+  console.log("-> [Mobile UI] Calculando índices de panel superior fijado al techo...");
   if (!window.ST || !window.ST.pque) return;
   
-  // 1. INTENTAR CAPTURAR EL CONTENEDOR PRINCIPAL O USAR EL CUERPO DE LA INTERFAZ
-  var mainContainer = document.getElementById('calendar') || 
-                      document.getElementById('calendarGrid') || 
-                      document.getElementById('grid') ||
-                      document.body;
-
-  // 2. AUTOINYECCIÓN DEFENSIVA DEL PANEL SUPERIOR SI NO EXISTE
+  // 1. ANCLAR DIRECTAMENTE AL DOCUMENTO PARA EVITAR BORRADOS POR INTERRUPCIÓN
   var panelSuperior = document.getElementById('mobile-stats-panel');
-  if (!panelSuperior && mainContainer) {
+  if (!panelSuperior) {
     panelSuperior = document.createElement('div');
     panelSuperior.id = 'mobile-stats-panel';
     
-    // Maquetación CSS estricta bajo la línea estética corporativa gris-azulada
+    // Maquetación CSS fija al techo (Inmune a innerHTML = "")
+    panelSuperior.style.position = 'fixed';
+    panelSuperior.style.top = '0';
+    panelSuperior.style.left = '0';
+    panelSuperior.style.width = '100%';
+    panelSuperior.style.zIndex = '99999';
     panelSuperior.style.display = 'grid';
     panelSuperior.style.gridTemplateColumns = 'repeat(3, 1fr)';
     panelSuperior.style.gap = '10px';
     panelSuperior.style.padding = '12px 10px';
-    panelSuperior.style.background = '#1e293b'; // Fondo oscuro institucional
-    panelSuperior.style.borderRadius = '8px';
-    panelSuperior.style.margin = '10px 8px 15px 8px';
-    panelSuperior.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+    panelSuperior.style.background = '#1e293b'; // Gris-azul institucional
+    panelSuperior.style.boxShadow = '0 3px 6px rgba(0,0,0,0.15)';
     panelSuperior.style.fontFamily = 'sans-serif';
-    panelSuperior.style.clear = 'both';
+    panelSuperior.style.boxSizing = 'border-box';
 
     panelSuperior.innerHTML = 
       '<div style="text-align:center; color:#ffffff; border-right:1px solid #334155;">' +
@@ -2587,20 +2584,14 @@ window.updateStats = function() {
         '<div id="mobile-stat-alertas" style="font-size:18px; font-weight:700; margin-top:2px; color:#f87171;">0</div>' +
       '</div>';
 
-    // Lo insertamos arriba de todo en el contenedor para que no se superponga con la lista
-    if (mainContainer.firstChild) {
-      mainContainer.insertBefore(panelSuperior, mainContainer.firstChild);
-    } else {
-      mainContainer.appendChild(panelSuperior);
-    }
+    document.body.appendChild(panelSuperior);
   }
 
-  // 3. CAPTURAR LOS ELEMENTOS RECIÉN INYECTADOS O LOS EXISTENTES
-  var elFlota = document.getElementById('mobile-stat-flota') || document.getElementById('statFlota') || document.getElementById('totalFleet');
-  var elReservas = document.getElementById('mobile-stat-reservas') || document.getElementById('statReservas') || document.getElementById('activeRes');
-  var elAlertas = document.getElementById('mobile-stat-alertas') || document.getElementById('statAlertas') || document.getElementById('activeAlerts');
+  // 2. CAPTURAR ELEMENTOS Y LLENAR CON LOS VALORES VIVOS DEL CDN
+  var elFlota = document.getElementById('mobile-stat-flota');
+  var elReservas = document.getElementById('mobile-stat-reservas');
+  var elAlertas = document.getElementById('mobile-stat-alertas');
 
-  // 4. INYECTAR LOS VALORES EN VIVO DE FORMA SEGURA
   if (elFlota && window.ST.pque) { elFlota.textContent = window.ST.pque.length; }
   if (elReservas && window.ST.res) { elReservas.textContent = window.ST.res.length; }
   
@@ -2667,6 +2658,7 @@ function renderCal() {
 
   // 3. CREAR CONTENEDOR EXCLUSIVO PARA INTEGRAR LA AGENDA COMPACTA MÓVIL
   // Esto evita pisar o romper formularios nativos fijos de tu cabecera
+    // ── CONTENEDOR DE LA AGENDA COMPACTA MÓVIL (DENTRO DE RENDERCAL) ──
   var targetLista = document.getElementById('agenda-mobile-render-box');
   if (!targetLista) {
     targetLista = document.createElement('div');
@@ -2677,10 +2669,8 @@ function renderCal() {
     targetLista.style.padding = '10px';
     targetLista.style.boxSizing = 'border-box';
     
-    // Si usamos el body, dejamos margen para respetar tu panel superior de índices
-    if (gridContainer === document.body) {
-      targetLista.style.marginTop = '180px'; 
-    }
+    // FORZAMOS MARGEN DE 70PX PARA QUE BAJE Y QUEDE JUSTO ABAJO DEL PANEL FIJO
+    targetLista.style.marginTop = '65px'; 
     
     gridContainer.appendChild(targetLista);
   }
