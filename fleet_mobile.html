@@ -834,84 +834,92 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 </div>
 
 <script>
-//CARGA INICIAL
+//CARGA INIIAL//
 // ═══════════════════════════════════════════════════════════════
-// VARIABLES GLOBALES CRÍTICAS — CONTROL DE SEGURIDAD MÓVIL
+// MOTOR DE INICIALIZACIÓN MÓVIL AUTOMÁTICO (ANTI-PANTALLAS EN BLANCO)
 // ═══════════════════════════════════════════════════════════════
-if (typeof WORKER_URL === "undefined") {
-  var WORKER_URL = "https://workers.dev";
-}
-if (typeof STORE_PREFIX === "undefined") {
-  var STORE_PREFIX = "fleet_maint_";
-}
-if (typeof TODAY === "undefined") {
-  var TODAY = new Date();
-}
-if (typeof MAINT_TYPES === "undefined") {
-  var MAINT_TYPES = [
-    { label: "Cambio de Aceite" },
-    { label: "Distribución" },
-    { label: "Pastillas de Freno" },
-    { label: "Filtros y Fluidos" },
-    { label: "Revisión General" }
-  ];
+
+// 1. Aseguramos la existencia de las funciones de actualización nativas
+// para evitar que los parsers del CDN tiren un "is not a function" en el celular
+if (typeof updateStats !== "function") {
+  window.updateStats = function() {
+    console.log("-> [Mobile UI] Calculando índices y flota total...");
+    if (!window.ST || !window.ST.pque) return;
+    
+    // Raspamos los contenedores de tus indicadores del panel superior si existen
+    var elFlota = document.getElementById('statFlota') || document.getElementById('totalFleet') || document.querySelector('.stat-card .value');
+    var elReservas = document.getElementById('statReservas') || document.getElementById('activeRes');
+    var elAlertas = document.getElementById('statAlertas') || document.getElementById('activeAlerts');
+
+    if (elFlota) elFlota.textContent = window.ST.pque.length;
+    if (elReservas && window.ST.res) elReservas.textContent = window.ST.res.length;
+    
+    // Conteo en vivo de alertas de taller suprimidas por Supabase
+    if (elAlertas) {
+      var contador = 0;
+      window.ST.pque.forEach(function(v) {
+        var tel = window.ST.tel ? window.ST.tel[v.plate] : null;
+        if (tel && typeof maintAlertInfo === "function") {
+          var a = maintAlertInfo(tel.km, v.plate);
+          if (a && a.isAlert) contador++;
+        }
+      });
+      elAlertas.textContent = contador;
+    }
+  };
 }
 
-// Inicialización forzada del objeto de estado global si está ausente
-if (typeof ST === "undefined" || !ST) {
-  window.ST = { pque: null, tel: null, res: null, maintHistory: {} };
+if (typeof tryRender !== "function") {
+  window.tryRender = function() {
+    console.log("-> [Mobile UI] Interceptado tryRender nativo. Redirigiendo a Agenda.");
+    if (typeof renderCal === "function") renderCal();
+  };
 }
 
-// ── DISPARADOR AUTOMÁTICO DE ARRANQUE INMUNE A CRASHES DE CONSOLA ──
+// 2. DETECTOR REACTIVO DE CARGA COMPLETA (Sondeo Interval de Alta Velocidad)
 window.addEventListener('DOMContentLoaded', function() {
-  console.log("-> [Init Mobile] DOM Cargado de forma exitosa. Evaluando parsers...");
+  console.log("-> [Init Mobile] DOM listo. Conectando hilos de telemetría y parque...");
 
-  // Intentamos ejecutar tu función nativa de escritorio encargada de jalar el CDN
+  // Forzamos el disparo de tu motor original de carga que lee los .txt del CDN
   if (typeof initApp === "function") {
-    try {
-      initApp();
-      console.log("-> [Init Mobile] Ejecutada initApp nativa.");
-    } catch(e) { console.warn("Aviso controlado: initApp falló o requiere IDs de escritorio.", e); }
+    try { initApp(); } catch(e) { console.warn("Aviso controlado en initApp:", e); }
+  } else if (typeof loadAllDataCDN === "function") {
+    try { loadAllDataCDN(); } catch(e) { console.warn("Aviso controlado en loadAllDataCDN:", e); }
   } else if (typeof loadData === "function") {
-    try {
-      loadData();
-    } catch(e) { console.warn("Aviso controlado: loadData falló.", e); }
+    try { loadData(); } catch(e) { console.warn("Aviso controlado en loadData:", e); }
   }
 
-  // ── LOOP DE COMPROBACIÓN EXCLUSIVO PARA MÓVIL ──
-  // Revisa la memoria cada 300ms. Apenas detecta que el CDN pobló el array, 
-  // borra el cartel de carga y dibuja la agenda con reservas y mantenimientos de forma inmediata.
-  var intentos = 0;
-  var chequearDatosInterval = setInterval(function() {
-    intentos++;
+  // Iniciamos el escáner de memoria en caliente para activar la interfaz apenas respondan los servidores
+  var checkCount = 0;
+  var monitorCDN = setInterval(function() {
+    checkCount++;
     
-    // Verificamos si los datos del parque y telemetría ya se encuentran en la memoria global ST
-    var parqueListo = window.ST && window.ST.pque && window.ST.pque.length > 0;
+    var dataExiste = window.ST && window.ST.pque && window.ST.pque.length > 0;
     
-    if (parqueListo) {
-      clearInterval(chequearDatosInterval);
-      console.log("-> [Init Mobile] ¡Flota detectada en caché/CDN de fondo! Forzando renderizado...");
+    if (dataExiste) {
+      clearInterval(monitorCDN);
+      console.log(`-> [Init Mobile] ¡Flota de ${window.ST.pque.length} unidades inyectada con éxito!`);
       
-      // Ocultamos de forma definitiva cualquier loader o aviso estático "Cargando..."
-      var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
-      if (loader) loader.style.display = 'none';
+      // Ocultamos de forma definitiva el aviso estático de carga
+      var loader = document.getElementById('loadingIndicator') || document.getElementById('loader') || document.getElementById('grid');
+      if (loader && loader.innerHTML.includes("Cargando")) {
+        loader.innerHTML = "";
+      }
 
-      // Disparamos nuestra función adaptativa de agenda vertical
+      // Ejecutamos la unificación estética
+      window.updateStats();
       if (typeof renderCal === "function") {
         renderCal();
       }
-    } else if (intentos > 15) {
-      // PLAN DE CONTINGENCIA FINAL: Si pasaron 4.5 segundos y el CDN no respondió, 
-      // forzamos el dibujo usando el LocalStorage de respaldo para que la pantalla no quede en blanco
-      clearInterval(chequearDatosInterval);
-      console.warn("-> [Init Mobile] Tiempo de espera del CDN agotado. Ejecutando renderizado de contingencia.");
+    } else if (checkCount > 20) {
+      // Plan de contingencia si el GitHub CDN se demora más de 6 segundos
+      clearInterval(monitorCDN);
+      console.warn("-> [Init Mobile] Tiempo de respuesta del CDN excedido. Forzando render de emergencia.");
       
       var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
       if (loader) loader.style.display = 'none';
       
-      if (typeof renderCal === "function") {
-        renderCal();
-      }
+      if (typeof renderCal === "function") renderCal();
     }
   }, 300);
 });
