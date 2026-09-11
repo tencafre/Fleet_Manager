@@ -1059,7 +1059,7 @@ window.updateStats = function() {
 function renderCal() {
   console.log("-> [Render] Iniciando compilación de interfaz móvil unificada...");
 
-  // 1. EXTRAER VARIABLES DESDE EL ESTADO GLOBAL (ST) CON CAPA DE CONTINGENCIA
+  // 1. EXTRAER VARIABLES DESDE EL ESTADO GLOBAL (ST)
   var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
   var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
   
@@ -1068,14 +1068,9 @@ function renderCal() {
     return;
   }
 
-  // 2. BUSCAR EL ANCLAJE HTML LEGÍTIMO MÓVIL
-  var contenedorDestino = document.getElementById('histList') || 
-                          document.getElementById('calendar') || 
-                          document.getElementById('calendarGrid') || 
-                          document.getElementById('grid') ||
-                          document.body;
-
-  if (!contenedorDestino) return;
+  // 2. 🚀 RESCATE ABSOLUTO POR REEMPLAZO RADICAL DEL BODY
+  // Forzamos que el destino sea el documento entero para que no quede nada oculto detrás de la plantilla vieja
+  var contenedorDestino = document.body;
 
   // 3. CALCULAR LOS ÍNDICES EN CALIENTE PARA EL PANEL SUPERIOR
   var totalFlota = parqueVehiculos.length;
@@ -1091,14 +1086,15 @@ function renderCal() {
     }
   });
 
-  // 4. ARMAR EL PANEL SUPERIOR INSTITUCIONAL (Fiel a tu paleta de colores)
+  // 4. ARMAR EL PANEL SUPERIOR INSTITUCIONAL (Estética corporativa limpia)
   var htmlPanelSuperior = 
-    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin:10px 0 15px 0; box-shadow:0 2px 4px rgba(0,0,0,0.1); font-family:sans-serif; text-align:center; color:#ffffff;">' +
+    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin:10px 8px 15px 8px; box-shadow:0 4px 6px rgba(0,0,0,0.15); font-family:sans-serif; text-align:center; color:#ffffff; position:relative; z-index:99999;">' +
       '<div style="border-right:1px solid #334155;">' +
         '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Flota Total</div>' +
         '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#38bdf8;">' + totalFlota + '</div>' +
       '</div>' +
       '<div style="border-right:1px solid #334155;">' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Reservas</div>' +
         '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#34d399;">' + totalReservas + '</div>' +
       '</div>' +
       '<div>' +
@@ -1108,7 +1104,7 @@ function renderCal() {
     '</div>';
 
   // 5. ARMAR LA CASCADA DE TARJETAS VERTICALES DE VEHÍCULOS
-  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%; font-family:sans-serif; display:block !important; clear:both !important;">';
+  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%; padding:0 8px; box-sizing:border-box; font-family:sans-serif; display:block !important; clear:both !important; position:relative; z-index:99999;">';
 
   parqueVehiculos.forEach(function(veh) {
     if (!veh || !veh.plate) return;
@@ -1179,7 +1175,7 @@ function renderCal() {
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              '<button onclick="window.abrirChecklistReserva(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#fff; border:none; padding:2px 5px; border-radius:3px; font-size:9px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+              '<button onclick="window.openChecklistFromMobile(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
             '</div>' +
           '</div>';
       });
@@ -1191,14 +1187,23 @@ function renderCal() {
 
   htmlTarjetasVehiculos += '</div>';
 
-  // Ocultar loaders estáticos si existiesen
-  var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
-  if (loader) loader.style.display = 'none';
-
-  // 6. VOLCADO ATÓMICO DEFINITIVO
+  // 6. 🚀 VOLCADO ATÓMICO COMPLETO SOBRE EL DOCUMENTO VISIBLE EN LA PANTALLA
   contenedorDestino.innerHTML = htmlPanelSuperior + htmlTarjetasVehiculos;
+  
+  // Agregamos un fondo de control neutro para corroborar el marco táctil
+  contenedorDestino.style.background = "#f8fafc";
+  
   console.log("-> [Render] ¡Estructura móvil acoplada con éxito completo!");
 }
+
+// Función puente antibugs para el enrutador de inspección móvil
+window.openChecklistFromMobile = function(plate, code, renter) {
+  if (typeof window.abrirChecklistReserva === "function") {
+    window.abrirChecklistReserva(plate, code, renter);
+  } else {
+    window.location.href = "checklist_kinto.html?plate=" + plate + "&res_code=" + code + "&renter=" + renter;
+  }
+};
 
 // Envía el nuevo service directo a Supabase (POST)
 async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, notes = "") {
