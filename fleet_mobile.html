@@ -2754,23 +2754,56 @@ function tryRender(){
 
 
 // ── FUNCIÓN GLOBAL DE ENLACE AL CHECKLIST DESDE RESERVA MÓVIL ──
+// ── ENLACE MÓVIL SINCRONIZADO DE ALTA FIDELIDAD CON LOCALSTORAGE NATIVO ──
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
-  console.log(`-> [Mobile Link] Redirigiendo a inspección para: ${plate}, Reserva: ${resCode}`);
+  var p = plate.toUpperCase().trim();
+  console.log("-> [Mobile Link] Preparando persistencia 'fleetcal_checklist_data' para: " + p);
+
+  // 1. Recuperar los datos de las variables ST compartidas en caliente
+  var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
+  var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
+  var resList = (window.ST && window.ST.res) ? window.ST.res : [];
+
+  var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
+  var tel = telList ? telList[p] : null;
+  var viaje = resList.find(function(r) { return r && (r.code === resCode || r.id === resCode); });
+
+  // 2. Réplica exacta del objeto estructurado nativo (Mismo formato que tu PC)
+  var payload = {
+    plate:      p,
+    resid:      resCode,
+    renter:     decodeURIComponent(renterName),
+    startDate:  viaje ? (viaje.start || viaje.desde || '') : '',
+    startTime:  viaje ? (viaje.startTime || '00:00') : '00:00',
+    endDate:    viaje ? (viaje.end || viaje.hasta || '') : '',
+    endTime:    viaje ? (viaje.endTime || '00:00') : '00:00',
+    km:         tel ? tel.km : '—',
+    tankCap:    veh ? (veh.tankCap || 0) : 0,
+    bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
+    
+    // Funciones nativas de neumáticos y accesorios de tu fleet_calendar.html
+    tires:      typeof getTireData === "function" ? getTireData(p) : [],
+    tireNums:   typeof getTireNumbers === "function" ? getTireNumbers(p) : [],
+    accesorios: typeof getAccData === "function" ? getAccData(p) : []
+  };
+
+  // 3. PISAR EL ALMACENAMIENTO LOCAL CON EL FORMATO EXIGIDO POR EL FORMULARIO
+  localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+  console.log("✓ Objeto inyectado en LocalStorage de forma exitosa.", payload);
+
+  // 4. DIRECCIONAMIENTO DETERMINADO DE PRODUCCIÓN
+  // Derivamos siempre a checklist_kinto.html para mantener la robustez consolidada
+  var urlDestino = "checklist_kinto.html";
   
-  // Construimos los parámetros de la URL pasándole los datos vivos del viaje actual
-  var urlDestino = "checklist_kinto.html?plate=" + encodeURIComponent(plate.toUpperCase().trim()) +
-                   "&res_code=" + encodeURIComponent(resCode) +
-                   "&renter=" + renterName;
-                   
-  // Si tu URL actual arrastra tokens o IDs de sesión (ej: ?sid=XXX), se los anexamos al salto
+  // Si tu URL móvil arrastra tokens o IDs de sesión (ej: ?sid=XXX), se los anexamos al salto
   if (window.location.search && window.location.search.includes('sid')) {
     var urlParams = new URLSearchParams(window.location.search);
     var sid = urlParams.get('sid');
-    if (sid) urlDestino += "&sid=" + encodeURIComponent(sid);
+    if (sid) urlDestino += "?sid=" + encodeURIComponent(sid);
   }
 
-  // Realizamos el salto directo de pantalla
+  // Realizamos el salto directo de pantalla en la misma pestaña para fluidez móvil
   window.location.href = urlDestino;
 };
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
