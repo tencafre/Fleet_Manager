@@ -834,7 +834,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 </div>
 
 <script>
-//CARGA INIIAL//
+//CARGA INIcIAL//
 // ═══════════════════════════════════════════════════════════════
 // MOTOR DE INICIALIZACIÓN MÓVIL AUTOMÁTICO (ANTI-PANTALLAS EN BLANCO)
 // ═══════════════════════════════════════════════════════════════
@@ -2549,34 +2549,29 @@ function updateStats(){
 
 // ── RENDERIZADOR DUAL INTELIGENTE (ESCRITORIO / AGENDA MÓVIL VERTICAL) ──
 function renderCal() {
-  console.log("-> [Render] Dibujando calendario adaptativo...");
+  console.log("-> [Render] Dibujando calendario adaptativo móvil...");
 
-  // 1. CAPTURAR EL CONTENEDOR PRINCIPAL DEL CALENDARIO DE TU INTERFAZ
+  // 1. ANCLAJE Y LIMPIEZA INMEDIATA DEL CARTEL DE CARGA
+  // Buscamos cualquier contenedor posible donde pueda estar la leyenda estática
   var gridContainer = document.getElementById('calendarGrid') || 
                       document.getElementById('calendarContainer') || 
-                      document.getElementById('grid');
+                      document.getElementById('grid') ||
+                      document.getElementById('maintHistList'); // Intento por tus IDs nativos
                       
   if (!gridContainer) {
-    console.error("No se encontró el contenedor principal del calendario en el HTML.");
+    console.error("No se encontró el contenedor principal del calendario para renderizar.");
     return;
   }
 
-  // ── RESCATE DE PANTALLA EN BLANCO ──
-  // Si el contenedor dice "Cargando datos...", limpiamos el cartel para dar paso a las tarjetas
-  if (gridContainer.innerHTML.includes("Cargando")) {
+  // 🚀 FUERZA BRUTA ANTI-CONGELAMIENTO: Borramos la leyenda antes de procesar los bucles
+  if (gridContainer.innerHTML.includes("Cargando") || gridContainer.innerHTML.includes("servidor")) {
     gridContainer.innerHTML = "";
   }
 
-  // Detectamos si el navegador es móvil
-  var isMobile = window.innerWidth <= 768;
+  // Detectamos si el navegador es móvil (Bypass estricto para fleet_mobile.html)
+  var isMobile = window.innerWidth <= 768 || true; // Forzamos true en este archivo móvil
 
-  if (!isMobile) {
-    console.log("-> Ejecutando vista horizontal de escritorio estándar.");
-    // ... Tu bucle original de 31 días se ejecuta aquí si estás en PC
-    return; 
-  }
-
-  // 2. CONTINÚA TU FLUJO AGENDA MÓVIL VERTICAL CON VALIDACIÓN DE ARRAYS SEGUROS
+  // 2. EXTRAER FLOTA CON DOBLE CAPA DE SEGURIDAD
   var parqueVehiculos = [];
   if (window.ST && window.ST.pque && window.ST.pque.length > 0) {
     parqueVehiculos = window.ST.pque;
@@ -2584,88 +2579,88 @@ function renderCal() {
     parqueVehiculos = ST.pque;
   }
 
-  // Si al ejecutar renderCal() los datos del CDN aún no terminaron de procesarse, 
-  // dejamos un aviso prolijo que se quitará solo en milisegundos de fondo
   if (parqueVehiculos.length === 0) {
-    gridContainer.innerHTML = "<div style='text-align:center; padding:30px; color:#475569; font-family:sans-serif; font-size:12px;'>⚡ Sincronizando datos de flota con el servidor central...</div>";
+    gridContainer.innerHTML = "<div style='text-align:center; padding:30px; color:#475569; font-family:sans-serif;'>Sincronizando datos de flota...</div>";
     return;
   }
 
-  // ... Todo el resto de tu bucle .forEach(function(veh) { ... }) que arma las tarjetas 
-  // de las reservas corrientes, futuras y pendientes se mantiene idéntico abajo ...
+  // Limpieza final preventiva del contenedor antes de inyectar las tarjetas
+  gridContainer.innerHTML = "";
+  gridContainer.style.display = "block";
+  gridContainer.style.width = "100%";
 
-
+  // 3. CONSTRUCCIÓN EN CASCADA DE TARJETAS VERTICALES
   parqueVehiculos.forEach(function(veh) {
+    if (!veh || !veh.plate) return; // Salto preventivo si el registro viene nulo
     var plate = veh.plate.toUpperCase().trim();
     
-    // Buscamos todas las reservas asociadas a esta patente en tu objeto de estado global ST.res
-    var todasLasReservas = window.ST && window.ST.res ? window.ST.res : [];
-    var viajesDelVehiculo = todasLasReservas.filter(function(r) {
-      return r.plate && r.plate.toUpperCase().trim() === plate;
-    });
+    // Buscamos las reservas asociadas de forma segura protegiendo contra arrays indefinidos
+    var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
+    
+    var viajesDelVehiculo = [];
+    if (Array.isArray(todasLasReservas)) {
+      viajesDelVehiculo = todasLasReservas.filter(function(r) {
+        return r && r.plate && r.plate.toUpperCase().trim() === plate;
+      });
+    }
 
-    // Verificamos si este coche tiene alertas de mantenimiento activas en Supabase
-    var hLocal = [];
-    try {
-      var raw = localStorage.getItem(STORE_PREFIX + plate);
-      hLocal = raw ? JSON.parse(raw) : [];
-    } catch(e) { hLocal = []; }
-    
-    var tel = window.ST && window.ST.tel ? window.ST.tel : null;
-    var kmActual = (tel && tel[plate]) ? tel[plate].km : 0;
-    
-    // Ejecutamos tu validador nativo de alarmas en caliente
+    // Comprobación de alertas de taller con Supabase
     var tieneAlerta = false;
-    if (typeof maintAlertInfo === "function" && kmActual) {
+    var tel = (window.ST && window.ST.tel) ? window.ST.tel : ((typeof ST !== "undefined" && ST.tel) ? ST.tel : null);
+    var kmActual = (tel && tel[plate]) ? parseInt(tel[plate].km || tel[plate].kilometers || 0, 10) : 0;
+    
+    if (typeof maintAlertInfo === "function" && kmActual > 0) {
       var alerta = maintAlertInfo(kmActual, plate);
       if (alerta && alerta.isAlert) tieneAlerta = true;
     }
 
-    // Estilo de la tarjeta del vehículo fiel a tu línea estética gris-azulada corporativa
+    // Creamos la tarjeta física con diseño lineal aislado
     var cardHTML = document.createElement('div');
+    cardHTML.className = "vehicle-mobile-card";
     cardHTML.style.background = "#ffffff";
-    cardHTML.style.border = "1px solid #e2e8f0";
+    cardHTML.style.border = "1px solid #cbd5e1";
     cardHTML.style.borderRadius = "8px";
     cardHTML.style.padding = "12px";
-    cardHTML.style.marginBottom = "12px";
-    cardHTML.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
+    cardHTML.style.marginBottom = "15px";
+    cardHTML.style.boxShadow = "0 2px 4px rgba(0,0,0,0.02)";
+    cardHTML.style.fontFamily = "sans-serif";
 
-    // Cabecera de la tarjeta con Patente, Modelo y botón de Mantenimiento nativo
     var cabecera = 
-      '<div style="display:flex; justify-content:between; align-items:center; border-bottom:1px solid #f1f5f9; padding-bottom:6px; margin-bottom:8px;">' +
+      '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px;">' +
         '<div>' +
-          '<span style="font-family:monospace; font-size:13px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; margin-right:8px;">' + plate + '</span>' +
-          '<strong style="color:#1e293b; font-size:12px;">' + veh.model + '</strong>' +
+          '<span style="font-family:monospace; font-size:13px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:3px 6px; border-radius:4px; margin-right:8px;">' + plate + '</span>' +
+          '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota de Flota') + '</strong>' +
         '</div>' +
         '<div>' +
-          '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + veh.model + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">' +
+          '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + (veh.model || '') + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; min-height:28px !important;">' +
             (tieneAlerta ? '⚠️ SERVICE' : '🔧 SERVICE') +
           '</button>' +
         '</div>' +
       '</div>';
 
-    // Bloque interno de la Agenda: Clasificamos y listamos los viajes Corrientes, Futuros y Pendientes
-    var listaViajesHTML = '<div style="margin-top:5px;">';
+    var listaViajesHTML = '<div style="margin-top:5px; display:block !important;">';
     
     if (viajesDelVehiculo.length === 0) {
-      listaViajesHTML += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:4px 0;">✓ Unidad Disponible: Sin reservas registradas en este período.</div>';
+      listaViajesHTML += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:6px 0;">✓ Unidad Disponible: Sin reservas registradas.</div>';
     } else {
-      // Ordenamos las reservas de forma cronológica por fecha de inicio
-      viajesDelVehiculo.sort(function(a, b) { return new Date(a.start) - new Date(b.start); });
+      // Ordenamiento cronológico seguro de las reservas
+      viajesDelVehiculo.sort(function(a, b) { 
+        return new Date(a.start || a.desde || 0) - new Date(b.start || b.desde || 0); 
+      });
 
       viajesDelVehiculo.forEach(function(viaje) {
+        if (!viaje) return;
         var ahora = new Date();
-        var inicio = new Date(viaje.start);
-        var fin = new Date(viaje.end);
+        var inicio = new Date(viaje.start || viaje.desde || ahora);
+        var fin = new Date(viaje.end || viaje.hasta || ahora);
         
-        // Clasificación de estado en base al tiempo actual del dispositivo móvil
-        var estadoReserva = "PENDIENTE"; // Futura
-        var colorBadge = "#64748b"; // Gris
+        var estadoReserva = "PENDIENTE";
+        var colorBadge = "#64748b";
         var bgBadge = "#f1f5f9";
 
         if (ahora >= inicio && ahora <= fin) {
-          estadoReserva = "EN CURSO"; // En curso hoy
-          colorBadge = "#16a34a"; // Verde
+          estadoReserva = "CORRIENTE";
+          colorBadge = "#16a34a";
           bgBadge = "#dcfce7";
         } else if (fin < ahora) {
           estadoReserva = "PASADA";
@@ -2673,28 +2668,27 @@ function renderCal() {
           bgBadge = "#f8fafc";
         }
 
-        // Formateo rápido de fechas legibles para el celular del operador
         var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
         var inicioStr = inicio.toLocaleDateString('es-AR', opcionesFecha);
         var finStr = fin.toLocaleDateString('es-AR', opcionesFecha);
 
         listaViajesHTML += 
-          '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px; margin-bottom:4px; font-size:11px;">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px 8px; margin-bottom:5px; font-size:11px;">' +
             '<div>' +
-              '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || 'Cliente Kinto') + ' <span style="font-size:9.5px; color:#64748b; font-weight:normal;">(' + (viaje.code || '-') + ')</span></div>' +
+              '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || viaje.cliente || 'Cliente Kinto') + '</div>' +
               '<div style="color:#475569; font-size:10px; margin-top:2px;">📅 ' + inicioStr + ' ➔ ' + finStr + '</div>' +
             '</div>' +
-            '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 6px; border-radius:4px; text-transform:uppercase;">' + estadoReserva + '</span>' +
+            '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 6px; border-radius:4px; text-transform:uppercase; display:inline-block !important;">' + estadoReserva + '</span>' +
           '</div>';
       });
     }
 
     listaViajesHTML += '</div>';
-
-    // Unificamos el bloque completo en la tarjeta
     cardHTML.innerHTML = cabecera + listaViajesHTML;
     gridContainer.appendChild(cardHTML);
   });
+
+  console.log("-> [Render] ¡Agenda móvil renderizada con éxito total sin superposiciones!");
 }
 </script>
 
