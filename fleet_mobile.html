@@ -2545,64 +2545,75 @@ function tryRender(){
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// INYECTOR ABSOLUTO ANTI-OCULTAMIENTOS (VERSIÓN FUERZA BRUTA MÓVIL)
+// ═══════════════════════════════════════════════════════════════
+
 window.updateStats = function() {
-  console.log("-> [Mobile UI] Calculando índices de panel superior fijado al techo...");
+  console.log("-> [Mobile UI] Ejecutando localizador absoluto de panel superior...");
   if (!window.ST || !window.ST.pque) return;
-  
-  // 1. REUBICACIÓN EN LA CABECERA ABSOLUTA DEL DOCUMENTO
+
+  // 1. RASTREAR CUALQUIER ANCLAJE VISIBLE QUE TENGA TU ARCHIVO HTML ORIGINAL
+  var headerObjetivo = document.getElementById('mobile-stats-panel') || 
+                       document.getElementById('header') || 
+                       document.querySelector('.header') || 
+                       document.querySelector('h1') || 
+                       document.querySelector('.navbar') ||
+                       document.body.firstChild; // Último recurso
+
+  if (!headerObjetivo) return;
+
   var panelSuperior = document.getElementById('mobile-stats-panel');
   if (!panelSuperior) {
     panelSuperior = document.createElement('div');
     panelSuperior.id = 'mobile-stats-panel';
     
-    // Configuración estructural inmune a desbordes o bloqueos de capas superiores
-    panelSuperior.style.position = 'fixed';
-    panelSuperior.style.top = '0';
-    panelSuperior.style.left = '0';
-    panelSuperior.style.width = '100%';
-    panelSuperior.style.zIndex = '999999'; // Prioridad máxima absoluta por sobre modales
+    // Diseño lineal que se acopla al flujo nativo sin flotar (Evita quedar escondido por debajo)
     panelSuperior.style.display = 'grid';
     panelSuperior.style.gridTemplateColumns = 'repeat(3, 1fr)';
     panelSuperior.style.gap = '10px';
     panelSuperior.style.padding = '12px 10px';
-    panelSuperior.style.background = '#1e293b'; // Gris azulado institucional de la flota
-    panelSuperior.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
-    panelSuperior.style.fontFamily = 'sans-serif';
+    panelSuperior.style.background = '#1e293b'; 
+    panelSuperior.style.borderRadius = '8px';
+    panelSuperior.style.margin = '15px 5px';
     panelSuperior.style.boxSizing = 'border-box';
+    panelSuperior.style.fontFamily = 'sans-serif';
 
     panelSuperior.innerHTML = 
       '<div style="text-align:center; color:#ffffff; border-right:1px solid #334155;">' +
-        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Flota Total</div>' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600;">Flota Total</div>' +
         '<div id="mobile-stat-flota" style="font-size:18px; font-weight:700; margin-top:2px; color:#38bdf8;">0</div>' +
       '</div>' +
       '<div style="text-align:center; color:#ffffff; border-right:1px solid #334155;">' +
-        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Reservas</div>' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600;">Reservas</div>' +
         '<div id="mobile-stat-reservas" style="font-size:18px; font-weight:700; margin-top:2px; color:#34d399;">0</div>' +
       '</div>' +
       '<div style="text-align:center; color:#ffffff;">' +
-        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Alertas</div>' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600;">Alertas</div>' +
         '<div id="mobile-stat-alertas" style="font-size:18px; font-weight:700; margin-top:2px; color:#f87171;">0</div>' +
       '</div>';
 
-    // 🚀 CAMBIO MAESTRO DE INYECCIÓN: Lo insertamos antes de cualquier otra etiqueta en el body
-    document.body.insertBefore(panelSuperior, document.body.firstChild);
+    // Lo metemos inmediatamente al lado del elemento encontrado para que herede su visibilidad
+    if (headerObjetivo.nodeName === 'H1' || headerObjetivo.classList.contains('header')) {
+      headerObjetivo.parentNode.insertBefore(panelSuperior, headerObjetivo.nextSibling);
+    } else {
+      document.body.insertBefore(panelSuperior, document.body.firstChild);
+    }
   }
 
-  // 2. CAPTURAR ELEMENTOS Y LLENAR CON LOS VALORES VIVOS DEL CDN
+  // Llenamos los datos reales del CDN
   var elFlota = document.getElementById('mobile-stat-flota');
   var elReservas = document.getElementById('mobile-stat-reservas');
   var elAlertas = document.getElementById('mobile-stat-alertas');
 
-  if (elFlota && window.ST.pque) { elFlota.textContent = window.ST.pque.length; }
-  if (elReservas && window.ST.res) { elReservas.textContent = window.ST.res.length; }
-  
+  if (elFlota && window.ST.pque) elFlota.textContent = window.ST.pque.length;
+  if (elReservas && window.ST.res) elReservas.textContent = window.ST.res.length;
   if (elAlertas) {
     var contador = 0;
     window.ST.pque.forEach(function(v) {
       var tel = window.ST.tel ? window.ST.tel[v.plate] : null;
       if (tel && typeof maintAlertInfo === "function") {
-        var rawKm = tel.km || tel.kilometers || "0";
-        var a = maintAlertInfo(String(rawKm), v.plate);
+        var a = maintAlertInfo(String(tel.km || "0"), v.plate);
         if (a && a.isAlert) contador++;
       }
     });
@@ -2610,56 +2621,22 @@ window.updateStats = function() {
   }
 };
 
-// ── RENDERIZADOR DUAL INTELIGENTE (ESCRITORIO / AGENDA MÓVIL VERTICAL) ──
+
 function renderCal() {
-  console.log("-> [Render] Dibujando calendario adaptativo móvil...");
+  console.log("-> [Render] Iniciando inyección forzada de tarjetas...");
 
-  // 1. MAPEADOR OMNÍVORO DE CONTENEDORES (Intenta agarrar cualquier anclaje del HTML)
-  var gridContainer = document.getElementById('calendar') || 
-                      document.getElementById('calendarGrid') || 
-                      document.getElementById('calendarContainer') || 
-                      document.getElementById('grid') ||
-                      document.getElementById('main') ||
-                      document.querySelector('.calendar-wrapper') ||
-                      document.querySelector('.calendar') ||
-                      document.querySelector('main') ||
-                      document.querySelector('.content') ||
-                      document.getElementById('content');
-                      
-  // 🚀 RESCATE ABSOLUTO: Si todo lo anterior falla en el HTML móvil, usamos el body directo
-  if (!gridContainer) {
-    console.warn("-> [Bypass] No se encontró contenedor específico. Usando cuerpo principal de la interfaz.");
-    gridContainer = document.body;
+  // 1. Forzamos la desactivación de cualquier capa oculta de carga (Loader)
+  var panelCarga = document.getElementById('loadingIndicator') || 
+                    document.getElementById('loader') || 
+                    document.querySelector('.loading');
+  if (panelCarga) {
+    panelCarga.style.setProperty('display', 'none', 'important');
+    panelCarga.innerHTML = ""; // Destruimos el cartel estático
   }
 
-  // 🚀 LIMPIEZA TOTAL: Borramos el cartel estático "Cargando datos..." del servidor
-  var loaderTexto = document.getElementById('loadingIndicator') || document.getElementById('loader');
-  if (loaderTexto) loaderTexto.style.display = 'none';
+  // 2. Buscamos dónde enganchar las tarjetas usando el mismo panel superior que acabamos de crear
+  var anchorBase = document.getElementById('mobile-stats-panel') || document.body;
   
-  if (gridContainer && gridContainer.innerHTML && (gridContainer.innerHTML.includes("Cargando") || gridContainer.innerHTML.includes("servidor"))) {
-    gridContainer.innerHTML = "";
-  }
-
-  // 2. EXTRAER FLOTA CON DOBLE CAPA DE SEGURIDAD ASÍNCRONA
-  var parqueVehiculos = [];
-  if (window.ST && window.ST.pque && window.ST.pque.length > 0) {
-    parqueVehiculos = window.ST.pque;
-  } else if (typeof ST !== "undefined" && ST.pque) {
-    parqueVehiculos = ST.pque;
-  }
-
-  // Si los datos del CDN aún se están procesando en memoria de fondo, dejamos un aviso estilizado temporal
-  if (parqueVehiculos.length === 0) {
-    var checkExist = document.getElementById('msg-sincronizando-maint');
-    if (!checkExist && gridContainer) {
-      gridContainer.innerHTML = "<div id='msg-sincronizando-maint' style='text-align:center; padding:30px; color:#475569; font-family:sans-serif; font-size:13px; font-weight:600;'>⚡ Sincronizando datos de flota con servidores centrales...</div>";
-    }
-    return;
-  }
-
-  // 3. CREAR CONTENEDOR EXCLUSIVO PARA INTEGRAR LA AGENDA COMPACTA MÓVIL
-  // Esto evita pisar o romper formularios nativos fijos de tu cabecera
-    // ── CONTENEDOR DE LA AGENDA COMPACTA MÓVIL (DENTRO DE RENDERCAL) ──
   var targetLista = document.getElementById('agenda-mobile-render-box');
   if (!targetLista) {
     targetLista = document.createElement('div');
@@ -2667,25 +2644,24 @@ function renderCal() {
     targetLista.style.width = '100%';
     targetLista.style.display = 'block';
     targetLista.style.clear = 'both';
-    targetLista.style.padding = '10px';
+    targetLista.style.padding = '5px';
     targetLista.style.boxSizing = 'border-box';
     
-    // FORZAMOS MARGEN DE 70PX PARA QUE BAJE Y QUEDE JUSTO ABAJO DEL PANEL FIJO
-    targetLista.style.marginTop = '65px'; 
-    
-    gridContainer.appendChild(targetLista);
+    // Lo enganchamos inmediatamente abajo del panel de índices para asegurar visibilidad
+    anchorBase.parentNode.insertBefore(targetLista, anchorBase.nextSibling);
   }
 
-  // Limpiamos la lista para reconstruir las tarjetas sin duplicaciones
   targetLista.innerHTML = "";
 
-  // 4. CONSTRUCCIÓN EN CASCADA DE TARJETAS VERTICALES
+  var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : [];
+  if (parqueVehiculos.length === 0) return;
+
+  // 3. CONSTRUCCIÓN EN CASCADA DE LAS TARJETAS MÓVILES
   parqueVehiculos.forEach(function(veh) {
-    if (!veh || !veh.plate) return; 
+    if (!veh || !veh.plate) return;
     var plate = veh.plate.toUpperCase().trim();
     
-    // Extraer de forma segura las reservas del CDN
-    var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
+    var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : [];
     var viajesDelVehiculo = [];
     if (Array.isArray(todasLasReservas)) {
       viajesDelVehiculo = todasLasReservas.filter(function(r) {
@@ -2693,63 +2669,46 @@ function renderCal() {
       });
     }
 
-    // Comprobación relacional de alertas de mantenimiento con Supabase
-       // ── BLINDAJE DE KILOMETRAJE ANTI-CRASH (Línea 2625-2635) ──
     var tieneAlerta = false;
-    var tel = (window.ST && window.ST.tel) ? window.ST.tel : ((typeof ST !== "undefined" && ST.tel) ? ST.tel : null);
-    
-    if (tel && tel[plate]) {
-      // Forzamos la conversión a String puro para satisfacer el .replace() de maintAlertInfo
-      var rawKm = tel[plate].km || tel[plate].kilometers || "0";
-      var kmStringSeguro = String(rawKm); 
-
-      if (typeof maintAlertInfo === "function" && kmStringSeguro !== "0") {
-        try {
-          // Se lo pasamos como string de forma limpia y garantizada
-          var alerta = maintAlertInfo(kmStringSeguro, plate);
-          if (alerta && alerta.isAlert) tieneAlerta = true;
-        } catch(err) {
-          console.warn("Aviso controlado: Falló el cálculo de alerta para " + plate, err);
-        }
-      }
+    var tel = window.ST && window.ST.tel ? window.ST.tel : null;
+    var kmActual = (tel && tel[plate]) ? parseInt(tel[plate].km || 0, 10) : 0;
+    if (typeof maintAlertInfo === "function" && kmActual > 0) {
+      var alerta = maintAlertInfo(String(kmActual), plate);
+      if (alerta && alerta.isAlert) tieneAlerta = true;
     }
 
-
-    // Maquetación de la tarjeta con la línea estética gris-azulada corporativa
     var cardHTML = document.createElement('div');
-    cardHTML.className = "vehicle-mobile-card";
     cardHTML.style.background = "#ffffff";
     cardHTML.style.border = "1px solid #cbd5e1";
     cardHTML.style.borderRadius = "8px";
     cardHTML.style.padding = "12px";
-    cardHTML.style.marginBottom = "15px";
-    cardHTML.style.boxShadow = "0 2px 4px rgba(0,0,0,0.02)";
+    cardHTML.style.marginBottom = "12px";
     cardHTML.style.fontFamily = "sans-serif";
+    cardHTML.style.boxShadow = "0 2px 4px rgba(0,0,0,0.02)";
 
     var cabecera = 
-      '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px;">' +
+      '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-bottom:8px;">' +
         '<div>' +
-          '<span style="font-family:monospace; font-size:13px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:3px 6px; border-radius:4px; margin-right:8px;">' + plate + '</span>' +
-          '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota Flota') + '</strong>' +
+          '<span style="font-family:monospace; font-size:12px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; margin-right:6px;">' + plate + '</span>' +
+          '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota') + '</strong>' +
         '</div>' +
         '<div>' +
-          '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + (veh.model || '') + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; min-height:28px !important;">' +
+          '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + (veh.model || '') + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">' +
             (tieneAlerta ? '⚠️ SERVICE' : '🔧 SERVICE') +
           '</button>' +
         '</div>' +
       '</div>';
 
-    var listaViajesHTML = '<div style="margin-top:5px; display:block !important;">';
-    
+    var listaViajesHTML = '<div style="margin-top:5px;">';
     if (viajesDelVehiculo.length === 0) {
-      listaViajesHTML += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:6px 0;">✓ Unidad Disponible: Sin reservas registradas.</div>';
+      listaViajesHTML += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:4px 0;">✓ Unidad Disponible</div>';
     } else {
-      // Ordenamiento cronológico seguro
-            viajesDelVehiculo.forEach(function(viaje) {
+      viajesDelVehiculo.sort(function(a, b) { return new Date(a.start) - new Date(b.start); });
+      viajesDelVehiculo.forEach(function(viaje) {
         if (!viaje) return;
         var ahora = new Date();
-        var inicio = new Date(viaje.start || viaje.desde || ahora);
-        var fin = new Date(viaje.end || viaje.hasta || ahora);
+        var inicio = new Date(viaje.start || viaje.desde);
+        var fin = new Date(viaje.end || viaje.hasta);
         
         var estadoReserva = "PENDIENTE";
         var colorBadge = "#64748b";
@@ -2760,39 +2719,25 @@ function renderCal() {
           colorBadge = "#16a34a";
           bgBadge = "#dcfce7";
         } else if (fin < ahora) {
-          estadoReserva = "PASADA";
-          colorBadge = "#94a3b8";
-          bgBadge = "#f8fafc";
-          return; // Salto preventivo para mantener limpio el celular
+          return; // Ocultar pasadas
         }
 
         var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
-        var inicioStr = inicio.toLocaleDateString('es-AR', opcionesFecha);
-        var finStr = fin.toLocaleDateString('es-AR', opcionesFecha);
-
-        // Variables seguras para el salto al Checklist
         var rCode = viaje.code || viaje.id || '0';
-        var rRenter = encodeURIComponent(viaje.renter || viaje.cliente || 'Kinto User');
+        var rRenter = encodeURIComponent(viaje.renter || viaje.cliente || 'User');
 
         listaViajesHTML += 
-          '<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px; margin-bottom:6px; font-size:11px;">' +
-            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-              '<div>' +
-                '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || viaje.cliente || 'Cliente Kinto') + '</div>' +
-                '<div style="color:#475569; font-size:10px; margin-top:2px;">📅 ' + inicioStr + ' ➔ ' + finStr + '</div>' +
-              '</div>' +
-              '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 6px; border-radius:4px; text-transform:uppercase;">' + estadoReserva + '</span>' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px; margin-bottom:4px; font-size:11px;">' +
+            '<div>' +
+              '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || viaje.cliente || 'Kinto User') + '</div>' +
+              '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + inicio.toLocaleDateString('es-AR', opcionesFecha) + '</div>' +
             '</div>' +
-            
-            // ── 📋 NUEVO: ACCIÓN DE LLAMADO AL CHECKLIST INDEPENDIENTE MÓVIL ──
-            '<div style="margin-top:6px; border-top:1px dashed #e2e8f0; padding-top:6px; text-align:right;">' +
-              '<button onclick="window.abrirChecklistReserva(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; min-height:26px !important;">' +
-                '📋 INICIAR CHECKLIST' +
-              '</button>' +
+            '<div style="text-align:right;">' +
+              '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:block; margin-bottom:4px;">' + estadoReserva + '</span>' +
+              '<button onclick="window.abrirChecklistReserva(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#fff; border:none; padding:2px 5px; border-radius:3px; font-size:9px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
             '</div>' +
           '</div>';
       });
-
     }
 
     listaViajesHTML += '</div>';
@@ -2800,7 +2745,7 @@ function renderCal() {
     targetLista.appendChild(cardHTML);
   });
 
-  console.log("-> [Render] ¡Agenda móvil e índices dibujados de forma definitiva sin errores!");
+  console.log("-> [Render] Finalizada la inyección lineal por espejo de flujo.");
 }
 // ── FUNCIÓN GLOBAL DE ENLACE AL CHECKLIST DESDE RESERVA MÓVIL ──
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
