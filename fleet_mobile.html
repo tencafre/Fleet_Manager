@@ -2773,6 +2773,60 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
   // Realizamos el salto directo de pantalla
   window.location.href = urlDestino;
 };
+// ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
+window.addEventListener('DOMContentLoaded', function() {
+  console.log("-> [Bypass Mobile] Evaluando parámetros de red en caliente...");
+  
+  var urlParams = new URLSearchParams(window.location.search);
+  var plateParam = urlParams.get('plate') || urlParams.get('Plate');
+  var renterParam = urlParams.get('renter');
+  var codeParam = urlParams.get('res_code');
+
+  if (plateParam) {
+    var p = plateParam.toUpperCase().trim();
+    console.log("✓ Forzando Patente en el DOM activo: " + p);
+    
+    // 1. Pisamos de forma estricta las variables globales
+    window.currentPlate = p;
+    if (typeof currentPlate !== "undefined") currentPlate = p;
+    
+    // 2. Buscamos tu selector nativo de patentes y forzamos su valor
+    var selector = document.getElementById('vehicleSelect') || 
+                   document.getElementById('select-car') || 
+                   document.getElementById('plateSelect') ||
+                   document.querySelector('select');
+                   
+    if (selector) {
+      selector.value = p;
+      // Disparamos manualmente el evento de cambio para que jale neumáticos y daños de Supabase
+      if (typeof selector.onchange === "function") {
+        selector.onchange();
+      } else {
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("change", false, true);
+        selector.dispatchEvent(evt);
+      }
+    }
+
+    // 3. Si usas inputs de texto plano para la patente
+    var inputP = document.getElementById('plate') || document.getElementById('dominio');
+    if (inputP) {
+      inputP.value = p;
+      inputP.readOnly = true;
+    }
+  }
+
+  // Sincronizamos el Conductor / Cliente de Kinto
+  if (renterParam) {
+    var r = decodeURIComponent(renterParam).trim();
+    window.currentRenter = r;
+    var inputR = document.getElementById('renter') || document.getElementById('conductor') || document.getElementById('clientName');
+    if (inputR) {
+      inputR.value = r;
+      inputR.readOnly = true;
+    }
+  }
+});
 
 </script>
 
