@@ -2551,25 +2551,23 @@ function updateStats(){
 function renderCal() {
   console.log("-> [Render] Dibujando calendario adaptativo móvil...");
 
-  // 1. ANCLAJE Y LIMPIEZA INMEDIATA DEL CARTEL DE CARGA
-  // Buscamos cualquier contenedor posible donde pueda estar la leyenda estática
-  var gridContainer = document.getElementById('calendarGrid') || 
+  // 1. CAPTURAR EL CONTENEDOR CON SOPORTE COMPLETO PARA ID 'calendar' MÓVIL NATIVO
+  var gridContainer = document.getElementById('calendar') || 
+                      document.getElementById('calendarGrid') || 
                       document.getElementById('calendarContainer') || 
                       document.getElementById('grid') ||
-                      document.getElementById('maintHistList'); // Intento por tus IDs nativos
+                      document.querySelector('.calendar-wrapper') ||
+                      document.querySelector('.calendar');
                       
   if (!gridContainer) {
     console.error("No se encontró el contenedor principal del calendario para renderizar.");
     return;
   }
 
-  // 🚀 FUERZA BRUTA ANTI-CONGELAMIENTO: Borramos la leyenda antes de procesar los bucles
+  // 🚀 LIMPIEZA INMEDIATA: Borramos la leyenda fija "Cargando datos..."
   if (gridContainer.innerHTML.includes("Cargando") || gridContainer.innerHTML.includes("servidor")) {
     gridContainer.innerHTML = "";
   }
-
-  // Detectamos si el navegador es móvil (Bypass estricto para fleet_mobile.html)
-  var isMobile = window.innerWidth <= 768 || true; // Forzamos true en este archivo móvil
 
   // 2. EXTRAER FLOTA CON DOBLE CAPA DE SEGURIDAD
   var parqueVehiculos = [];
@@ -2584,17 +2582,17 @@ function renderCal() {
     return;
   }
 
-  // Limpieza final preventiva del contenedor antes de inyectar las tarjetas
+  // Limpieza preventiva del contenedor antes de inyectar las tarjetas
   gridContainer.innerHTML = "";
   gridContainer.style.display = "block";
   gridContainer.style.width = "100%";
 
   // 3. CONSTRUCCIÓN EN CASCADA DE TARJETAS VERTICALES
   parqueVehiculos.forEach(function(veh) {
-    if (!veh || !veh.plate) return; // Salto preventivo si el registro viene nulo
+    if (!veh || !veh.plate) return; 
     var plate = veh.plate.toUpperCase().trim();
     
-    // Buscamos las reservas asociadas de forma segura protegiendo contra arrays indefinidos
+    // Buscamos las reservas asociadas de forma segura
     var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
     
     var viajesDelVehiculo = [];
@@ -2688,7 +2686,7 @@ function renderCal() {
     gridContainer.appendChild(cardHTML);
   });
 
-  console.log("-> [Render] ¡Agenda móvil renderizada con éxito total sin superposiciones!");
+  console.log("-> [Render] ¡Agenda móvil renderizada con éxito total dentro del contenedor nativo!");
 }
 </script>
 
