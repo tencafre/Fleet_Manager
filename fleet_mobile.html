@@ -852,6 +852,80 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 
 <script>
 //CARGA INIcIAL//
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── INTERCEPTOR INTELIGENTE DE DATOS MÓVILES (ANTI-PANTALLAS EN BLANCO) ──
+// ═══════════════════════════════════════════════════════════════════════════
+(function() {
+  console.log("-> [Checklist Init] Analizando parámetros de entrada de la URL...");
+  
+  var params = new URLSearchParams(window.location.search);
+  
+  // 1. Extraemos las variables tolerando cualquier tipo de mayúscula o minúscula
+  var patenteURL = params.get('plate') || params.get('Plate') || params.get('patente') || params.get('dominio');
+  var renterURL  = params.get('renter') || params.get('Renter') || params.get('cliente') || params.get('conductor');
+  var resCodeURL = params.get('res_code') || params.get('resCode') || params.get('reserva');
+
+  // 2. Si detectamos datos viniendo desde la Agenda Móvil, forzamos su asignación global
+  if (patenteURL) {
+    var pLimpia = patenteURL.toUpperCase().trim();
+    console.log("✓ Patente detectada por URL en Inspección: " + pLimpia);
+    
+    // Asignamos a todas las variantes de variables globales que use tu formulario original
+    window.currentPlate = pLimpia;
+    if (typeof currentPlate !== "undefined") currentPlate = pLimpia;
+    if (typeof activePlate !== "undefined") activePlate = pLimpia;
+    
+    // Forzamos el input visual de la patente si existe en tu cabecera
+    var inputPatente = document.getElementById('plate') || document.getElementById('input-plate') || document.getElementById('dominio');
+    if (inputPatente) {
+      inputPatente.value = pLimpia;
+      // Desactivamos el campo para que el inspector no lo altere sin querer
+      inputPatente.readOnly = true; 
+    }
+  }
+
+  if (renterURL) {
+    var rLimpio = decodeURIComponent(renterURL).trim();
+    console.log("✓ Cliente detectado por URL: " + rLimpio);
+    window.currentRenter = rLimpio;
+    if (typeof currentRenter !== "undefined") currentRenter = rLimpio;
+    
+    var inputRenter = document.getElementById('renter') || document.getElementById('client-name') || document.getElementById('conductor');
+    if (inputRenter) {
+      inputRenter.value = rLimpio;
+      inputRenter.readOnly = true;
+    }
+  }
+
+  if (resCodeURL) {
+    console.log("✓ Código de Reserva detectado: " + resCodeURL);
+    window.currentResCode = resCodeURL;
+    if (typeof currentResCode !== "undefined") currentResCode = resCodeURL;
+  }
+
+  // 3. RE-EJECUCIÓN DEL FLUJO DE DATOS ORIGINAL
+  // Si tu checklist tiene funciones nativas para actualizar la pantalla al elegir un auto, 
+  // las obligamos a correr ahora mismo usando los datos inyectados de la URL
+  document.addEventListener("DOMContentLoaded", function() {
+    if (patenteURL) {
+      console.log("-> [Checklist UI] Forzando descarga asíncrona de neumáticos y daños para: " + patenteURL);
+      
+      // Intentamos llamar a tus funciones nativas de sincronización de Supabase en caliente
+      if (typeof cargarDatosVehiculo === "function") cargarDatosVehiculo(patenteURL);
+      else if (typeof syncDamagesFromServer === "function") syncDamagesFromServer(patenteURL);
+      else if (typeof downloadDamages === "function") downloadDamages(patenteURL);
+      
+      // Si tienes un selector desplegable de unidades en el checklist, lo sincronizamos
+      var selectorUnidad = document.getElementById('vehicleSelect') || document.getElementById('select-car');
+      if (selectorUnidad) {
+        selectorUnidad.value = patenteURL.toUpperCase().trim();
+        // Si tu selector gatilla un evento onchange, lo disparamos de forma manual
+        if (typeof selectorUnidad.onchange === "function") selectorUnidad.onchange();
+      }
+    }
+  });
+})();
+
 // ═══════════════════════════════════════════════════════════════
 // MOTOR DE INICIALIZACIÓN MÓVIL AUTOMÁTICO (ANTI-PANTALLAS EN BLANCO)
 // ═══════════════════════════════════════════════════════════════
@@ -999,79 +1073,6 @@ let modalPlate = null;
 
 // Modificamos a asíncrona para descargar los Services reales desde la nube
 // ── MAINTENANCE STORAGE (Sincronizado Supabase Antibugs) ──
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── INTERCEPTOR INTELIGENTE DE DATOS MÓVILES (ANTI-PANTALLAS EN BLANCO) ──
-// ═══════════════════════════════════════════════════════════════════════════
-(function() {
-  console.log("-> [Checklist Init] Analizando parámetros de entrada de la URL...");
-  
-  var params = new URLSearchParams(window.location.search);
-  
-  // 1. Extraemos las variables tolerando cualquier tipo de mayúscula o minúscula
-  var patenteURL = params.get('plate') || params.get('Plate') || params.get('patente') || params.get('dominio');
-  var renterURL  = params.get('renter') || params.get('Renter') || params.get('cliente') || params.get('conductor');
-  var resCodeURL = params.get('res_code') || params.get('resCode') || params.get('reserva');
-
-  // 2. Si detectamos datos viniendo desde la Agenda Móvil, forzamos su asignación global
-  if (patenteURL) {
-    var pLimpia = patenteURL.toUpperCase().trim();
-    console.log("✓ Patente detectada por URL en Inspección: " + pLimpia);
-    
-    // Asignamos a todas las variantes de variables globales que use tu formulario original
-    window.currentPlate = pLimpia;
-    if (typeof currentPlate !== "undefined") currentPlate = pLimpia;
-    if (typeof activePlate !== "undefined") activePlate = pLimpia;
-    
-    // Forzamos el input visual de la patente si existe en tu cabecera
-    var inputPatente = document.getElementById('plate') || document.getElementById('input-plate') || document.getElementById('dominio');
-    if (inputPatente) {
-      inputPatente.value = pLimpia;
-      // Desactivamos el campo para que el inspector no lo altere sin querer
-      inputPatente.readOnly = true; 
-    }
-  }
-
-  if (renterURL) {
-    var rLimpio = decodeURIComponent(renterURL).trim();
-    console.log("✓ Cliente detectado por URL: " + rLimpio);
-    window.currentRenter = rLimpio;
-    if (typeof currentRenter !== "undefined") currentRenter = rLimpio;
-    
-    var inputRenter = document.getElementById('renter') || document.getElementById('client-name') || document.getElementById('conductor');
-    if (inputRenter) {
-      inputRenter.value = rLimpio;
-      inputRenter.readOnly = true;
-    }
-  }
-
-  if (resCodeURL) {
-    console.log("✓ Código de Reserva detectado: " + resCodeURL);
-    window.currentResCode = resCodeURL;
-    if (typeof currentResCode !== "undefined") currentResCode = resCodeURL;
-  }
-
-  // 3. RE-EJECUCIÓN DEL FLUJO DE DATOS ORIGINAL
-  // Si tu checklist tiene funciones nativas para actualizar la pantalla al elegir un auto, 
-  // las obligamos a correr ahora mismo usando los datos inyectados de la URL
-  document.addEventListener("DOMContentLoaded", function() {
-    if (patenteURL) {
-      console.log("-> [Checklist UI] Forzando descarga asíncrona de neumáticos y daños para: " + patenteURL);
-      
-      // Intentamos llamar a tus funciones nativas de sincronización de Supabase en caliente
-      if (typeof cargarDatosVehiculo === "function") cargarDatosVehiculo(patenteURL);
-      else if (typeof syncDamagesFromServer === "function") syncDamagesFromServer(patenteURL);
-      else if (typeof downloadDamages === "function") downloadDamages(patenteURL);
-      
-      // Si tienes un selector desplegable de unidades en el checklist, lo sincronizamos
-      var selectorUnidad = document.getElementById('vehicleSelect') || document.getElementById('select-car');
-      if (selectorUnidad) {
-        selectorUnidad.value = patenteURL.toUpperCase().trim();
-        // Si tu selector gatilla un evento onchange, lo disparamos de forma manual
-        if (typeof selectorUnidad.onchange === "function") selectorUnidad.onchange();
-      }
-    }
-  });
-})();
 
 
 // ═══════════════════════════════════════════════════════════════
