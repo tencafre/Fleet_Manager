@@ -2546,14 +2546,61 @@ function tryRender(){
 }
 
 window.updateStats = function() {
-  console.log("-> [Mobile UI] Calculando índices de panel superior de forma segura...");
+  console.log("-> [Mobile UI] Calculando índices de panel superior con autoinyección...");
   if (!window.ST || !window.ST.pque) return;
   
-  var elFlota = document.getElementById('statFlota') || document.getElementById('totalFleet') || document.querySelector('.stat-card .value');
-  var elReservas = document.getElementById('statReservas') || document.getElementById('activeRes');
-  var elAlertas = document.getElementById('statAlertas') || document.getElementById('activeAlerts');
+  // 1. INTENTAR CAPTURAR EL CONTENEDOR PRINCIPAL O USAR EL CUERPO DE LA INTERFAZ
+  var mainContainer = document.getElementById('calendar') || 
+                      document.getElementById('calendarGrid') || 
+                      document.getElementById('grid') ||
+                      document.body;
 
-  // CONTROL ESTRICTO: Solo inyecta el valor si la etiqueta HTML existe en la pantalla del celular
+  // 2. AUTOINYECCIÓN DEFENSIVA DEL PANEL SUPERIOR SI NO EXISTE
+  var panelSuperior = document.getElementById('mobile-stats-panel');
+  if (!panelSuperior && mainContainer) {
+    panelSuperior = document.createElement('div');
+    panelSuperior.id = 'mobile-stats-panel';
+    
+    // Maquetación CSS estricta bajo la línea estética corporativa gris-azulada
+    panelSuperior.style.display = 'grid';
+    panelSuperior.style.gridTemplateColumns = 'repeat(3, 1fr)';
+    panelSuperior.style.gap = '10px';
+    panelSuperior.style.padding = '12px 10px';
+    panelSuperior.style.background = '#1e293b'; // Fondo oscuro institucional
+    panelSuperior.style.borderRadius = '8px';
+    panelSuperior.style.margin = '10px 8px 15px 8px';
+    panelSuperior.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+    panelSuperior.style.fontFamily = 'sans-serif';
+    panelSuperior.style.clear = 'both';
+
+    panelSuperior.innerHTML = 
+      '<div style="text-align:center; color:#ffffff; border-right:1px solid #334155;">' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Flota Total</div>' +
+        '<div id="mobile-stat-flota" style="font-size:18px; font-weight:700; margin-top:2px; color:#38bdf8;">0</div>' +
+      '</div>' +
+      '<div style="text-align:center; color:#ffffff; border-right:1px solid #334155;">' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Reservas</div>' +
+        '<div id="mobile-stat-reservas" style="font-size:18px; font-weight:700; margin-top:2px; color:#34d399;">0</div>' +
+      '</div>' +
+      '<div style="text-align:center; color:#ffffff;">' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Alertas</div>' +
+        '<div id="mobile-stat-alertas" style="font-size:18px; font-weight:700; margin-top:2px; color:#f87171;">0</div>' +
+      '</div>';
+
+    // Lo insertamos arriba de todo en el contenedor para que no se superponga con la lista
+    if (mainContainer.firstChild) {
+      mainContainer.insertBefore(panelSuperior, mainContainer.firstChild);
+    } else {
+      mainContainer.appendChild(panelSuperior);
+    }
+  }
+
+  // 3. CAPTURAR LOS ELEMENTOS RECIÉN INYECTADOS O LOS EXISTENTES
+  var elFlota = document.getElementById('mobile-stat-flota') || document.getElementById('statFlota') || document.getElementById('totalFleet');
+  var elReservas = document.getElementById('mobile-stat-reservas') || document.getElementById('statReservas') || document.getElementById('activeRes');
+  var elAlertas = document.getElementById('mobile-stat-alertas') || document.getElementById('statAlertas') || document.getElementById('activeAlerts');
+
+  // 4. INYECTAR LOS VALORES EN VIVO DE FORMA SEGURA
   if (elFlota && window.ST.pque) { elFlota.textContent = window.ST.pque.length; }
   if (elReservas && window.ST.res) { elReservas.textContent = window.ST.res.length; }
   
