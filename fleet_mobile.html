@@ -2549,24 +2549,24 @@ window.updateStats = function() {
   console.log("-> [Mobile UI] Calculando índices de panel superior fijado al techo...");
   if (!window.ST || !window.ST.pque) return;
   
-  // 1. ANCLAR DIRECTAMENTE AL DOCUMENTO PARA EVITAR BORRADOS POR INTERRUPCIÓN
+  // 1. REUBICACIÓN EN LA CABECERA ABSOLUTA DEL DOCUMENTO
   var panelSuperior = document.getElementById('mobile-stats-panel');
   if (!panelSuperior) {
     panelSuperior = document.createElement('div');
     panelSuperior.id = 'mobile-stats-panel';
     
-    // Maquetación CSS fija al techo (Inmune a innerHTML = "")
+    // Configuración estructural inmune a desbordes o bloqueos de capas superiores
     panelSuperior.style.position = 'fixed';
     panelSuperior.style.top = '0';
     panelSuperior.style.left = '0';
     panelSuperior.style.width = '100%';
-    panelSuperior.style.zIndex = '99999';
+    panelSuperior.style.zIndex = '999999'; // Prioridad máxima absoluta por sobre modales
     panelSuperior.style.display = 'grid';
     panelSuperior.style.gridTemplateColumns = 'repeat(3, 1fr)';
     panelSuperior.style.gap = '10px';
     panelSuperior.style.padding = '12px 10px';
-    panelSuperior.style.background = '#1e293b'; // Gris-azul institucional
-    panelSuperior.style.boxShadow = '0 3px 6px rgba(0,0,0,0.15)';
+    panelSuperior.style.background = '#1e293b'; // Gris azulado institucional de la flota
+    panelSuperior.style.boxShadow = '0 4px 10px rgba(0,0,0,0.25)';
     panelSuperior.style.fontFamily = 'sans-serif';
     panelSuperior.style.boxSizing = 'border-box';
 
@@ -2584,7 +2584,8 @@ window.updateStats = function() {
         '<div id="mobile-stat-alertas" style="font-size:18px; font-weight:700; margin-top:2px; color:#f87171;">0</div>' +
       '</div>';
 
-    document.body.appendChild(panelSuperior);
+    // 🚀 CAMBIO MAESTRO DE INYECCIÓN: Lo insertamos antes de cualquier otra etiqueta en el body
+    document.body.insertBefore(panelSuperior, document.body.firstChild);
   }
 
   // 2. CAPTURAR ELEMENTOS Y LLENAR CON LOS VALORES VIVOS DEL CDN
