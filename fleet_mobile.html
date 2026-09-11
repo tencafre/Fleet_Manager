@@ -2690,11 +2690,64 @@ function renderCal() {
       listaViajesHTML += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:6px 0;">✓ Unidad Disponible: Sin reservas registradas.</div>';
     } else {
       // Ordenamiento cronológico seguro
-      viajesDelVehiculo.sort(function(a, b) { 
-        return new Date(a.start || a.desde || 0) - new Date(b.start || b.desde || 0); 
+            viajesDelVehiculo.forEach(function(viaje) {
+        if (!viaje) return;
+        var ahora = new Date();
+        var inicio = new Date(viaje.start || viaje.desde || ahora);
+        var fin = new Date(viaje.end || viaje.hasta || ahora);
+        
+        var estadoReserva = "PENDIENTE";
+        var colorBadge = "#64748b";
+        var bgBadge = "#f1f5f9";
+
+        if (ahora >= inicio && ahora <= fin) {
+          estadoReserva = "CORRIENTE";
+          colorBadge = "#16a34a";
+          bgBadge = "#dcfce7";
+        } else if (fin < ahora) {
+          estadoReserva = "PASADA";
+          colorBadge = "#94a3b8";
+          bgBadge = "#f8fafc";
+          return; // Salto preventivo para mantener limpio el celular
+        }
+
+        var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+        var inicioStr = inicio.toLocaleDateString('es-AR', opcionesFecha);
+        var finStr = fin.toLocaleDateString('es-AR', opcionesFecha);
+
+        // Variables seguras para el salto al Checklist
+        var rCode = viaje.code || viaje.id || '0';
+        var rRenter = encodeURIComponent(viaje.renter || viaje.cliente || 'Kinto User');
+
+        listaViajesHTML += 
+          '<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px; margin-bottom:6px; font-size:11px;">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+              '<div>' +
+                '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || viaje.cliente || 'Cliente Kinto') + '</div>' +
+                '<div style="color:#475569; font-size:10px; margin-top:2px;">📅 ' + inicioStr + ' ➔ ' + finStr + '</div>' +
+              '</div>' +
+              '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 6px; border-radius:4px; text-transform:uppercase;">' + estadoReserva + '</span>' +
+            '</div>' +
+            
+            // ── 📋 NUEVO: ACCIÓN DE LLAMADO AL CHECKLIST INDEPENDIENTE MÓVIL ──
+            '<div style="margin-top:6px; border-top:1px dashed #e2e8f0; padding-top:6px; text-align:right;">' +
+              '<button onclick="window.abrirChecklistReserva(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#ffffff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; min-height:26px !important;">' +
+                '📋 INICIAR CHECKLIST' +
+              '</button>' +
+            '</div>' +
+          '</div>';
       });
 
-      // ── FUNCIÓN GLOBAL DE ENLACE AL CHECKLIST DESDE RESERVA MÓVIL ──
+    }
+
+    listaViajesHTML += '</div>';
+    cardHTML.innerHTML = cabecera + listaViajesHTML;
+    targetLista.appendChild(cardHTML);
+  });
+
+  console.log("-> [Render] ¡Agenda móvil e índices dibujados de forma definitiva sin errores!");
+}
+// ── FUNCIÓN GLOBAL DE ENLACE AL CHECKLIST DESDE RESERVA MÓVIL ──
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   console.log(`-> [Mobile Link] Redirigiendo a inspección para: ${plate}, Reserva: ${resCode}`);
@@ -2715,14 +2768,6 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
   window.location.href = urlDestino;
 };
 
-
-    listaViajesHTML += '</div>';
-    cardHTML.innerHTML = cabecera + listaViajesHTML;
-    targetLista.appendChild(cardHTML);
-  });
-
-  console.log("-> [Render] ¡Agenda móvil e índices dibujados de forma definitiva sin errores!");
-}
 </script>
 
 <!-- ── CONFIG MODAL ── -->
