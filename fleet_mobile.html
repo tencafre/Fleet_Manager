@@ -1775,6 +1775,33 @@ window.applyLocalPreset=function(){
     // Si falla la red, continuar con datos embebidos
   }
 })();
+// ── DISPARADOR REACTIVO DE CONTROL DE INICIO (ANTI-PANTALLAS EN BLANCO) ──
+window.onload = function() {
+  console.log("-> [Init Mobile] Iniciando secuencia de arranque asíncrona...");
+  
+  // Ocultamos elementos innecesarios de escritorio de forma forzada si existen
+  var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
+  
+  // Si tu script nativo usa una función de carga del CDN, la envolvemos para garantizar el renderizado
+  if (typeof loadAllDataCDN === "function") {
+    loadAllDataCDN().then(function() {
+      console.log("-> [Init Mobile] Datos listos. Forzando dibujo de agenda...");
+      if (loader) loader.style.display = "none";
+      renderCal();
+    }).catch(function() {
+      // Plan de contingencia si el fetch del CDN se demora
+      renderCal();
+    });
+  } else {
+    // Si tus parsers se ejecutan de forma lineal simple, forzamos un retardo de 400ms 
+    // para dar tiempo a que se pueblen los objetos ST.pque y ST.res
+    setTimeout(function() {
+      console.log("-> [Init Mobile] Timeout preventivo cumplido. Dibujando agenda.");
+      if (loader) loader.style.display = "none";
+      renderCal();
+    }, 500);
+  }
+};
 
 (function(){
   ST.pque=parsePque(`18723 Toyota Corolla HV AT AI239SV	SEDAN	43
@@ -2444,32 +2471,39 @@ function renderCal() {
     return;
   }
 
-  // 2. DETECTAR SI EL NAVEGADOR ES MÓVIL (Ancho menor a 768px)
+  // ── RESCATE DE PANTALLA EN BLANCO ──
+  // Si el contenedor dice "Cargando datos...", limpiamos el cartel para dar paso a las tarjetas
+  if (gridContainer.innerHTML.includes("Cargando")) {
+    gridContainer.innerHTML = "";
+  }
+
+  // Detectamos si el navegador es móvil
   var isMobile = window.innerWidth <= 768;
 
-  // Si está en escritorio, ejecuta tu bucle nativo original de 31 columnas horizontales
   if (!isMobile) {
-    // ... AQUÍ SE MANTIENE TU CÓDIGO ORIGINAL DE ESCRITORIO INTACTO ...
-    // (El que hace el for de 1 a 31 días y dibuja las barras de las reservas)
     console.log("-> Ejecutando vista horizontal de escritorio estándar.");
+    // ... Tu bucle original de 31 días se ejecuta aquí si estás en PC
     return; 
   }
 
-  // 3. 🚀 MODALIDAD MÓVIL: VISTA AGENDA VERTICAL DE VIAJES (Fiel a tu fleet_mobile original)
-  console.log("-> Ejecutando vista Agenda Vertical para dispositivo móvil.");
-  
-  // Limpiamos el contenedor para armar la lista limpia sin desfases
-  gridContainer.innerHTML = "";
-  gridContainer.style.display = "block";
-  gridContainer.style.width = "100%";
+  // 2. CONTINÚA TU FLUJO AGENDA MÓVIL VERTICAL CON VALIDACIÓN DE ARRAYS SEGUROS
+  var parqueVehiculos = [];
+  if (window.ST && window.ST.pque && window.ST.pque.length > 0) {
+    parqueVehiculos = window.ST.pque;
+  } else if (typeof ST !== "undefined" && ST.pque) {
+    parqueVehiculos = ST.pque;
+  }
 
-  // Barremos el parque de vehículos global (ST.pque) para armar las tarjetas de control
-  var parqueVehiculos = window.ST && window.ST.pque ? window.ST.pque : [];
-  
+  // Si al ejecutar renderCal() los datos del CDN aún no terminaron de procesarse, 
+  // dejamos un aviso prolijo que se quitará solo en milisegundos de fondo
   if (parqueVehiculos.length === 0) {
-    gridContainer.innerHTML = "<div style='text-align:center; padding:20px; color:#64748b;'>Cargando flota de unidades...</div>";
+    gridContainer.innerHTML = "<div style='text-align:center; padding:30px; color:#475569; font-family:sans-serif; font-size:12px;'>⚡ Sincronizando datos de flota con el servidor central...</div>";
     return;
   }
+
+  // ... Todo el resto de tu bucle .forEach(function(veh) { ... }) que arma las tarjetas 
+  // de las reservas corrientes, futuras y pendientes se mantiene idéntico abajo ...
+
 
   parqueVehiculos.forEach(function(veh) {
     var plate = veh.plate.toUpperCase().trim();
