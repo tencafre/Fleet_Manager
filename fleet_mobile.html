@@ -2632,14 +2632,26 @@ function renderCal() {
     }
 
     // Comprobación relacional de alertas de mantenimiento con Supabase
+       // ── BLINDAJE DE KILOMETRAJE ANTI-CRASH (Línea 2625-2635) ──
     var tieneAlerta = false;
     var tel = (window.ST && window.ST.tel) ? window.ST.tel : ((typeof ST !== "undefined" && ST.tel) ? ST.tel : null);
-    var kmActual = (tel && tel[plate]) ? parseInt(tel[plate].km || tel[plate].kilometers || 0, 10) : 0;
     
-    if (typeof maintAlertInfo === "function" && kmActual > 0) {
-      var alerta = maintAlertInfo(kmActual, plate);
-      if (alerta && alerta.isAlert) tieneAlerta = true;
+    if (tel && tel[plate]) {
+      // Forzamos la conversión a String puro para satisfacer el .replace() de maintAlertInfo
+      var rawKm = tel[plate].km || tel[plate].kilometers || "0";
+      var kmStringSeguro = String(rawKm); 
+
+      if (typeof maintAlertInfo === "function" && kmStringSeguro !== "0") {
+        try {
+          // Se lo pasamos como string de forma limpia y garantizada
+          var alerta = maintAlertInfo(kmStringSeguro, plate);
+          if (alerta && alerta.isAlert) tieneAlerta = true;
+        } catch(err) {
+          console.warn("Aviso controlado: Falló el cálculo de alerta para " + plate, err);
+        }
+      }
     }
+
 
     // Maquetación de la tarjeta con la línea estética gris-azulada corporativa
     var cardHTML = document.createElement('div');
