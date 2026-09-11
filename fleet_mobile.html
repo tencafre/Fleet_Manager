@@ -2551,25 +2551,33 @@ function updateStats(){
 function renderCal() {
   console.log("-> [Render] Dibujando calendario adaptativo móvil...");
 
-  // 1. CAPTURAR EL CONTENEDOR CON SOPORTE COMPLETO PARA ID 'calendar' MÓVIL NATIVO
+  // 1. MAPEADOR OMNÍVORO DE CONTENEDORES (Intenta agarrar cualquier anclaje del HTML)
   var gridContainer = document.getElementById('calendar') || 
                       document.getElementById('calendarGrid') || 
                       document.getElementById('calendarContainer') || 
                       document.getElementById('grid') ||
+                      document.getElementById('main') ||
                       document.querySelector('.calendar-wrapper') ||
-                      document.querySelector('.calendar');
+                      document.querySelector('.calendar') ||
+                      document.querySelector('main') ||
+                      document.querySelector('.content') ||
+                      document.getElementById('content');
                       
+  // 🚀 RESCATE ABSOLUTO: Si todo lo anterior falla en el HTML móvil, usamos el body directo
   if (!gridContainer) {
-    console.error("No se encontró el contenedor principal del calendario para renderizar.");
-    return;
+    console.warn("-> [Bypass] No se encontró contenedor específico. Usando cuerpo principal de la interfaz.");
+    gridContainer = document.body;
   }
 
-  // 🚀 LIMPIEZA INMEDIATA: Borramos la leyenda fija "Cargando datos..."
-  if (gridContainer.innerHTML.includes("Cargando") || gridContainer.innerHTML.includes("servidor")) {
+  // 🚀 LIMPIEZA TOTAL: Borramos el cartel estático "Cargando datos..." del servidor
+  var loaderTexto = document.getElementById('loadingIndicator') || document.getElementById('loader');
+  if (loaderTexto) loaderTexto.style.display = 'none';
+  
+  if (gridContainer && gridContainer.innerHTML && (gridContainer.innerHTML.includes("Cargando") || gridContainer.innerHTML.includes("servidor"))) {
     gridContainer.innerHTML = "";
   }
 
-  // 2. EXTRAER FLOTA CON DOBLE CAPA DE SEGURIDAD
+  // 2. EXTRAER FLOTA CON DOBLE CAPA DE SEGURIDAD ASÍNCRONA
   var parqueVehiculos = [];
   if (window.ST && window.ST.pque && window.ST.pque.length > 0) {
     parqueVehiculos = window.ST.pque;
@@ -2577,24 +2585,45 @@ function renderCal() {
     parqueVehiculos = ST.pque;
   }
 
+  // Si los datos del CDN aún se están procesando en memoria de fondo, dejamos un aviso estilizado temporal
   if (parqueVehiculos.length === 0) {
-    gridContainer.innerHTML = "<div style='text-align:center; padding:30px; color:#475569; font-family:sans-serif;'>Sincronizando datos de flota...</div>";
+    var checkExist = document.getElementById('msg-sincronizando-maint');
+    if (!checkExist && gridContainer) {
+      gridContainer.innerHTML = "<div id='msg-sincronizando-maint' style='text-align:center; padding:30px; color:#475569; font-family:sans-serif; font-size:13px; font-weight:600;'>⚡ Sincronizando datos de flota con servidores centrales...</div>";
+    }
     return;
   }
 
-  // Limpieza preventiva del contenedor antes de inyectar las tarjetas
-  gridContainer.innerHTML = "";
-  gridContainer.style.display = "block";
-  gridContainer.style.width = "100%";
+  // 3. CREAR CONTENEDOR EXCLUSIVO PARA INTEGRAR LA AGENDA COMPACTA MÓVIL
+  // Esto evita pisar o romper formularios nativos fijos de tu cabecera
+  var targetLista = document.getElementById('agenda-mobile-render-box');
+  if (!targetLista) {
+    targetLista = document.createElement('div');
+    targetLista.id = 'agenda-mobile-render-box';
+    targetLista.style.width = '100%';
+    targetLista.style.display = 'block';
+    targetLista.style.clear = 'both';
+    targetLista.style.padding = '10px';
+    targetLista.style.boxSizing = 'border-box';
+    
+    // Si usamos el body, dejamos margen para respetar tu panel superior de índices
+    if (gridContainer === document.body) {
+      targetLista.style.marginTop = '180px'; 
+    }
+    
+    gridContainer.appendChild(targetLista);
+  }
 
-  // 3. CONSTRUCCIÓN EN CASCADA DE TARJETAS VERTICALES
+  // Limpiamos la lista para reconstruir las tarjetas sin duplicaciones
+  targetLista.innerHTML = "";
+
+  // 4. CONSTRUCCIÓN EN CASCADA DE TARJETAS VERTICALES
   parqueVehiculos.forEach(function(veh) {
     if (!veh || !veh.plate) return; 
     var plate = veh.plate.toUpperCase().trim();
     
-    // Buscamos las reservas asociadas de forma segura
+    // Extraer de forma segura las reservas del CDN
     var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
-    
     var viajesDelVehiculo = [];
     if (Array.isArray(todasLasReservas)) {
       viajesDelVehiculo = todasLasReservas.filter(function(r) {
@@ -2602,7 +2631,7 @@ function renderCal() {
       });
     }
 
-    // Comprobación de alertas de taller con Supabase
+    // Comprobación relacional de alertas de mantenimiento con Supabase
     var tieneAlerta = false;
     var tel = (window.ST && window.ST.tel) ? window.ST.tel : ((typeof ST !== "undefined" && ST.tel) ? ST.tel : null);
     var kmActual = (tel && tel[plate]) ? parseInt(tel[plate].km || tel[plate].kilometers || 0, 10) : 0;
@@ -2612,7 +2641,7 @@ function renderCal() {
       if (alerta && alerta.isAlert) tieneAlerta = true;
     }
 
-    // Creamos la tarjeta física con diseño lineal aislado
+    // Maquetación de la tarjeta con la línea estética gris-azulada corporativa
     var cardHTML = document.createElement('div');
     cardHTML.className = "vehicle-mobile-card";
     cardHTML.style.background = "#ffffff";
@@ -2627,7 +2656,7 @@ function renderCal() {
       '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px;">' +
         '<div>' +
           '<span style="font-family:monospace; font-size:13px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:3px 6px; border-radius:4px; margin-right:8px;">' + plate + '</span>' +
-          '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota de Flota') + '</strong>' +
+          '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota Flota') + '</strong>' +
         '</div>' +
         '<div>' +
           '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + (veh.model || '') + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:5px 10px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; min-height:28px !important;">' +
@@ -2641,7 +2670,7 @@ function renderCal() {
     if (viajesDelVehiculo.length === 0) {
       listaViajesHTML += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:6px 0;">✓ Unidad Disponible: Sin reservas registradas.</div>';
     } else {
-      // Ordenamiento cronológico seguro de las reservas
+      // Ordenamiento cronológico seguro
       viajesDelVehiculo.sort(function(a, b) { 
         return new Date(a.start || a.desde || 0) - new Date(b.start || b.desde || 0); 
       });
@@ -2664,10 +2693,11 @@ function renderCal() {
           estadoReserva = "PASADA";
           colorBadge = "#94a3b8";
           bgBadge = "#f8fafc";
+          return; // Salto opcional para ocultar viajes pasados en el celular
         }
 
         var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
-        var inicioStr = inicio.toLocaleDateString('es-AR', opcionesFecha);
+        var inicioStr = inicio.toLocaleDateString('es-AR', optionsFecha);
         var finStr = fin.toLocaleDateString('es-AR', opcionesFecha);
 
         listaViajesHTML += 
@@ -2683,10 +2713,10 @@ function renderCal() {
 
     listaViajesHTML += '</div>';
     cardHTML.innerHTML = cabecera + listaViajesHTML;
-    gridContainer.appendChild(cardHTML);
+    targetLista.appendChild(cardHTML);
   });
 
-  console.log("-> [Render] ¡Agenda móvil renderizada con éxito total dentro del contenedor nativo!");
+  console.log("-> [Render] ¡Agenda móvil e índices dibujados de forma definitiva sin errores!");
 }
 </script>
 
