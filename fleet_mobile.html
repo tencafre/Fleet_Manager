@@ -2756,10 +2756,11 @@ function tryRender(){
 // ── FUNCIÓN GLOBAL DE ENLACE AL CHECKLIST DESDE RESERVA MÓVIL ──
 // ── ENLACE MÓVIL SINCRONIZADO DE ALTA FIDELIDAD CON LOCALSTORAGE NATIVO ──
 // ── ENLACE MÓVIL DIRECTO CON PARSER DE TELEMETRÍA Y FECHAS ESTRICTO ──
+// ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO Y REDUNDANTE (ANTI-FALLAS DE FECHA Y KM) ──
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link] Calibrando extracción de KM y fechas para: " + p);
+  console.log("-> [Mobile Link] Ejecutando empaquetado simétrico para: " + p);
 
   var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
   var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
@@ -2768,68 +2769,77 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
   var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
   var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
 
-  // 1. ── EXTRACTOR RÍGIDO DE KILOMETRAJE TRIPLE CAPA ──
-  var kmFinal = "—";
+  // 1. CAPTURA Y FORMATEO DE KILOMETRAJE IDÉNTICO A ESCRITORIO
+  var kmTxt = "—";
   if (telList && telList[p]) {
-    // Soportamos todas las variantes de nombres de variables de tu motor nativo
     var datosTel = telList[p];
-    var valorKm = datosTel.km || datosTel.kilometers || datosTel.last_km || "";
-    
+    var valorKm = datosTel.km || datosTel.kilometers || "";
     if (valorKm !== "") {
-      // Si viene como número o string con puntos, lo limpiamos para dejarlo plano
-      kmFinal = String(valorKm).replace(/[^\d]/g, ''); 
+      // Guardamos el string numérico puro
+      kmTxt = String(valorKm).replace(/[^\d]/g, '');
     }
   }
 
-  // 2. ── PARSER DE FECHAS SEGURO CONTRA STRINGS VACÍOS ──
+  // 2. CAPTURA Y EXTRACCIÓN DE FECHAS DUALES (ISO Y PLANAS)
+  var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
+  var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
+
   var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
   
-  if (viaje) {
-    var rawStart = viaje.start || viaje.desde || "";
-    var rawEnd = viaje.end || viaje.hasta || "";
-
-    if (String(rawStart).includes('T')) {
-      var partesS = String(rawStart).split('T');
-      sDate = partesS[0];
-      sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else {
-      sDate = rawStart;
-      sTime = viaje.startTime || "00:00";
-    }
-
-    if (String(rawEnd).includes('T')) {
-      var partesE = String(rawEnd).split('T');
-      eDate = partesE[0];
-      eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else {
-      eDate = rawEnd;
-      eTime = viaje.endTime || "00:00";
-    }
+  if (rawStart.includes('T')) {
+    var partesS = rawStart.split('T');
+    sDate = partesS[0];
+    sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+  } else {
+    sDate = rawStart;
+    sTime = viaje ? (viaje.startTime || "00:00") : "00:00";
   }
 
-  // 3. RÉPLICA EXACTA CON INYECCIÓN DE TIEMPOS Y KM CALIBRADA
+  if (rawEnd.includes('T')) {
+    var partesE = rawEnd.split('T');
+    eDate = partesE[0];
+    eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+  } else {
+    eDate = rawEnd;
+    eTime = viaje ? (viaje.endTime || "00:00") : "00:00";
+  }
+
+  // 3. ARMADO DEL PAYLOAD CON LLAVES REDUNDANTES (Satisface cualquier validador nativo)
   var payload = {
+    // Variables obligatorias
     plate:      p,
     resid:      resCode,
     renter:     decodeURIComponent(renterName),
-    startDate:  sDate, // Formato estricto YYYY-MM-DD
-    startTime:  sTime, // Formato estricto HH:MM
-    endDate:    eDate,
-    endTime:    eTime,
-    km:         kmFinal, // ¡INYECTADO DE FORMA SEGURA PLANA!
+    
+    // Inyección de fechas cruzadas (Formatos alternativos para evitar vacíos)
+    startDate:  sDate,      // YYYY-MM-DD
+    startTime:  sTime,      // HH:MM
+    endDate:    eDate,      // YYYY-MM-DD
+    endTime:    eTime,      // HH:MM
+    
+    start:      rawStart,   // String ISO original (FullCalendar)
+    end:        rawEnd,     // String ISO original (FullCalendar)
+    
+    // Inyección de Kilómetros cruzados
+    km:         kmTxt,
+    kilometers: kmTxt,
+    telemetria_km: kmTxt,
+
+    // Estructura técnica de la unidad
     tankCap:    veh ? (veh.tankCap || 0) : 0,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
+    // Hilos de funciones nativas del archivo compartido
     tires:      typeof getTireData === "function" ? getTireData(p) : [],
     tireNums:   typeof getTireNumbers === "function" ? getTireNumbers(p) : [],
     accesorios: typeof getAccData === "function" ? getAccData(p) : []
   };
 
-  // 4. PISAR EL ALMACENAMIENTO LOCAL CON LA ESTRUCTURA FINAL SANEADA
+  // 4. PERSISTENCIA EN EL DISCO DEL TELÉFONO
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Payload definitivo inyectado en LocalStorage.", payload);
+  console.log("✓ Objeto empaquetado de forma definitiva:", payload);
 
-  // Direccionamiento directo fluido en la misma pestaña
+  // Redirección directa en la misma pestaña para rendimiento en celulares
   var urlDestino = "checklist_kinto.html";
   if (window.location.search && window.location.search.includes('sid')) {
     var urlParams = new URLSearchParams(window.location.search);
@@ -2839,6 +2849,7 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
 
   window.location.href = urlDestino;
 };
+
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
 window.addEventListener('DOMContentLoaded', function() {
   console.log("-> [Bypass Mobile] Evaluando parámetros de red en caliente...");
