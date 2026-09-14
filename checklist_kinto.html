@@ -830,98 +830,94 @@ async function exportarRemitoPDF() {
 // ═══════════════════════════════════════════════════════════════════════════
 //   ── LECTOR MAESTRO OMNÍVORO DE PERSISTENCIA (ANTI-CAMPOS VACÍOS) ──
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── LECTOR MAESTRO OMNÍVORO CON FORZADO EN CASCADA (VERSION FINAL) ──
+// ═══════════════════════════════════════════════════════════════════════════
 (function() {
   console.log("-> [Checklist Master] Ejecutando decodificador semántico en disco...");
   
   var rawData = localStorage.getItem('fleetcal_checklist_data');
-  if (!rawData) {
-    console.warn("-> No se detectó la clave 'fleetcal_checklist_data' en este dispositivo.");
-    return;
-  }
+  if (!rawData) return;
 
   try {
     var d = JSON.parse(rawData);
     console.log("✓ Payload recuperado con éxito:", d);
     
-    // Asignación de variables globales de respaldo
+    // Asignación de variables globales compartidas por tu motor nativo
     window.currentPlate   = d.plate || "";
     window.currentRenter  = d.renter || "";
     window.currentResCode = d.resid || "";
     window.currentKm      = d.km || d.kilometers || "";
 
-    // Fechas crudas y procesadas
-    var fechaInicio = d.startDate || d.start || "";
-    var fechaFin    = d.endDate || d.end || "";
+    var fechaInicio = d.startDate || "";
+    var fechaFin    = d.endDate || "";
     var horaInicio  = d.startTime || "00:00";
     var horaFin     = d.endTime || "00:00";
 
-    // AGUARDAR CARGA DEL DOM PARA REALIZAR EL BARRIDO DE INJECTS
+    // AGUARDAR CARGA COMPLETA Y EJECUTAR VALIDADOR DEFENSIVO EN BLOQUE
     document.addEventListener("DOMContentLoaded", function() {
       console.log("-> [Checklist Master] Buscando inputs de forma semántica en la pantalla...");
 
-      // 1. INYECTAR PATENTE
+      // 1. INYECTAR PATENTE EN CUALQUIER CAMPO COMPATIBLE
       var inpPlate = document.getElementById('plate') || document.getElementById('dominio') || document.querySelector('input[name*="plat"]') || document.querySelector('input[name*="dom"]');
-      if (inpPlate && d.plate) { inpPlate.value = d.plate; inpPlate.readOnly = true; }
+      if (inpPlate && d.plate) { inpPlate.value = d.plate; }
 
       // 2. INYECTAR CLIENTE / RENTER
       var inpRenter = document.getElementById('renter') || document.getElementById('conductor') || document.querySelector('input[name*="rent"]') || document.querySelector('input[name*="cond"]');
-      if (inpRenter && d.renter) { inpRenter.value = d.renter; inpRenter.readOnly = true; }
+      if (inpRenter && d.renter) { inpRenter.value = d.renter; }
 
-      // 3. 📅 INYECTAR FECHA Y HORA DE ENTREGA (Rastreo por ID, Atributo o Tipo de campo)
-      var inpStartDate = document.getElementById('startDate') || 
-                         document.getElementById('fecha_entrega') || 
-                         document.getElementById('desde') ||
-                         document.querySelector('input[type="date"]') || 
-                         document.querySelector('input[type="datetime-local"]');
-                         
-      if (inpStartDate && fechaInicio) {
-        if (inpStartDate.type === "datetime-local" && horaInicio) {
-          inpStartDate.value = fechaInicio.split('T')[0] + "T" + horaInicio.slice(0, 5);
-        } else {
-          inpStartDate.value = fechaInicio.split('T')[0];
+      // 3. 🚀 BARRIDO MAESTRO DE CAMPOS DE FECHA (Evita descalces por tipos de input)
+      var todosLosInputs = document.querySelectorAll('input');
+      
+      todosLosInputs.forEach(function(input) {
+        // Control de campos de Entrega / Inicio / Desde
+        if (input.id.toLowerCase().includes('start') || input.id.toLowerCase().includes('entrega') || input.id.toLowerCase().includes('desde') || input.name.toLowerCase().includes('desde')) {
+          if (input.type === 'datetime-local' && fechaInicio) {
+            input.value = fechaInicio + "T" + horaInicio.slice(0,5);
+          } else if (fechaInicio) {
+            input.value = fechaInicio;
+          }
         }
-        console.log("✓ Campo de entrega rellenado con: " + inpStartDate.value);
-      }
-
-      // 4. 📅 INYECTAR FECHA Y HORA DE FINALIZACIÓN / DEVOLUCIÓN
-      var inputsFecha = document.querySelectorAll('input[type="date"], input[type="datetime-local"]');
-      var inpEndDate = document.getElementById('endDate') || 
-                       document.getElementById('fecha_devolucion') || 
-                       document.getElementById('hasta') ||
-                       (inputsFecha && inputsFecha.length > 1 ? inputsFecha[1] : null);
-
-      if (inpEndDate && fechaFin) {
-        if (inpEndDate.type === "datetime-local" && horaFin) {
-          inpEndDate.value = fechaFin.split('T')[0] + "T" + horaFin.slice(0, 5);
-        } else {
-          inpEndDate.value = fechaFin.split('T')[0];
+        
+        // Control de campos de Devolución / Fin / Hasta
+        if (input.id.toLowerCase().includes('end') || input.id.toLowerCase().includes('devolucion') || input.id.toLowerCase().includes('hasta') || input.name.toLowerCase().includes('hasta')) {
+          if (input.type === 'datetime-local' && fechaFin) {
+            input.value = fechaFin + "T" + horaFin.slice(0,5);
+          } else if (fechaFin) {
+            input.value = fechaFin;
+          }
         }
-        console.log("✓ Campo de devolución rellenado con: " + inpEndDate.value);
-      }
 
-      // 5. 🔧 INYECTAR KILOMETRAJE / ODÓMETRO (Escáner completo de inputs numéricos o descriptivos)
-      var inpKm = document.getElementById('km') || 
-                  document.getElementById('kilometraje') || 
-                  document.getElementById('odometro') || 
-                  document.getElementById('maint_km') ||
-                  document.querySelector('input[name*="km"]') ||
-                  document.querySelector('input[name*="odo"]') ||
-                  document.querySelector('input[name*="kilo"]');
+        // 🚀 4. INYECTAR KILOMETRAJE / ODÓMETRO POR COINCIDENCIA DE PALABRA CLAVE
+        if (input.id.toLowerCase().includes('km') || input.id.toLowerCase().includes('kilo') || input.id.toLowerCase().includes('odo') || input.name.toLowerCase().includes('km') || input.name.toLowerCase().includes('odometro')) {
+          if (window.currentKm && window.currentKm !== "—") {
+            var kmLimpio = String(window.currentKm).replace(/[^\d]/g, '');
+            if (kmLimpio) {
+              input.value = kmLimpio;
+              console.log("✓ Campo de odómetro forzado con éxito: " + kmLimpio);
+              
+              // Gatillamos sus eventos nativos por si tu script de escritorio hace cálculos internos
+              if (typeof input.onchange === "function") input.onchange();
+              if (typeof input.oninput === "function") input.oninput();
+            }
+          }
+        }
+      });
 
-      if (inpKm && window.currentKm) {
-        // Limpiamos cualquier residuo de texto y dejamos solo números planos
-        var kmLimpio = String(window.currentKm).replace(/[^\d]/g, '');
-        if (kmLimpio) {
-          inpKm.value = kmLimpio;
-          console.log("✓ Odómetro rellenado con éxito: " + kmLimpio + " km");
-          
-          // Disparar eventos nativos por si tu script realiza cálculos reactivos en caliente
-          if (typeof inpKm.onchange === "function") inpKm.onchange();
-          if (typeof inpKm.oninput === "function") inpKm.oninput();
+      // 5. RESPALDO EXCLUSIVO POR TIPO SI TU FORMULARIO NO USA IDs CONOCIDOS
+      // Si hay solo dos inputs de tipo fecha en toda la pantalla, los llenamos secuencialmente
+      var inputsFechaPuros = document.querySelectorAll('input[type="date"], input[type="datetime-local"]');
+      if (inputsFechaPuros && inputsFechaPuros.length >= 2) {
+        console.log("-> [Bypass Semántico] Llenando campos por índice de tipo fecha.");
+        if (!inputsFechaPuros[0].value && fechaInicio) {
+          inputsFechaPuros[0].value = inputsFechaPuros[0].type === 'datetime-local' ? fechaInicio + "T" + horaInicio.slice(0,5) : fechaInicio;
+        }
+        if (!inputsFechaPuros[1].value && fechaFin) {
+          inputsFechaPuros[1].value = inputsFechaPuros[1].type === 'datetime-local' ? fechaFin + "T" + horaFin.slice(0,5) : fechaFin;
         }
       }
 
-      // 6. Sincronizar el selector desplegable de vehículos si existe en el checklist
+      // Sincronizar el selector desplegable corporativo de vehículos si existe
       var selectorVeh = document.getElementById('vehicleSelect') || document.getElementById('select-car') || document.querySelector('select[name*="veh"]');
       if (selectorVeh && d.plate) {
         selectorVeh.value = d.plate.toUpperCase().trim();
@@ -933,6 +929,7 @@ async function exportarRemitoPDF() {
     console.error("Error crítico en el parseo del inicializador de checklist:", err);
   }
 })();
+
 </script>
 </body>
 </html>
