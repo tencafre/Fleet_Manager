@@ -833,6 +833,9 @@ async function exportarRemitoPDF() {
 // ═══════════════════════════════════════════════════════════════════════════
 //   ── LECTOR MAESTRO OMNÍVORO CON FORZADO EN CASCADA (VERSION FINAL) ──
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── LECTOR MAESTRO OMNÍVORO CON RETARDO DIFERIDO (VERSIÓN FINAL BLINDADA) ──
+// ═══════════════════════════════════════════════════════════════════════════
 (function() {
   console.log("-> [Checklist Master] Ejecutando decodificador semántico en disco...");
   
@@ -843,7 +846,7 @@ async function exportarRemitoPDF() {
     var d = JSON.parse(rawData);
     console.log("✓ Payload recuperado con éxito:", d);
     
-    // Asignación de variables globales compartidas por tu motor nativo
+    // Variables globales de respaldo para tu motor de escritorio
     window.currentPlate   = d.plate || "";
     window.currentRenter  = d.renter || "";
     window.currentResCode = d.resid || "";
@@ -854,79 +857,88 @@ async function exportarRemitoPDF() {
     var horaInicio  = d.startTime || "00:00";
     var horaFin     = d.endTime || "00:00";
 
-    // AGUARDAR CARGA COMPLETA Y EJECUTAR VALIDADOR DEFENSIVO EN BLOQUE
+    // AGUARDAR CARGA COMPLETA DEL DOM
     document.addEventListener("DOMContentLoaded", function() {
-      console.log("-> [Checklist Master] Buscando inputs de forma semántica en la pantalla...");
+      console.log("-> [Checklist Master] DOM listo. Programando inyección diferida anti-blanqueos...");
 
-      // 1. INYECTAR PATENTE EN CUALQUIER CAMPO COMPATIBLE
-      var inpPlate = document.getElementById('plate') || document.getElementById('dominio') || document.querySelector('input[name*="plat"]') || document.querySelector('input[name*="dom"]');
-      if (inpPlate && d.plate) { inpPlate.value = d.plate; }
+      // 🚀 EL TRUCO DE INGENIERÍA DEFINITIVO:
+      // Esperamos 450 milisegundos a que los scripts pesados de escritorio se inicialicen 
+      // y abran la cámara o el SVG, y justo ahí pisamos los inputs por la fuerza.
+      setTimeout(function() {
+        console.log("-> [Checklist Master] Ejecutando barrido semántico diferido en caliente...");
 
-      // 2. INYECTAR CLIENTE / RENTER
-      var inpRenter = document.getElementById('renter') || document.getElementById('conductor') || document.querySelector('input[name*="rent"]') || document.querySelector('input[name*="cond"]');
-      if (inpRenter && d.renter) { inpRenter.value = d.renter; }
+        // 1. INYECTAR PATENTE
+        var inpPlate = document.getElementById('plate') || document.getElementById('dominio') || document.querySelector('input[name*="plat"]') || document.querySelector('input[name*="dom"]');
+        if (inpPlate && d.plate) { inpPlate.value = d.plate; }
 
-      // 3. 🚀 BARRIDO MAESTRO DE CAMPOS DE FECHA (Evita descalces por tipos de input)
-      var todosLosInputs = document.querySelectorAll('input');
-      
-      todosLosInputs.forEach(function(input) {
-        // Control de campos de Entrega / Inicio / Desde
-        if (input.id.toLowerCase().includes('start') || input.id.toLowerCase().includes('entrega') || input.id.toLowerCase().includes('desde') || input.name.toLowerCase().includes('desde')) {
-          if (input.type === 'datetime-local' && fechaInicio) {
-            input.value = fechaInicio + "T" + horaInicio.slice(0,5);
-          } else if (fechaInicio) {
-            input.value = fechaInicio;
-          }
-        }
+        // 2. INYECTAR CLIENTE / RENTER
+        var inpRenter = document.getElementById('renter') || document.getElementById('conductor') || document.querySelector('input[name*="rent"]') || document.querySelector('input[name*="cond"]');
+        if (inpRenter && d.renter) { inpRenter.value = d.renter; }
+
+        // 3. BARRIDO RECURSIVO DE TODOS LOS INPUTS DEL FORMULARIO
+        var todosLosInputs = document.querySelectorAll('input');
         
-        // Control de campos de Devolución / Fin / Hasta
-        if (input.id.toLowerCase().includes('end') || input.id.toLowerCase().includes('devolucion') || input.id.toLowerCase().includes('hasta') || input.name.toLowerCase().includes('hasta')) {
-          if (input.type === 'datetime-local' && fechaFin) {
-            input.value = fechaFin + "T" + horaFin.slice(0,5);
-          } else if (fechaFin) {
-            input.value = fechaFin;
-          }
-        }
+        todosLosInputs.forEach(function(input) {
+          var idL = input.id.toLowerCase();
+          var nameL = input.name.toLowerCase();
 
-        // 🚀 4. INYECTAR KILOMETRAJE / ODÓMETRO POR COINCIDENCIA DE PALABRA CLAVE
-        if (input.id.toLowerCase().includes('km') || input.id.toLowerCase().includes('kilo') || input.id.toLowerCase().includes('odo') || input.name.toLowerCase().includes('km') || input.name.toLowerCase().includes('odometro')) {
-          if (window.currentKm && window.currentKm !== "—") {
-            var kmLimpio = String(window.currentKm).replace(/[^\d]/g, '');
-            if (kmLimpio) {
-              input.value = kmLimpio;
-              console.log("✓ Campo de odómetro forzado con éxito: " + kmLimpio);
-              
-              // Gatillamos sus eventos nativos por si tu script de escritorio hace cálculos internos
-              if (typeof input.onchange === "function") input.onchange();
-              if (typeof input.oninput === "function") input.oninput();
+          // Control de campos de Entrega / Inicio / Desde
+          if (idL.includes('start') || idL.includes('entrega') || idL.includes('desde') || nameL.includes('desde') || idL.includes('inicio')) {
+            if (input.type === 'datetime-local' && fechaInicio) {
+              input.value = fechaInicio + "T" + horaInicio.slice(0,5);
+            } else if (fechaInicio) {
+              input.value = fechaInicio;
             }
           }
-        }
-      });
+          
+          // Control de campos de Devolución / Fin / Hasta
+          if (idL.includes('end') || idL.includes('devolucion') || idL.includes('hasta') || nameL.includes('hasta') || idL.includes('fin')) {
+            if (input.type === 'datetime-local' && fechaFin) {
+              input.value = fechaFin + "T" + horaFin.slice(0,5);
+            } else if (fechaFin) {
+              input.value = fechaFin;
+            }
+          }
 
-      // 5. RESPALDO EXCLUSIVO POR TIPO SI TU FORMULARIO NO USA IDs CONOCIDOS
-      // Si hay solo dos inputs de tipo fecha en toda la pantalla, los llenamos secuencialmente
-      var inputsFechaPuros = document.querySelectorAll('input[type="date"], input[type="datetime-local"]');
-      if (inputsFechaPuros && inputsFechaPuros.length >= 2) {
-        console.log("-> [Bypass Semántico] Llenando campos por índice de tipo fecha.");
-        if (!inputsFechaPuros[0].value && fechaInicio) {
-          inputsFechaPuros[0].value = inputsFechaPuros[0].type === 'datetime-local' ? fechaInicio + "T" + horaInicio.slice(0,5) : fechaInicio;
-        }
-        if (!inputsFechaPuros[1].value && fechaFin) {
-          inputsFechaPuros[1].value = inputsFechaPuros[1].type === 'datetime-local' ? fechaFin + "T" + horaFin.slice(0,5) : fechaFin;
-        }
-      }
+          // 4. INYECTAR KILOMETRAJE / ODÓMETRO
+          if (idL.includes('km') || idL.includes('kilo') || idL.includes('odo') || nameL.includes('km') || nameL.includes('odometro')) {
+            if (window.currentKm && window.currentKm !== "—") {
+              var kmLimpio = String(window.currentKm).replace(/[^\d]/g, '');
+              if (kmLimpio) {
+                input.value = kmLimpio;
+                console.log("✓ Campo de odómetro forzado de forma diferida: " + kmLimpio);
+                
+                // Disparamos sus eventos para que actualice alertas nativas de escritorio si corresponde
+                if (typeof input.onchange === "function") input.onchange();
+                if (typeof input.oninput === "function") input.oninput();
+              }
+            }
+          }
+        });
 
-      // Sincronizar el selector desplegable corporativo de vehículos si existe
-      var selectorVeh = document.getElementById('vehicleSelect') || document.getElementById('select-car') || document.querySelector('select[name*="veh"]');
-      if (selectorVeh && d.plate) {
-        selectorVeh.value = d.plate.toUpperCase().trim();
-        if (typeof selectorVeh.onchange === "function") selectorVeh.onchange();
-      }
+        // 5. RESPALDO EXCLUSIVO POR ÍNDICE DE TIPOS DE CAMPO
+        var inputsFechaPuros = document.querySelectorAll('input[type="date"], input[type="datetime-local"]');
+        if (inputsFechaPuros && inputsFechaPuros.length >= 2) {
+          if (!inputsFechaPuros[0].value && fechaInicio) {
+            inputsFechaPuros[0].value = inputsFechaPuros[0].type === 'datetime-local' ? fechaInicio + "T" + horaInicio.slice(0,5) : fechaInicio;
+          }
+          if (!inputsFechaPuros[1].value && fechaFin) {
+            inputsFechaPuros[1].value = inputsFechaPuros[1].type === 'datetime-local' ? fechaFin + "T" + horaFin.slice(0,5) : fechaFin;
+          }
+        }
 
+        // Sincronizar el selector desplegable corporativo de vehículos si existe
+        var selectorVeh = document.getElementById('vehicleSelect') || document.getElementById('select-car') || document.querySelector('select[name*="veh"]');
+        if (selectorVeh && d.plate) {
+          selectorVeh.value = d.plate.toUpperCase().trim();
+          if (typeof selectorVeh.onchange === "function") selectorVeh.onchange();
+        }
+
+        console.log("✓ Finalizado el proceso de sobreescritura diferida inmune.");
+      }, 450); // Retardo de 450ms suficiente para ganar la carrera de inicialización
     });
   } catch (err) {
-    console.error("Error crítico en el parseo del inicializador de checklist:", err);
+    console.error("Error crítico en el inicializador diferido:", err);
   }
 })();
 
