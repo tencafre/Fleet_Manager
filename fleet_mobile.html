@@ -1133,18 +1133,36 @@ window.updateStats = function() {
 function renderCal() {
   console.log("-> [Render] Iniciando compilación de interfaz móvil unificada...");
 
-  // 1. EXTRAER VARIABLES DESDE EL ESTADO GLOBAL (ST)
   var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
   var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
   
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
-    console.log("-> [Render] Esperando datos del parque automotor...");
     return;
   }
 
-  // 2. 🚀 RESCATE ABSOLUTO POR REEMPLAZO RADICAL DEL BODY
-  // Forzamos que el destino sea el documento entero para que no quede nada oculto detrás de la plantilla vieja
-  var contenedorDestino = document.body;
+  // 🚀 ARREGLO MAESTRO ANTI-BLANQUEOS DE CHECKLIST:
+  // Le prohibimos terminantemente al script móvil tocar o pisar el 'document.body'.
+  // Si no encuentra una de tus cajas nativas del calendario móvil, creará una aislada
+  // para que no destruya la pantalla del checklist_kinto al saltar de pestaña.
+  var contenedorDestino = document.getElementById('calendar') || 
+                          document.getElementById('calendarGrid') || 
+                          document.getElementById('grid') ||
+                          document.getElementById('histList');
+
+  if (!contenedorDestino) {
+    // Si no encuentra ninguna caja interna (lo que pasa cuando saltás al checklist), 
+    // creamos un contenedor flotante invisible para que los datos mueran ahí sin romper el body
+    contenedorDestino = document.getElementById('mobile-contingencia-box');
+    if (!contenedorDestino) {
+      contenedorDestino = document.createElement('div');
+      contenedorDestino.id = 'mobile-contingencia-box';
+      contenedorDestino.style.display = 'none'; // Totalmente oculto
+      document.body.appendChild(contenedorDestino);
+    }
+  }
+
+  // El resto de la función (el cálculo de índices, las variables totalFlota, totalReservas,
+  // el htmlPanelSuperior y el bucle forEach de las tarjetas) se mantiene EXACTAMENTE IGUAL abajo...
 
   // 3. CALCULAR LOS ÍNDICES EN CALIENTE PARA EL PANEL SUPERIOR
   var totalFlota = parqueVehiculos.length;
