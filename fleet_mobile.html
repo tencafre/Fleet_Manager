@@ -2759,10 +2759,11 @@ function tryRender(){
 // ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO Y REDUNDANTE (ANTI-FALLAS DE FECHA Y KM) ──
 // ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO CON SEGURO DE ESCRITURA EN DISCO ──
 // ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO CON SEGURO DE ESCRITURA EN DISCO ──
+// ── ENLACE MÓVIL DIRECTO CON PARSER DE FECHAS DE ALTA PREDECIBILIDAD ──
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link] Iniciando empaquetado seguro para: " + p);
+  console.log("-> [Mobile Link] Calibrando extracción rígida de tiempos para: " + p);
 
   var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
   var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
@@ -2771,76 +2772,81 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
   var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
   var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
 
-  // 1. CAPTURA Y FORMATEO DE KILOMETRAJE SEGURO
+  // 1. EXTRAER KM DE TELEMETRÍA
   var kmTxt = "—";
   if (telList && telList[p]) {
     var datosTel = telList[p];
     var valorKm = datosTel.km || datosTel.kilometers || "";
-    if (valorKm !== "") {
-      kmTxt = String(valorKm).replace(/[^\d]/g, '');
-    }
+    if (valorKm !== "") kmTxt = String(valorKm).replace(/[^\d]/g, '');
   }
 
-  // 2. CAPTURA Y EXTRACCIÓN DE FECHAS DUALES (ISO Y PLANAS)
-  var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
-  var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
+  // 2. 🚀 PARSER PREDICTIVO DE FECHAS (ANTI-STRINGS VACÍOS)
+  // Extraemos los strings crudos buscando cualquier variante de llaves de FullCalendar o CDN
+  var rawStart = viaje ? (viaje.start || viaje.desde || viaje.startDate || "") : "";
+  var rawEnd = viaje ? (viaje.end || viaje.hasta || viaje.endDate || "") : "";
 
   var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-  
-  if (String(rawStart).includes('T')) {
-    var partesS = String(rawStart).split('T');
-    sDate = partesS[0];
-    sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+
+  // Procesar fecha de Inicio
+  if (rawStart !== "") {
+    if (String(rawStart).includes('T')) {
+      var partesS = String(rawStart).split('T');
+      sDate = partesS[0];
+      sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else {
+      // Fallback si viene solo YYYY-MM-DD plano
+      sDate = String(rawStart).slice(0, 10);
+      sTime = viaje.startTime || viaje.hora_inicio || "00:00";
+    }
   } else {
-    sDate = rawStart;
-    sTime = viaje ? (viaje.startTime || "00:00") : "00:00";
+    // Plan de contingencia absoluto: usa la fecha de hoy si el CDN no trajo datos
+    sDate = new Date().toISOString().slice(0, 10);
   }
 
-  if (String(rawEnd).includes('T')) {
-    var partesE = String(rawEnd).split('T');
-    eDate = partesE[0];
-    eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+  // Procesar fecha de Fin
+  if (rawEnd !== "") {
+    if (String(rawEnd).includes('T')) {
+      var partesE = String(rawEnd).split('T');
+      eDate = partesE[0];
+      eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else {
+      eDate = String(rawEnd).slice(0, 10);
+      eTime = viaje.endTime || viaje.hora_fin || "00:00";
+    }
   } else {
-    eDate = rawEnd;
-    eTime = viaje ? (viaje.endTime || "00:00") : "00:00";
+    eDate = new Date().toISOString().slice(0, 10);
   }
 
-  // 3. ARMADO DEL PAYLOAD CON LLAVES REDUNDANTES CRUCIALES
+  // 3. ARMADO DEL PAYLOAD CON ESTRUCTURA RIGIDA REDUNDANTE
   var payload = {
     plate:      p,
     resid:      resCode,
     renter:     decodeURIComponent(renterName),
     
-    // Inyección de fechas cruzadas redundantes
-    startDate:  sDate,      
-    startTime:  sTime,      
-    endDate:    eDate,      
-    endTime:    eTime,      
+    // Inyección de fechas garantizadas sin vacíos
+    startDate:  sDate,      // YYYY-MM-DD
+    startTime:  sTime,      // HH:MM
+    endDate:    eDate,      // YYYY-MM-DD
+    endTime:    eTime,      // HH:MM
     
-    start:      rawStart,   
-    end:        rawEnd,     
+    start:      rawStart || sDate + "T" + sTime,   
+    end:        rawEnd || eDate + "T" + eTime,     
     
-    // Inyección de Kilómetros cruzados redundantes
     km:         kmTxt,
     kilometers: kmTxt,
-    telemetria_km: kmTxt,
-
-    // Estructura técnica de la unidad
     tankCap:    veh ? (veh.tankCap || 0) : 0,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
-    // Hilos de funciones nativas
     tires:      typeof getTireData === "function" ? getTireData(p) : [],
     tireNums:   typeof getTireNumbers === "function" ? getTireNumbers(p) : [],
     accesorios: typeof getAccData === "function" ? getAccData(p) : []
   };
 
-  // 4. FORZAR ESCRITURA EN DISCO
-  localStorage.removeItem('fleetcal_checklist_data'); // Purgamos caché anterior
+  // 4. PERSISTENCIA Y SEGURO DE RETARDO DE ESCRITURA
+  localStorage.removeItem('fleetcal_checklist_data');
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Objeto consolidado en LocalStorage:", payload);
+  console.log("✓ Payload consolidado en LocalStorage de forma predictiva:", payload);
 
-  // 5. 🚀 RETARDO DE ASINCRONÍA DE RED (Le da 150ms al teléfono para asimilar los datos)
   setTimeout(function() {
     var urlDestino = "checklist_kinto.html";
     if (window.location.search && window.location.search.includes('sid')) {
@@ -2848,10 +2854,8 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
       var sid = urlParams.get('sid');
       if (sid) urlDestino += "?sid=" + encodeURIComponent(sid);
     }
-    
-    console.log("-> [Mobile Link] Redirección segura ejecutada.");
     window.location.href = urlDestino;
-  }, 150); 
+  }, 100); 
 };
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
