@@ -1113,46 +1113,18 @@ window.updateStats = function() {
 window._mobileRenderLayoutActivo = false;
 
 function renderCal() {
-  // Si ya se está ejecutando un renderizado, abortamos el segundo para evitar el vaciado de pantalla
-  if (window._mobileRenderLayoutActivo) {
-    console.log("-> [Bypass] Bloqueado doble renderizado en paralelo.");
-    return;
-  }
-  window._mobileRenderLayoutActivo = true;
+  console.log("-> [Render Absolute] Iniciando compilación de interfaz móvil unificada...");
 
-  console.log("-> [Render] Iniciando compilación de interfaz móvil unificada...");
-
-  // 1. EXTRAER VARIABLES DESDE EL ESTADO GLOBAL (ST)
+  // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL
   var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
   var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
   
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
-    console.log("-> [Render] Esperando datos del parque automotor...");
-    window._mobileRenderLayoutActivo = false;
+    console.log("-> [Render Absolute] Esperando datos del parque automotor...");
     return;
   }
 
-  // 2. 🚀 ANCLAJE SEGURO AISLADO (NUNCA MÁS PISAMOS EL DOCUMENT.BODY DIRECTO)
-  // Intentamos inyectar dentro de tu div del calendario viejo para que no rompa el DOM superior
-  var contenedorDestino = document.getElementById('calendar') || 
-                          document.getElementById('calendarGrid') || 
-                          document.getElementById('grid') ||
-                          document.getElementById('histList');
-
-  // Si no encuentra ninguno, creamos una caja limpia fija al inicio para evitar quedar ocultos
-  if (!contenedorDestino || contenedorDestino === document.body) {
-    contenedorDestino = document.getElementById('mobile-ui-app-container');
-    if (!contenedorDestino) {
-      contenedorDestino = document.createElement('div');
-      contenedorDestino.id = 'mobile-ui-app-container';
-      contenedorDestino.style.width = '100%';
-      contenedorDestino.style.padding = '10px';
-      contenedorDestino.style.boxSizing = 'border-box';
-      document.body.insertBefore(contenedorDestino, document.body.firstChild);
-    }
-  }
-
-  // 3. CALCULAR LOS ÍNDICES EN CALIENTE PARA EL PANEL SUPERIOR
+  // 2. CALCULAR LOS ÍNDICES EN CALIENTE PARA EL PANEL SUPERIOR
   var totalFlota = parqueVehiculos.length;
   var totalReservas = Array.isArray(todasLasReservas) ? todasLasReservas.length : 0;
   var totalAlertas = 0;
@@ -1166,9 +1138,9 @@ function renderCal() {
     }
   });
 
-  // 4. ARMAR EL PANEL SUPERIOR INSTITUCIONAL
+  // 3. COMPILAR EL PANEL SUPERIOR OSCURO CORPORATIVO
   var htmlPanelSuperior = 
-    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); font-family:sans-serif; text-align:center; color:#ffffff;">' +
+    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; color:#ffffff;">' +
       '<div style="border-right:1px solid #334155;">' +
         '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Flota Total</div>' +
         '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#38bdf8;">' + totalFlota + '</div>' +
@@ -1183,8 +1155,8 @@ function renderCal() {
       '</div>' +
     '</div>';
 
-  // 5. ARMAR LA CASCADA DE TARJETAS VERTICALES DE VEHÍCULOS
-  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%; font-family:sans-serif; display:block !important; clear:both !important;">';
+  // 4. COMPILAR LA CASCADA DE TARJETAS VERTICALES DE VEHÍCULOS
+  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%;">';
 
   parqueVehiculos.forEach(function(veh) {
     if (!veh || !veh.plate) return;
@@ -1267,17 +1239,28 @@ function renderCal() {
 
   htmlTarjetasVehiculos += '</div>';
 
-  // Ocultar loaders estáticos si existiesen de forma limpia
-  var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
-  if (loader) loader.style.setProperty('display', 'none', 'important');
+  // 5. 🚀 RESCATE ABSOLUTO POR SELECTOR CSS INTERNO RESILIENTE
+  // Buscamos la etiqueta real donde tu HTML original dibuja el layout para sobreescribirla de raiz
+  var contenedorDestino = document.getElementById('calendar') || 
+                          document.getElementById('calendarGrid') || 
+                          document.getElementById('grid') ||
+                          document.getElementById('histList') ||
+                          document.querySelector('.wrapper') ||
+                          document.querySelector('main');
 
-  // 6. VOLCADO SEGURO CONTROLADO EN TU CAJA DE ANCLAJE INTERNA
-  contenedorDestino.innerHTML = htmlPanelSuperior + htmlTarjetasVehiculos;
-  
-  console.log("-> [Render] ¡Estructura móvil acoplada con éxito completo!");
-  
-  // Abrimos el semáforo para habilitar renders futuros si el usuario agrega o borra mantenimientos
-  window._mobileRenderLayoutActivo = false;
+  if (contenedorDestino) {
+    contenedorDestino.innerHTML = htmlPanelSuperior + htmlTarjetasVehiculos;
+    contenedorDestino.style.setProperty('display', 'block', 'important');
+    contenedorDestino.style.background = '#f8fafc';
+    
+    // Volamos cualquier loader persistente que esté ocultando la caja
+    var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
+    if (loader) loader.style.setProperty('display', 'none', 'important');
+    
+    console.log("-> [Render Absolute] ¡Estructura integrada volcada con éxito total!");
+  } else {
+    console.error("-> [Critical Error] No se detectó ninguna sección base para volcar la interfaz.");
+  }
 }
 
 // Función puente antibugs para el enrutador de inspección móvil
