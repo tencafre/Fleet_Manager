@@ -1109,39 +1109,48 @@ window.updateStats = function() {
   // El cálculo visual de índices se unifica abajo para evitar desfases de renderizado
 };
 
+// Semáforo de control para evitar que las cargas paralelas dupliquen o borren la UI
+window._mobileRenderLayoutActivo = false;
+
 function renderCal() {
+  // Si ya se está ejecutando un renderizado, abortamos el segundo para evitar el vaciado de pantalla
+  if (window._mobileRenderLayoutActivo) {
+    console.log("-> [Bypass] Bloqueado doble renderizado en paralelo.");
+    return;
+  }
+  window._mobileRenderLayoutActivo = true;
+
   console.log("-> [Render] Iniciando compilación de interfaz móvil unificada...");
 
+  // 1. EXTRAER VARIABLES DESDE EL ESTADO GLOBAL (ST)
   var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
   var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
   
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
+    console.log("-> [Render] Esperando datos del parque automotor...");
+    window._mobileRenderLayoutActivo = false;
     return;
   }
 
-  // 🚀 ARREGLO MAESTRO ANTI-BLANQUEOS DE CHECKLIST:
-  // Le prohibimos terminantemente al script móvil tocar o pisar el 'document.body'.
-  // Si no encuentra una de tus cajas nativas del calendario móvil, creará una aislada
-  // para que no destruya la pantalla del checklist_kinto al saltar de pestaña.
+  // 2. 🚀 ANCLAJE SEGURO AISLADO (NUNCA MÁS PISAMOS EL DOCUMENT.BODY DIRECTO)
+  // Intentamos inyectar dentro de tu div del calendario viejo para que no rompa el DOM superior
   var contenedorDestino = document.getElementById('calendar') || 
                           document.getElementById('calendarGrid') || 
                           document.getElementById('grid') ||
                           document.getElementById('histList');
 
-  if (!contenedorDestino) {
-    // Si no encuentra ninguna caja interna (lo que pasa cuando saltás al checklist), 
-    // creamos un contenedor flotante invisible para que los datos mueran ahí sin romper el body
-    contenedorDestino = document.getElementById('mobile-contingencia-box');
+  // Si no encuentra ninguno, creamos una caja limpia fija al inicio para evitar quedar ocultos
+  if (!contenedorDestino || contenedorDestino === document.body) {
+    contenedorDestino = document.getElementById('mobile-ui-app-container');
     if (!contenedorDestino) {
       contenedorDestino = document.createElement('div');
-      contenedorDestino.id = 'mobile-contingencia-box';
-      contenedorDestino.style.display = 'none'; // Totalmente oculto
-      document.body.appendChild(contenedorDestino);
+      contenedorDestino.id = 'mobile-ui-app-container';
+      contenedorDestino.style.width = '100%';
+      contenedorDestino.style.padding = '10px';
+      contenedorDestino.style.boxSizing = 'border-box';
+      document.body.insertBefore(contenedorDestino, document.body.firstChild);
     }
   }
-
-  // El resto de la función (el cálculo de índices, las variables totalFlota, totalReservas,
-  // el htmlPanelSuperior y el bucle forEach de las tarjetas) se mantiene EXACTAMENTE IGUAL abajo...
 
   // 3. CALCULAR LOS ÍNDICES EN CALIENTE PARA EL PANEL SUPERIOR
   var totalFlota = parqueVehiculos.length;
@@ -1157,9 +1166,9 @@ function renderCal() {
     }
   });
 
-  // 4. ARMAR EL PANEL SUPERIOR INSTITUCIONAL (Estética corporativa limpia)
+  // 4. ARMAR EL PANEL SUPERIOR INSTITUCIONAL
   var htmlPanelSuperior = 
-    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin:10px 8px 15px 8px; box-shadow:0 4px 6px rgba(0,0,0,0.15); font-family:sans-serif; text-align:center; color:#ffffff; position:relative; z-index:99999;">' +
+    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); font-family:sans-serif; text-align:center; color:#ffffff;">' +
       '<div style="border-right:1px solid #334155;">' +
         '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Flota Total</div>' +
         '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#38bdf8;">' + totalFlota + '</div>' +
@@ -1175,7 +1184,7 @@ function renderCal() {
     '</div>';
 
   // 5. ARMAR LA CASCADA DE TARJETAS VERTICALES DE VEHÍCULOS
-  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%; padding:0 8px; box-sizing:border-box; font-family:sans-serif; display:block !important; clear:both !important; position:relative; z-index:99999;">';
+  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%; font-family:sans-serif; display:block !important; clear:both !important;">';
 
   parqueVehiculos.forEach(function(veh) {
     if (!veh || !veh.plate) return;
@@ -1197,7 +1206,7 @@ function renderCal() {
     }
 
     var cabeceraCard = 
-      '<div class="vehicle-mobile-card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02); display:block !important; clear:both !important;">' +
+      '<div class="vehicle-mobile-card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02); margin-top: 10px;">' +
         '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-bottom:8px;">' +
           '<div>' +
             '<span style="font-family:monospace; font-size:12px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; margin-right:6px;">' + plate + '</span>' +
@@ -1258,13 +1267,17 @@ function renderCal() {
 
   htmlTarjetasVehiculos += '</div>';
 
-  // 6. 🚀 VOLCADO ATÓMICO COMPLETO SOBRE EL DOCUMENTO VISIBLE EN LA PANTALLA
+  // Ocultar loaders estáticos si existiesen de forma limpia
+  var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
+  if (loader) loader.style.setProperty('display', 'none', 'important');
+
+  // 6. VOLCADO SEGURO CONTROLADO EN TU CAJA DE ANCLAJE INTERNA
   contenedorDestino.innerHTML = htmlPanelSuperior + htmlTarjetasVehiculos;
   
-  // Agregamos un fondo de control neutro para corroborar el marco táctil
-  contenedorDestino.style.background = "#f8fafc";
-  
   console.log("-> [Render] ¡Estructura móvil acoplada con éxito completo!");
+  
+  // Abrimos el semáforo para habilitar renders futuros si el usuario agrega o borra mantenimientos
+  window._mobileRenderLayoutActivo = false;
 }
 
 // Función puente antibugs para el enrutador de inspección móvil
