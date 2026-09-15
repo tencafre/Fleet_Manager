@@ -1118,11 +1118,18 @@ window._mobileRenderLayoutActivo = false;
 
 function renderCal() {
   console.log("-> [Render Absolute] Iniciando compilación de interfaz móvil unificada...");
+// 🚀 CÁPSULA DE FUERZA BRUTA MÓVIL:
+  // Si tu HTML viejo tiene layouts invisibles tapando la pantalla,
+  // buscamos la grilla estática y la pulverizamos para dar paso a las tarjetas
+  var layoutViejoInfraccion = document.getElementById('loadingIndicator') || document.getElementById('loader') || document.querySelector('.loading-overlay');
+  if (layoutViejoInfraccion) {
+    layoutViejoInfraccion.style.setProperty('display', 'none', 'important');
+  }
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL
   var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
   var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
-  
+ 
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
     console.log("-> [Render Absolute] Esperando datos del parque automotor...");
     return;
