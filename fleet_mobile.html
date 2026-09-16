@@ -2753,10 +2753,38 @@ function tryRender(){
 // ═══════════════════════════════════════════════════════════════════════════
 //   ── SERIALIZADOR COMPATIBLE MÓVIL HÍBRIDO (MOLDE ORIGINAL ESCRITORIO) ──
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── EMULADOR MAESTRO DE DATOS DE ESCRITORIO PARA SALTO AL CHECKLIST ──
+// ═══════════════════════════════════════════════════════════════════════════
+
+// 1. Emuladores de extracción de datos de Supabase / LocalStorage viejos
+// para que el celular procese cubiertas y accesorios igual que la PC
+function getTireDataMobile(plate) {
+  try {
+    var raw = localStorage.getItem('fleet_tires_' + plate.toUpperCase().trim());
+    return raw ? JSON.parse(raw) : ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
+  } catch(e) { return ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"]; }
+}
+
+function getTireNumbersMobile(plate) {
+  try {
+    var raw = localStorage.getItem('fleet_tire_nums_' + plate.toUpperCase().trim());
+    return raw ? JSON.parse(raw) : ["", "", "", "", ""];
+  } catch(e) { return ["", "", "", "", ""]; }
+}
+
+function getAccDataMobile(plate) {
+  try {
+    var raw = localStorage.getItem('fleet_acc_' + plate.toUpperCase().trim());
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+// 2. Función de enlace y empaquetado simétrico absoluto
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Sync Link] Preparando persistencia simétrica para: " + p);
+  console.log("-> [Mobile Link Master] Emulando JSON de escritorio para: " + p);
 
   var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
   var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
@@ -2766,35 +2794,38 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
   var tel = telList ? telList[p] : null;
   var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
 
-  // 1. Extractor seguro de kilómetros de telemetría plana
-  var kmFinal = "—";
+  // Extracción limpia de odómetro desde la telemetría del CDN
+  var kmTxt = "—";
   if (tel) {
-    var valKm = tel.km || tel.kilometers || "";
-    if (valKm !== "") kmFinal = String(valKm).replace(/[^\d]/g, '');
+    var valorKm = tel.km || tel.kilometers || tel.last_km || "";
+    if (valorKm !== "") kmTxt = String(valorKm).replace(/[^\d]/g, '');
   }
 
-  // 2. Separador de tiempos ISO con fallbacks estrictos
+  // Extracción y segmentación de fechas desde el array de reservas del CDN
+  var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
+  var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
+
   var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-  if (viaje) {
-    var rawStart = viaje.start || viaje.desde || "";
-    var rawEnd = viaje.end || viaje.hasta || "";
-
-    if (String(rawStart).includes('T')) {
-      var partesS = String(rawStart).split('T');
-      sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else { sDate = rawStart; sTime = viaje.startTime || "00:00"; }
-
-    if (String(rawEnd).includes('T')) {
-      var partesE = String(rawEnd).split('T');
-      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else { eDate = rawEnd; eTime = viaje.endTime || "00:00"; }
-  } else {
-    // Fallback absoluto si la reserva no se encuentra en el array de memoria temporal
-    sDate = new Date().toISOString().slice(0, 10);
-    eDate = sDate;
+  
+  if (String(rawStart).includes('T')) {
+    var partesS = String(rawStart).split('T');
+    sDate = partesS[0]; 
+    sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+  } else if (rawStart !== "") {
+    sDate = String(rawStart).slice(0, 10);
+    sTime = viaje.startTime || "00:00";
   }
 
-  // 3. ARMADO DEL OBJETO REFLEJANDO EL MOLDE EXACTO QUE TU PC ESPERA LEER
+  if (String(rawEnd).includes('T')) {
+    var partesE = String(rawEnd).split('T');
+    eDate = partesE[0]; 
+    eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+  } else if (rawEnd !== "") {
+    eDate = String(rawEnd).slice(0, 10);
+    eTime = viaje.endTime || "00:00";
+  }
+
+  // 🚀 EL MOLDE ESCRITORIO IDÉNTICO REQUERIDO POR CHECKLIST_KINTO.HTML
   var payload = {
     plate:      p,
     resid:      resCode,
@@ -2803,30 +2834,27 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
     startTime:  sTime,
     endDate:    eDate,
     endTime:    eTime,
-    km:         kmFinal,
+    km:         kmTxt,
     tankCap:    veh ? (veh.tankCap || 0) : 0,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
-    // Al no estar en la PC, inyectamos los moldes de arrays limpios para que 
-    // los bucles del checklist nativo iteren en cero sin crashear el render del auto
-    tires:      ["BUENO", "BUENO", "BUENO", "BUENO"],
-    tireNums:   ["", "", "", ""],
-    accesorios: []
+    // Inyectamos las estructuras relacionales idénticas extraídas de la memoria
+    tires:      getTireDataMobile(p),
+    tireNums:   getTireNumbersMobile(p),
+    accesorios: getAccDataMobile(p)
   };
 
-  // 4. PERSISTENCIA RÍGIDA SÍNCRONA EN EL DISCO DEL TELÉFONO
-  localStorage.removeItem('fleetcal_checklist_data'); // Limpieza preventiva
+  // Persistencia limpia en el disco del teléfono celular
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Objeto inyectado de forma idéntica al molde de PC:", payload);
+  console.log("✓ Payload simétrico unificado inyectado con éxito en disco:", payload);
 
-  // 5. REDIRECCIÓN SEGURA UNIFICADA CONTRA ERRORES 404
-  // Forzamos abrir el checklist_kinto.html que es el archivo consolidado real
+  // Redirección forzada en la misma pestaña hacia el archivo legítimo común
   setTimeout(function() {
     window.location.href = "checklist_kinto.html";
   }, 100);
 };
 
-// Mapeamos el disparador para asegurar compatibilidad de clics en las tarjetas
+// Declaración duplicada preventiva para enganchar el clic de tus tarjetas
 window.openChecklistFromMobile = window.abrirChecklistReserva;
 
 
