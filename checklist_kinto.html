@@ -344,6 +344,42 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 </div><!-- /page -->
 
 <script>
+
+// LECTOR COMPATIBLE DE RESPALDO EN CHECKLIST_KINTO
+(function() {
+  var rawData = localStorage.getItem('fleetcal_checklist_data');
+  if (!rawData) return;
+  try {
+    var d = JSON.parse(rawData);
+    window.currentPlate = d.plate || "";
+    window.currentRenter = d.renter || "";
+    window.currentResCode = d.resid || "";
+    window.currentKm = d.km || "";
+
+    document.addEventListener("DOMContentLoaded", function() {
+      setTimeout(function() {
+        // Inyectamos de forma directa usando la propiedad .value nativa de HTML
+        var inpPlate = document.getElementById('plate') || document.getElementById('dominio');
+        if (inpPlate && d.plate) { inpPlate.value = d.plate; if(typeof inpPlate.onchange === "function") inpPlate.onchange(); }
+
+        var inpRenter = document.getElementById('renter') || document.getElementById('conductor');
+        if (inpRenter && d.renter) inpRenter.value = d.renter;
+
+        var inpKm = document.getElementById('km') || document.getElementById('kilometraje');
+        if (inpKm && d.km && d.km !== "—") { inpKm.value = d.km; if(typeof inpKm.onchange === "function") inpKm.onchange(); }
+
+        var inpS = document.getElementById('startDate') || document.getElementById('fecha_entrega');
+        if (inpS && d.startDate) inpS.value = (inpS.type === "datetime-local") ? d.startDate + "T" + (d.startTime || "00:00") : d.startDate;
+
+        var inpE = document.getElementById('endDate') || document.getElementById('fecha_devolucion');
+        if (inpE && d.endDate) inpE.value = (inpE.type === "datetime-local") ? d.endDate + "T" + (d.endTime || "00:00") : d.endDate;
+
+        console.log("-> [Checklist Kinto] Campos auto-rellenados con éxito.");
+      }, 400);
+    });
+  } catch(e) { console.error("Error en lector de checklist:", e); }
+})();
+
 const VEHICLES = {
   "HATCHBACK": {
     label: "Hatchback",
