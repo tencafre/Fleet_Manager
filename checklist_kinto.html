@@ -848,6 +848,9 @@ async function exportarRemitoPDF() {
 // ═══════════════════════════════════════════════════════════════════════════
 //   ── INITIALIZER UNIFICADO NO INVASIVO (ÚNICA COPIA DE SEGURIDAD) ──
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── INTERCEPTOR SÍNCRONO REPOSITORIO DE KINTO (SOLUCIÓN DEFINITIVA) ──
+// ═══════════════════════════════════════════════════════════════════════════
 (function() {
   console.log("-> [Checklist Kinto Unificado] Leyendo persistencia de flota...");
   var rawData = localStorage.getItem('fleetcal_checklist_data');
@@ -855,47 +858,47 @@ async function exportarRemitoPDF() {
 
   try {
     var d = JSON.parse(rawData);
-    console.log("✓ Payload cargado en memoria de Kinto:", d);
+    console.log("✓ Payload cargado con éxito en memoria de Kinto:", d);
     
-    // Alimentamos las variables globales idénticas a tu motor original de escritorio
+    // Alimentamos las variables globales del motor original de Kinto
+    // Esto hace que las imágenes y el SVG se rendericen de forma nativa al inicio
     window.currentPlate   = d.plate || "";
     window.currentRenter  = d.renter || "";
-    window.currentResCode = d.resid || d.resCode || "";
-    window.currentKm      = d.km || d.kilometers || "";
-
-    window.checklistStartDate = d.startDate || d.start || "";
-    window.checklistEndDate   = d.endDate || d.end || "";
-    window.checklistStartTime = d.startTime || "00:00";
-    window.checklistEndTime   = d.endTime || "00:00";
+    window.currentResCode = d.resid || "";
+    window.currentKm      = d.km || "";
 
     document.addEventListener("DOMContentLoaded", function() {
-      // Dejamos 500ms para que tus scripts nativos dibujen el SVG y las imágenes sin interferencias
+      // Damos 350ms para que la plantilla estática cargue las imágenes base de la carrocería
       setTimeout(function() {
-        console.log("-> [Checklist Kinto Unificado] Asignando valores a los campos...");
+        console.log("-> [Checklist Kinto] Forzando inyección visual sobre los campos...");
 
         var txtPlate = document.getElementById('plate') || document.getElementById('dominio');
-        if (txtPlate && d.plate) { 
-          txtPlate.value = d.plate; 
-          // Forzamos el evento change nativo para activar tu motor original de imágenes
-          if (typeof txtPlate.onchange === "function") txtPlate.onchange();
-        }
+        if (txtPlate && d.plate) { txtPlate.value = d.plate; }
 
         var txtRenter = document.getElementById('renter') || document.getElementById('conductor');
         if (txtRenter && d.renter) { txtRenter.value = d.renter; }
 
         var txtKm = document.getElementById('km') || document.getElementById('kilometraje');
-        if (txtKm && d.km && d.km !== "—") { 
-          txtKm.value = d.km; 
-          if (typeof txtKm.onchange === "function") txtKm.onchange();
+        if (txtKm && d.km && d.km !== "—") { txtKm.value = d.km; }
+
+        var txtStart = document.getElementById('startDate') || document.getElementById('fecha_entrega');
+        if (txtStart && d.startDate) {
+          txtStart.value = (txtStart.type === "datetime-local") ? d.startDate + "T" + (d.startTime || "00:00") : d.startDate;
         }
 
-        // Si tu Kinto original tiene funciones para cargar el auto al elegir la patente, las despertamos
-        if (typeof cargarDatosVehiculo === "function" && d.plate) {
-          cargarDatosVehiculo(d.plate);
-        } else if (typeof initChecklist === "function") {
-          initChecklist();
+        var txtEnd = document.getElementById('endDate') || document.getElementById('fecha_devolucion');
+        if (txtEnd && d.endDate) {
+          txtEnd.value = (txtEnd.type === "datetime-local") ? d.endDate + "T" + (d.endTime || "00:00") : d.endDate;
         }
-      }, 500);
+
+        // DISPARADOR MAESTRO: Forzamos la ejecución de tu inicializador nativo original de la PC
+        if (typeof initChecklist === "function") {
+          initChecklist();
+        } else if (typeof cargarDatosVehiculo === "function" && d.plate) {
+          cargarDatosVehiculo(d.plate);
+        }
+
+      }, 350);
     });
 
   } catch (err) {

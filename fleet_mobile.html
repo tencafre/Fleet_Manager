@@ -2748,10 +2748,12 @@ function tryRender(){
 // ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO CON SEGURO DE ESCRITURA EN DISCO ──
 // ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO CON SEGURO DE ESCRITURA EN DISCO ──
 // ── ENLACE MÓVIL DIRECTO CON PARSER DE FECHAS DE ALTA PREDECIBILIDAD ──
+
+// ── ENLACE MÓVIL HOMOLOGADO CON EL DATASET DE ESCRITORIO (ANTI-FALLAS) ──
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link] Generando payload simétrico para Kinto: " + p);
+  console.log("-> [Mobile Link] Replicando serialización original de la PC para: " + p);
 
   var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
   var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
@@ -2761,25 +2763,24 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
   var tel = telList ? telList[p] : null;
   var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
 
-  // Extracción limpia de odómetro
-  var kmTxt = "—";
-  if (tel) kmTxt = String(tel.km || tel.kilometers || "").replace(/[^\d]/g, '');
-
-  var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
-  var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
-
+  // 1. Separación de Tiempos idéntica a FullCalendar
   var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-  if (String(rawStart).includes('T')) {
-    var partesS = String(rawStart).split('T');
-    sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-  } else { sDate = rawStart; }
+  if (viaje) {
+    var rawStart = viaje.start || viaje.desde || "";
+    var rawEnd = viaje.end || viaje.hasta || "";
+    
+    if (String(rawStart).includes('T')) {
+      var partesS = String(rawStart).split('T');
+      sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else { sDate = rawStart; sTime = viaje.startTime || "00:00"; }
 
-  if (String(rawEnd).includes('T')) {
-    var partesE = String(rawEnd).split('T');
-    eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-  } else { eDate = rawEnd; }
+    if (String(rawEnd).includes('T')) {
+      var partesE = String(rawEnd).split('T');
+      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else { eDate = rawEnd; eTime = viaje.endTime || "00:00"; }
+  }
 
-    // 🚀 MOLDE NATIVO CORREGIDO (SIN ERRORES DE SINTAXIS)
+  // 2. CONSTRUCCIÓN DEL PAYLOAD EXACTO ORIGINAL DE TU COMPU
   var payload = {
     plate:      p,
     resid:      resCode,
@@ -2788,26 +2789,30 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
     startTime:  sTime,
     endDate:    eDate,
     endTime:    eTime,
-    km:         kmTxt,
+    km:         tel ? tel.km : '—',
     tankCap:    veh ? (veh.tankCap || 0) : 0,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
-    // CORRECCIÓN: Cerramos el operador ternario con un array vacío legítimo
-    tires:      (window.ST && window.ST.tires) ? window.ST.tires : [],
-    tireNums:   ["","","",""],
-    accesorios: []
+    // Inyección de métodos seguros para no romper los bucles nativos de Kinto
+    tires:      typeof getTireData === "function" ? getTireData(p) : ["BUENO","BUENO","BUENO","BUENO"],
+    tireNums:   typeof getTireNumbers === "function" ? getTireNumbers(p) : ["","","",""],
+    accesorios: typeof getAccData === "function" ? getAccData(p) : []
   };
 
+  // Guardamos en la clave compartida del disco rígido
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  
+  console.log("✓ Objeto inyectado de forma idéntica a la PC:", payload);
+
+  // 3. SEGURO DE RETARDO ASÍNCRONO
+  // Forzamos la redirección exclusiva a checklist_kinto.html tanto para PC como para móvil
+  // eliminando la derivación fallida de checklist_mobile.html
   setTimeout(function() {
     window.location.href = "checklist_kinto.html";
-  }, 100);
-
+  }, 120);
 };
 
-// Mapeo de puente para asegurar compatibilidad de clics
 window.openChecklistFromMobile = window.abrirChecklistReserva;
+
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
 window.addEventListener('DOMContentLoaded', function() {
