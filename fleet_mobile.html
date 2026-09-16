@@ -1118,22 +1118,64 @@ window._mobileRenderLayoutActivo = false;
 
 function renderCal() {
   console.log("-> [Render Absolute] Iniciando compilación de interfaz móvil unificada...");
-// 🚀 CÁPSULA DE FUERZA BRUTA MÓVIL:
-  // Si tu HTML viejo tiene layouts invisibles tapando la pantalla,
-  // buscamos la grilla estática y la pulverizamos para dar paso a las tarjetas
-  var layoutViejoInfraccion = document.getElementById('loadingIndicator') || document.getElementById('loader') || document.querySelector('.loading-overlay');
-  if (layoutViejoInfraccion) {
-    layoutViejoInfraccion.style.setProperty('display', 'none', 'important');
+
+  // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL O CACHÉ DE RESPALDO (Evita el retorno prematuro)
+  var parqueVehiculos = (window.ST && window.ST.pque && window.ST.pque.length > 0) ? window.ST.pque : [];
+  var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : [];
+
+  // BACKUP SÍNCRONO: Si el CDN se demora, leemos tu memoria local para no congelar la pantalla
+  if (parqueVehiculos.length === 0) {
+    try {
+      var cachedPque = localStorage.getItem('fleet_pque_cache');
+      if (cachedPque) parqueVehiculos = JSON.parse(cachedPque);
+    } catch(e) { console.warn("Fallo al leer caché de contingencia de parque."); }
+  }
+  if (todasLasReservas.length === 0) {
+    try {
+      var cachedRes = localStorage.getItem('fleet_res_cache');
+      if (cachedRes) todasLasReservas = JSON.parse(cachedRes);
+    } catch(e) {}
   }
 
-  // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL
-  var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
-  var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
- 
-  if (!parqueVehiculos || parqueVehiculos.length === 0) {
-    console.log("-> [Render Absolute] Esperando datos del parque automotor...");
+  // Si después del respaldo de disco el array sigue vacío, dejamos un cartel prolijo de espera sutil
+  var baseLetrero = document.getElementById('letrero-control-movil');
+  if (!baseLetrero) {
+    console.error("-> Error crítico: Falta el letrero verde en el HTML.");
     return;
   }
+
+  // Saneamos visualmente tu cartel verde para que actúe como cabecera estructural
+  baseLetrero.style.position = 'static';
+  baseLetrero.style.display = 'block';
+  baseLetrero.style.marginBottom = '15px';
+
+  var contenedorDestino = document.getElementById('mobile-integrated-app-box');
+  if (!contenedorDestino) {
+    contenedorDestino = document.createElement('div');
+    contenedorDestino.id = 'mobile-integrated-app-box';
+    contenedorDestino.style.width = '100%';
+    contenedorDestino.style.padding = '10px';
+    contenedorDestino.style.boxSizing = 'border-box';
+    contenedorDestino.style.background = '#f8fafc';
+    contenedorDestino.style.fontFamily = 'sans-serif';
+    contenedorDestino.style.display = 'block';
+    baseLetrero.parentNode.insertBefore(contenedorDestino, baseLetrero.nextSibling);
+  }
+
+  if (parqueVehiculos.length === 0) {
+    contenedorDestino.innerHTML = "<div style='text-align:center; padding:35px; color:#475569; font-size:13px; font-weight:600;'>⚡ Sincronizando datos de flota con el servidor central de GitHub...</div>";
+    return;
+  }
+
+  // Guardamos en caché local para la próxima apertura instantánea
+  try {
+    if (window.ST && window.ST.pque) localStorage.setItem('fleet_pque_cache', JSON.stringify(window.ST.pque));
+    if (window.ST && window.ST.res) localStorage.setItem('fleet_res_cache', JSON.stringify(window.ST.res));
+  } catch(e) {}
+
+  // Volamos cualquier loader o máscara estática vieja que esté bloqueando la visualización
+  var layoutViejoInfraccion = document.getElementById('loadingIndicator') || document.getElementById('loader') || document.querySelector('.loading-overlay');
+  if (layoutViejoInfraccion) layoutViejoInfraccion.style.setProperty('display', 'none', 'important');
 
   // 2. CALCULAR LOS ÍNDICES EN CALIENTE PARA EL PANEL SUPERIOR
   var totalFlota = parqueVehiculos.length;
@@ -1166,8 +1208,8 @@ function renderCal() {
       '</div>' +
     '</div>';
 
-  // 4. COMPILAR LA CASCADA DE TARJETAS VERTICALES DE VEHÍCULOS
-  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%;">';
+  // 4. COMPILAR LA CASCADA DE TARJETAS VERTICALES DE VEHÍCULOS Y VIAJES
+  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%; display:block !important; clear:both !important;">';
 
   parqueVehiculos.forEach(function(veh) {
     if (!veh || !veh.plate) return;
@@ -1189,7 +1231,7 @@ function renderCal() {
     }
 
     var cabeceraCard = 
-      '<div class="vehicle-mobile-card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02); margin-top: 10px;">' +
+      '<div class="vehicle-mobile-card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02); display:block !important; clear:both !important;">' +
         '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-bottom:8px;">' +
           '<div>' +
             '<span style="font-family:monospace; font-size:12px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; margin-right:6px;">' + plate + '</span>' +
@@ -1238,7 +1280,7 @@ function renderCal() {
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              '<button onclick="window.openChecklistFromMobile(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+              '<button onclick="window.abrirChecklistReserva(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
             '</div>' +
           '</div>';
       });
@@ -1250,28 +1292,9 @@ function renderCal() {
 
   htmlTarjetasVehiculos += '</div>';
 
-  // 5. 🚀 RESCATE ABSOLUTO POR SELECTOR CSS INTERNO RESILIENTE
-  // Buscamos la etiqueta real donde tu HTML original dibuja el layout para sobreescribirla de raiz
-  var contenedorDestino = document.getElementById('calendar') || 
-                          document.getElementById('calendarGrid') || 
-                          document.getElementById('grid') ||
-                          document.getElementById('histList') ||
-                          document.querySelector('.wrapper') ||
-                          document.querySelector('main');
-
-  if (contenedorDestino) {
-    contenedorDestino.innerHTML = htmlPanelSuperior + htmlTarjetasVehiculos;
-    contenedorDestino.style.setProperty('display', 'block', 'important');
-    contenedorDestino.style.background = '#f8fafc';
-    
-    // Volamos cualquier loader persistente que esté ocultando la caja
-    var loader = document.getElementById('loadingIndicator') || document.getElementById('loader');
-    if (loader) loader.style.setProperty('display', 'none', 'important');
-    
-    console.log("-> [Render Absolute] ¡Estructura integrada volcada con éxito total!");
-  } else {
-    console.error("-> [Critical Error] No se detectó ninguna sección base para volcar la interfaz.");
-  }
+  // 5. VOLCADO ATÓMICO FINAL EN EL CONTENEDOR INTEGRADO VISIBLE
+  contenedorDestino.innerHTML = htmlPanelSuperior + htmlTarjetasVehiculos;
+  console.log("-> [Render Absolute] ¡Estructura integrada volcada con éxito total abajo del letrero visible!");
 }
 
 // Función puente antibugs para el enrutador de inspección móvil
