@@ -345,40 +345,106 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 
 <script>
 
-// LECTOR COMPATIBLE DE RESPALDO EN CHECKLIST_KINTO
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── INYECTOR DE DATOS NO INVASIVO CON FORZADO DE VISIBILIDAD DE CAPAS ──
+// ═══════════════════════════════════════════════════════════════════════════
 (function() {
+  console.log("-> [Checklist Reparación] Iniciando lectura segura de persistencia...");
+  
   var rawData = localStorage.getItem('fleetcal_checklist_data');
   if (!rawData) return;
+
   try {
     var d = JSON.parse(rawData);
-    window.currentPlate = d.plate || "";
-    window.currentRenter = d.renter || "";
+    console.log("✓ Datos recuperados en destino:", d);
+    
+    window.currentPlate   = d.plate || "";
+    window.currentRenter  = d.renter || "";
     window.currentResCode = d.resid || "";
-    window.currentKm = d.km || "";
+    window.currentKm      = d.km || d.kilometers || "";
+
+    var fechaInicio = d.startDate || "";
+    var fechaFin    = d.endDate || "";
+    var horaInicio  = d.startTime || "00:00";
+    var horaFin     = d.endTime || "00:00";
 
     document.addEventListener("DOMContentLoaded", function() {
+      
       setTimeout(function() {
-        // Inyectamos de forma directa usando la propiedad .value nativa de HTML
-        var inpPlate = document.getElementById('plate') || document.getElementById('dominio');
-        if (inpPlate && d.plate) { inpPlate.value = d.plate; if(typeof inpPlate.onchange === "function") inpPlate.onchange(); }
+        console.log("-> [Checklist Reparación] Asignando valores directos a los campos nativos...");
 
-        var inpRenter = document.getElementById('renter') || document.getElementById('conductor');
-        if (inpRenter && d.renter) inpRenter.value = d.renter;
+        // 1. Inyectar Patente
+        var inpPlate = document.getElementById('plate') || document.getElementById('dominio') || document.getElementById('input-plate');
+        if (inpPlate && d.plate) { 
+          inpPlate.value = d.plate; 
+          if (typeof inpPlate.onchange === "function") inpPlate.onchange();
+        }
 
-        var inpKm = document.getElementById('km') || document.getElementById('kilometraje');
-        if (inpKm && d.km && d.km !== "—") { inpKm.value = d.km; if(typeof inpKm.onchange === "function") inpKm.onchange(); }
+        // 2. Inyectar Cliente / Conductor
+        var inpRenter = document.getElementById('renter') || document.getElementById('conductor') || document.getElementById('clientName');
+        if (inpRenter && d.renter) { inpRenter.value = d.renter; }
 
-        var inpS = document.getElementById('startDate') || document.getElementById('fecha_entrega');
-        if (inpS && d.startDate) inpS.value = (inpS.type === "datetime-local") ? d.startDate + "T" + (d.startTime || "00:00") : d.startDate;
+        // 3. Inyectar Kilómetros / Odómetro
+        var inpKm = document.getElementById('km') || document.getElementById('kilometraje') || document.getElementById('odometro') || document.getElementById('maint_km');
+        if (inpKm && window.currentKm && window.currentKm !== "—") {
+          var kmPlano = String(window.currentKm).replace(/[^\d]/g, '');
+          if (kmPlano) {
+            inpKm.value = kmPlano;
+            if (typeof inpKm.onchange === "function") inpKm.onchange();
+            if (typeof inpKm.oninput === "function") inpKm.oninput();
+          }
+        }
 
-        var inpE = document.getElementById('endDate') || document.getElementById('fecha_devolucion');
-        if (inpE && d.endDate) inpE.value = (inpE.type === "datetime-local") ? d.endDate + "T" + (d.endTime || "00:00") : d.endDate;
+        // 4. Inyectar Fechas
+        var inpStartDate = document.getElementById('startDate') || document.getElementById('fecha_entrega') || document.getElementById('desde');
+        if (inpStartDate && fechaInicio) {
+          if (inpStartDate.type === "datetime-local" && horaInicio) {
+            inpStartDate.value = fechaInicio + "T" + horaInicio.slice(0, 5);
+          } else {
+            inpStartDate.value = fechaInicio;
+          }
+        }
 
-        console.log("-> [Checklist Kinto] Campos auto-rellenados con éxito.");
-      }, 400);
+        var inpEndDate = document.getElementById('endDate') || document.getElementById('fecha_devolucion') || document.getElementById('hasta');
+        if (inpEndDate && fechaFin) {
+          if (inpEndDate.type === "datetime-local" && horaFin) {
+            inpEndDate.value = fechaFin + "T" + horaFin.slice(0, 5);
+          } else {
+            inpEndDate.value = fechaFin;
+          }
+        }
+
+        // 5. Sincronizar el selector desplegable
+        var selectorVeh = document.getElementById('vehicleSelect') || document.getElementById('select-car');
+        if (selectorVeh && d.plate) {
+          selectorVeh.value = d.plate.toUpperCase().trim();
+          if (typeof selectorVeh.onchange === "function") selectorVeh.onchange();
+        }
+
+        // 🚀 6. EL TRUCO MAESTRO: DESTRUIR LOADERS Y FORZAR VISIBILIDAD DE CONTENEDORES
+        // Buscamos cualquier overlay, spinner o loader estático que quede congelado tapando la app
+        var loaders = document.querySelectorAll('#loadingIndicator, #loader, .loading, .spinner, .overlay, #loading, .loading-overlay');
+        loaders.forEach(function(l) {
+          l.style.setProperty('display', 'none', 'important');
+        });
+
+        // Forzamos visibilidad en los bloques principales del formulario, imágenes y SVG
+        var seccionesMaster = document.querySelectorAll('main, #app, .wrapper, .container, form, svg, .car-diagram, .image-container');
+        seccionesMaster.forEach(function(s) {
+          s.style.setProperty('display', 'block', 'important');
+          s.style.setProperty('visibility', 'visible', 'important');
+          s.style.setProperty('opacity', '1', 'important');
+        });
+
+        console.log("✓ Sincronización finalizada y capas forzadas al 100% de visibilidad.");
+      }, 450); // 450ms da margen a que los scripts de la cámara y del auto se armen
     });
-  } catch(e) { console.error("Error en lector de checklist:", e); }
+
+  } catch (err) {
+    console.error("Error en el inyector de reparación:", err);
+  }
 })();
+
 
 const VEHICLES = {
   "HATCHBACK": {
