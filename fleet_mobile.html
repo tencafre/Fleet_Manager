@@ -1117,83 +1117,43 @@ window.updateStats = function() {
 window._mobileRenderLayoutActivo = false;
 
 function renderCal() {
-  console.log("-> [Render Absolute] Iniciando compilación de interfaz móvil unificada...");
+  console.log("-> [Render Nuclear] Compilando interfaz móvil sobre lienzo limpio...");
 
-  // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL O CACHÉ DE RESPALDO (Evita el retorno prematuro)
-  var parqueVehiculos = (window.ST && window.ST.pque && window.ST.pque.length > 0) ? window.ST.pque : [];
-  var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : [];
-
-  // BACKUP SÍNCRONO: Si el CDN se demora, leemos tu memoria local para no congelar la pantalla
-  if (parqueVehiculos.length === 0) {
-    try {
-      var cachedPque = localStorage.getItem('fleet_pque_cache');
-      if (cachedPque) parqueVehiculos = JSON.parse(cachedPque);
-    } catch(e) { console.warn("Fallo al leer caché de contingencia de parque."); }
-  }
-  if (todasLasReservas.length === 0) {
-    try {
-      var cachedRes = localStorage.getItem('fleet_res_cache');
-      if (cachedRes) todasLasReservas = JSON.parse(cachedRes);
-    } catch(e) {}
-  }
-
-  // Si después del respaldo de disco el array sigue vacío, dejamos un cartel prolijo de espera sutil
-  var baseLetrero = document.getElementById('letrero-control-movil');
-  if (!baseLetrero) {
-    console.error("-> Error crítico: Falta el letrero verde en el HTML.");
+  // 1. EXTRAER VARIABLES DEL ESTADO GLOBAL DIRECTO
+  var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
+  var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
+  
+  // Si los datos del CDN aún no impactaron la memoria global, esperamos el próximo ciclo asíncrono
+  if (!parqueVehiculos || parqueVehiculos.length === 0) {
+    console.log("-> [Render Nuclear] Esperando que el CDN pueble las variables del parque automotor...");
     return;
   }
 
-  // Saneamos visualmente tu cartel verde para que actúe como cabecera estructural
-  baseLetrero.style.position = 'static';
-  baseLetrero.style.display = 'block';
-  baseLetrero.style.marginBottom = '15px';
-
-  var contenedorDestino = document.getElementById('mobile-integrated-app-box');
-  if (!contenedorDestino) {
-    contenedorDestino = document.createElement('div');
-    contenedorDestino.id = 'mobile-integrated-app-box';
-    contenedorDestino.style.width = '100%';
-    contenedorDestino.style.padding = '10px';
-    contenedorDestino.style.boxSizing = 'border-box';
-    contenedorDestino.style.background = '#f8fafc';
-    contenedorDestino.style.fontFamily = 'sans-serif';
-    contenedorDestino.style.display = 'block';
-    baseLetrero.parentNode.insertBefore(contenedorDestino, baseLetrero.nextSibling);
-  }
-
-  if (parqueVehiculos.length === 0) {
-    contenedorDestino.innerHTML = "<div style='text-align:center; padding:35px; color:#475569; font-size:13px; font-weight:600;'>⚡ Sincronizando datos de flota con el servidor central de GitHub...</div>";
-    return;
-  }
-
-  // Guardamos en caché local para la próxima apertura instantánea
-  try {
-    if (window.ST && window.ST.pque) localStorage.setItem('fleet_pque_cache', JSON.stringify(window.ST.pque));
-    if (window.ST && window.ST.res) localStorage.setItem('fleet_res_cache', JSON.stringify(window.ST.res));
-  } catch(e) {}
-
-  // Volamos cualquier loader o máscara estática vieja que esté bloqueando la visualización
-  var layoutViejoInfraccion = document.getElementById('loadingIndicator') || document.getElementById('loader') || document.querySelector('.loading-overlay');
-  if (layoutViejoInfraccion) layoutViejoInfraccion.style.setProperty('display', 'none', 'important');
-
-  // 2. CALCULAR LOS ÍNDICES EN CALIENTE PARA EL PANEL SUPERIOR
+  // 2. CÁLCULO EN CALIENTE DE INDICADORES (PANEL SUPERIOR)
   var totalFlota = parqueVehiculos.length;
   var totalReservas = Array.isArray(todasLasReservas) ? todasLasReservas.length : 0;
   var totalAlertas = 0;
 
-  parqueVehiculos.forEach(function(v) {
-    var tel = (window.ST && window.ST.tel) ? window.ST.tel : null;
-    var vehTel = tel ? tel[v.plate] : null;
-    if (vehTel && typeof maintAlertInfo === "function") {
-      var a = maintAlertInfo(String(vehTel.km || "0"), v.plate);
-      if (a && a.isAlert) totalAlertas++;
-    }
-  });
+  try {
+    parqueVehiculos.forEach(function(v) {
+      if (!v || !v.plate) return;
+      var tel = (window.ST && window.ST.tel) ? window.ST.tel : null;
+      var vehTel = tel ? tel[v.plate] : null;
+      if (vehTel && typeof maintAlertInfo === "function") {
+        var a = maintAlertInfo(String(vehTel.km || "0"), v.plate);
+        if (a && a.isAlert) totalAlertas++;
+      }
+    });
+  } catch(e) { console.warn("Error en conteo preventivo de alertas."); }
 
-  // 3. COMPILAR EL PANEL SUPERIOR OSCURO CORPORATIVO
-  var htmlPanelSuperior = 
-    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin-bottom:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; color:#ffffff;">' +
+  // 3. CONSTRUCCIÓN DE COMPILADO HTML DE UNA SOLA PIEZA
+  // Re-inyectamos el letrero verde como parte del flujo nativo para corroborar el estado
+  var HTML_FINAL = 
+    '<div id="letrero-control-movil" style="width:100%; background:#16a34a; color:#ffffff; font-family:sans-serif; font-size:13px; font-weight:bold; text-align:center; padding:12px; box-sizing:border-box; letter-spacing:0.5px;">' +
+      '🚀 CONTROL: INTERFAZ MÓVIL OPERATIVA EN LÍNEA 🚀' +
+    '</div>' +
+    
+    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin:15px 8px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; color:#ffffff; font-family:sans-serif;">' +
       '<div style="border-right:1px solid #334155;">' +
         '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Flota Total</div>' +
         '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#38bdf8;">' + totalFlota + '</div>' +
@@ -1206,11 +1166,11 @@ function renderCal() {
         '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Alertas</div>' +
         '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#f87171;">' + totalAlertas + '</div>' +
       '</div>' +
-    '</div>';
+    '</div>' +
+    
+    '<div id="agenda-mobile-render-box" style="width:100%; padding:0 8px; box-sizing:border-box; font-family:sans-serif;">';
 
-  // 4. COMPILAR LA CASCADA DE TARJETAS VERTICALES DE VEHÍCULOS Y VIAJES
-  var htmlTarjetasVehiculos = '<div id="agenda-mobile-render-box" style="width:100%; display:block !important; clear:both !important;">';
-
+  // 4. GENERACIÓN DE TARJETAS VERTICALES
   parqueVehiculos.forEach(function(veh) {
     if (!veh || !veh.plate) return;
     var plate = veh.plate.toUpperCase().trim();
@@ -1287,14 +1247,19 @@ function renderCal() {
     }
 
     listaViajes += '</div></div>';
-    htmlTarjetasVehiculos += cabeceraCard + listaViajes;
+    HTML_FINAL += cabeceraCard + listaViajes;
   });
 
-  htmlTarjetasVehiculos += '</div>';
+  HTML_FINAL += '</div>';
 
-  // 5. VOLCADO ATÓMICO FINAL EN EL CONTENEDOR INTEGRADO VISIBLE
-  contenedorDestino.innerHTML = htmlPanelSuperior + htmlTarjetasVehiculos;
-  console.log("-> [Render Absolute] ¡Estructura integrada volcada con éxito total abajo del letrero visible!");
+  // 5. 🚀 VOLCADO CONTROLADO DIRECTO AL CUERPO VISIBLE DE LA INTERFAZ
+  // Reemplazamos el innerHTML del body para limpiar de raiz cualquier mascara o layout roto viejo
+  document.body.innerHTML = HTML_FINAL;
+  document.body.style.background = "#f8fafc";
+  document.body.style.margin = "0";
+  document.body.style.padding = "0";
+  
+  console.log("-> [Render Nuclear] ¡Estructura móvil de agenda inyectada de forma atómica y exitosa!");
 }
 
 // Función puente antibugs para el enrutador de inspección móvil
