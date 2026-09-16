@@ -1263,13 +1263,9 @@ function renderCal() {
 }
 
 // Función puente antibugs para el enrutador de inspección móvil
-window.openChecklistFromMobile = function(plate, code, renter) {
-  if (typeof window.abrirChecklistReserva === "function") {
-    window.abrirChecklistReserva(plate, code, renter);
-  } else {
-    window.location.href = "checklist_kinto.html?plate=" + plate + "&res_code=" + code + "&renter=" + renter;
-  }
-};
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── CONECTOR DE SALTO INDESTRUCTIBLE AL CHECKLIST (SOLUCIÓN DEFINITIVA) ──
+// ═══════════════════════════════════════════════════════════════════════════
 
 // Envía el nuevo service directo a Supabase (POST)
 async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, notes = "") {
@@ -2755,100 +2751,62 @@ function tryRender(){
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link] Calibrando extracción rígida de tiempos para: " + p);
+  console.log("-> [Mobile Link] Generando payload simétrico para Kinto: " + p);
 
   var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
   var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
   var resList = (window.ST && window.ST.res) ? window.ST.res : [];
 
   var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
+  var tel = telList ? telList[p] : null;
   var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
 
-  // 1. EXTRAER KM DE TELEMETRÍA
+  // Extracción limpia de odómetro
   var kmTxt = "—";
-  if (telList && telList[p]) {
-    var datosTel = telList[p];
-    var valorKm = datosTel.km || datosTel.kilometers || "";
-    if (valorKm !== "") kmTxt = String(valorKm).replace(/[^\d]/g, '');
-  }
+  if (tel) kmTxt = String(tel.km || tel.kilometers || "").replace(/[^\d]/g, '');
 
-  // 2. 🚀 PARSER PREDICTIVO DE FECHAS (ANTI-STRINGS VACÍOS)
-  // Extraemos los strings crudos buscando cualquier variante de llaves de FullCalendar o CDN
-  var rawStart = viaje ? (viaje.start || viaje.desde || viaje.startDate || "") : "";
-  var rawEnd = viaje ? (viaje.end || viaje.hasta || viaje.endDate || "") : "";
+  var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
+  var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
 
   var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
+  if (String(rawStart).includes('T')) {
+    var partesS = String(rawStart).split('T');
+    sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+  } else { sDate = rawStart; }
 
-  // Procesar fecha de Inicio
-  if (rawStart !== "") {
-    if (String(rawStart).includes('T')) {
-      var partesS = String(rawStart).split('T');
-      sDate = partesS[0];
-      sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else {
-      // Fallback si viene solo YYYY-MM-DD plano
-      sDate = String(rawStart).slice(0, 10);
-      sTime = viaje.startTime || viaje.hora_inicio || "00:00";
-    }
-  } else {
-    // Plan de contingencia absoluto: usa la fecha de hoy si el CDN no trajo datos
-    sDate = new Date().toISOString().slice(0, 10);
-  }
+  if (String(rawEnd).includes('T')) {
+    var partesE = String(rawEnd).split('T');
+    eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+  } else { eDate = rawEnd; }
 
-  // Procesar fecha de Fin
-  if (rawEnd !== "") {
-    if (String(rawEnd).includes('T')) {
-      var partesE = String(rawEnd).split('T');
-      eDate = partesE[0];
-      eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else {
-      eDate = String(rawEnd).slice(0, 10);
-      eTime = viaje.endTime || viaje.hora_fin || "00:00";
-    }
-  } else {
-    eDate = new Date().toISOString().slice(0, 10);
-  }
-
-  // 3. ARMADO DEL PAYLOAD CON ESTRUCTURA RIGIDA REDUNDANTE
+  // 🚀 MOLDE NATIVO EXACTO (Mismos nombres que tu código original de escritorio)
   var payload = {
     plate:      p,
     resid:      resCode,
     renter:     decodeURIComponent(renterName),
-    
-    // Inyección de fechas garantizadas sin vacíos
-    startDate:  sDate,      // YYYY-MM-DD
-    startTime:  sTime,      // HH:MM
-    endDate:    eDate,      // YYYY-MM-DD
-    endTime:    eTime,      // HH:MM
-    
-    start:      rawStart || sDate + "T" + sTime,   
-    end:        rawEnd || eDate + "T" + eTime,     
-    
+    startDate:  sDate,
+    startTime:  sTime,
+    endDate:    eDate,
+    endTime:    eTime,
     km:         kmTxt,
-    kilometers: kmTxt,
     tankCap:    veh ? (veh.tankCap || 0) : 0,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
-    tires:      typeof getTireData === "function" ? getTireData(p) : [],
-    tireNums:   typeof getTireNumbers === "function" ? getTireNumbers(p) : [],
-    accesorios: typeof getAccData === "function" ? getAccData(p) : []
+    // Arrays requeridos por los bucles de neumáticos y accesorios de Kinto
+    tires:      (window.ST && window.ST.tires) ? window.ST.tires :,
+    tireNums:   ["","","",""],
+    accesorios: []
   };
 
-  // 4. PERSISTENCIA Y SEGURO DE RETARDO DE ESCRITURA
-  localStorage.removeItem('fleetcal_checklist_data');
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Payload consolidado en LocalStorage de forma predictiva:", payload);
-
+  
   setTimeout(function() {
-    var urlDestino = "checklist_kinto.html";
-    if (window.location.search && window.location.search.includes('sid')) {
-      var urlParams = new URLSearchParams(window.location.search);
-      var sid = urlParams.get('sid');
-      if (sid) urlDestino += "?sid=" + encodeURIComponent(sid);
-    }
-    window.location.href = urlDestino;
-  }, 100); 
+    window.location.href = "checklist_kinto.html";
+  }, 100);
 };
+
+// Mapeo de puente para asegurar compatibilidad de clics
+window.openChecklistFromMobile = window.abrirChecklistReserva;
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
 window.addEventListener('DOMContentLoaded', function() {
