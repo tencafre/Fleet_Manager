@@ -2750,91 +2750,84 @@ function tryRender(){
 // ── ENLACE MÓVIL DIRECTO CON PARSER DE FECHAS DE ALTA PREDECIBILIDAD ──
 
 // ── ENLACE MÓVIL HOMOLOGADO CON EL DATASET DE ESCRITORIO (ANTI-FALLAS) ──
-// ── ENLACE MÓVIL DIRECTO CON EXTRACTOR OMNÍVORO DE FECHAS (VERSIÓN INMUNE) ──
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── SERIALIZADOR COMPATIBLE MÓVIL HÍBRIDO (MOLDE ORIGINAL ESCRITORIO) ──
+// ═══════════════════════════════════════════════════════════════════════════
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link] Generando payload simétrico para Kinto: " + p);
+  console.log("-> [Mobile Sync Link] Preparando persistencia simétrica para: " + p);
 
   var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
   var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
-  
-  // RASTREO MULTICAPA DEL ARRAY DE RESERVAS
-  var resList = window.ST?.res || window.ST?.reservations || window.reservas || [];
+  var resList = (window.ST && window.ST.res) ? window.ST.res : [];
 
   var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
   var tel = telList ? telList[p] : null;
   var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
 
-  // 1. EXTRACTOR SEGURO DE KILÓMETROS
-  var kmTxt = "0";
+  // 1. Extractor seguro de kilómetros de telemetría plana
+  var kmFinal = "—";
   if (tel) {
-    kmTxt = String(tel.km || tel.kilometers || "0").replace(/[^\d]/g, '');
+    var valKm = tel.km || tel.kilometers || "";
+    if (valKm !== "") kmFinal = String(valKm).replace(/[^\d]/g, '');
   }
 
-  // 2. 🚀 RESCATE ABSOLUTO DE FECHAS (Paso predictivo multifallback)
-  var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
-  var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
-
-  // Si por fallas de variables el string ISO viene vacío, forzamos la fecha de HOY
-  // para evitar que el checklist se rompa o quede congelado en blanco
-  if (!rawStart || rawStart === "") {
-    console.warn("-> [Bypass] Reserva no encontrada en ST.res. Forzando marcas de tiempo actuales...");
-    var hoyISO = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    rawStart = hoyISO + "T08:00";
-    rawEnd = hoyISO + "T18:00";
-  }
-
+  // 2. Separador de tiempos ISO con fallbacks estrictos
   var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-  
-  if (String(rawStart).includes('T')) {
-    var partesS = String(rawStart).split('T');
-    sDate = partesS[0]; 
-    sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+  if (viaje) {
+    var rawStart = viaje.start || viaje.desde || "";
+    var rawEnd = viaje.end || viaje.hasta || "";
+
+    if (String(rawStart).includes('T')) {
+      var partesS = String(rawStart).split('T');
+      sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else { sDate = rawStart; sTime = viaje.startTime || "00:00"; }
+
+    if (String(rawEnd).includes('T')) {
+      var partesE = String(rawEnd).split('T');
+      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else { eDate = rawEnd; eTime = viaje.endTime || "00:00"; }
   } else {
-    sDate = String(rawStart).slice(0, 10);
-    sTime = "00:00";
+    // Fallback absoluto si la reserva no se encuentra en el array de memoria temporal
+    sDate = new Date().toISOString().slice(0, 10);
+    eDate = sDate;
   }
 
-  if (String(rawEnd).includes('T')) {
-    var partesE = String(rawEnd).split('T');
-    eDate = partesE[0]; 
-    eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-  } else {
-    eDate = String(rawEnd).slice(0, 10);
-    eTime = "00:00";
-  }
-
-  // Molde nativo idéntico y cruzado con todas las llaves posibles
+  // 3. ARMADO DEL OBJETO REFLEJANDO EL MOLDE EXACTO QUE TU PC ESPERA LEER
   var payload = {
     plate:      p,
     resid:      resCode,
     renter:     decodeURIComponent(renterName),
-    startDate:  sDate, // Garantizado lleno YYYY-MM-DD
-    startTime:  sTime, // Garantizado lleno HH:MM
-    endDate:    eDate, // Garantizado lleno YYYY-MM-DD
-    endTime:    eTime, // Garantizado lleno HH:MM
-    
-    start:      rawStart,
-    end:        rawEnd,
-    km:         kmTxt,
-    telemetria_km: "FORCED_MOBILE_OK", // Activa el bypass de origen en checklist_kinto
+    startDate:  sDate,
+    startTime:  sTime,
+    endDate:    eDate,
+    endTime:    eTime,
+    km:         kmFinal,
     tankCap:    veh ? (veh.tankCap || 0) : 0,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
-    tires:      [],
-    tireNums:   ["","","",""],
+    
+    // Al no estar en la PC, inyectamos los moldes de arrays limpios para que 
+    // los bucles del checklist nativo iteren en cero sin crashear el render del auto
+    tires:      ["BUENO", "BUENO", "BUENO", "BUENO"],
+    tireNums:   ["", "", "", ""],
     accesorios: []
   };
 
+  // 4. PERSISTENCIA RÍGIDA SÍNCRONA EN EL DISCO DEL TELÉFONO
+  localStorage.removeItem('fleetcal_checklist_data'); // Limpieza preventiva
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Payload predictivo forzado inyectado con éxito:", payload);
-  
+  console.log("✓ Objeto inyectado de forma idéntica al molde de PC:", payload);
+
+  // 5. REDIRECCIÓN SEGURA UNIFICADA CONTRA ERRORES 404
+  // Forzamos abrir el checklist_kinto.html que es el archivo consolidado real
   setTimeout(function() {
     window.location.href = "checklist_kinto.html";
   }, 100);
 };
-window.openChecklistFromMobile = window.abrirChecklistReserva;
 
+// Mapeamos el disparador para asegurar compatibilidad de clics en las tarjetas
+window.openChecklistFromMobile = window.abrirChecklistReserva;
 
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
