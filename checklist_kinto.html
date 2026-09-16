@@ -834,53 +834,58 @@ async function exportarRemitoPDF() {
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
 // ═══════════════════════════════════════════════════════════════════════════
-//   ── LECTOR MAESTRO OMNÍVORO DE PERSISTENCIA (ANTI-CAMPOS VACÍOS) ──
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── LECTOR MAESTRO OMNÍVORO CON FORZADO EN CASCADA (VERSION FINAL) ──
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── LECTOR MAESTRO OMNÍVORO CON RETARDO DIFERIDO (VERSIÓN FINAL BLINDADA) ──
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── INYECTOR DE DATOS NO INVASIVO COMPATIBLE (REPARACIÓN ABSOLUTA) ──
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── INITIALIZER UNIFICADO NO INVASIVO (ÚNICA COPIA DE SEGURIDAD) ──
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── INTERCEPTOR SÍNCRONO REPOSITORIO DE KINTO (SOLUCIÓN DEFINITIVA) ──
+//   ── INTERCEPTOR INTELIGENTE DE ENTRADA (MÓVIL COMPATIBLE / PC INMUNE) ──
 // ═══════════════════════════════════════════════════════════════════════════
 (function() {
-  console.log("-> [Checklist Kinto Unificado] Leyendo persistencia de flota...");
+  console.log("-> [Checklist Master] Analizando persistencia de datos en disco...");
   var rawData = localStorage.getItem('fleetcal_checklist_data');
   if (!rawData) return;
 
   try {
     var d = JSON.parse(rawData);
-    console.log("✓ Payload cargado con éxito en memoria de Kinto:", d);
     
-    // Alimentamos las variables globales del motor original de Kinto
-    // Esto hace que las imágenes y el SVG se rendericen de forma nativa al inicio
+    // 🚀 DETECTOR DE ORIGEN: Si detectamos que el objeto posee la llave 'telemetria_km' 
+    // o viene formateado por el celular, aplicamos el acople móvil.
+    // Si viene de la PC de escritorio, abortamos este script para que use tu lógica original intacta.
+    var esOrdenMovil = d.telemetria_km || !d.start;
+    
+    if (!esOrdenMovil) {
+      console.log("-> [Checklist Master] Conexión de escritorio detectada. Delegando en motor nativo PC.");
+      return; 
+    }
+
+    console.log("✓ Conexión móvil detectada. Aplicando bypass de datos cruzados:", d);
+    
+    // Alimentamos las variables globales que consumen tus scripts de Kinto originales
     window.currentPlate   = d.plate || "";
     window.currentRenter  = d.renter || "";
     window.currentResCode = d.resid || "";
     window.currentKm      = d.km || "";
 
     document.addEventListener("DOMContentLoaded", function() {
-      // Damos 350ms para que la plantilla estática cargue las imágenes base de la carrocería
+      // Damos 400ms para que la plantilla estática dibuje el auto, las imágenes y el SVG de forma limpia
       setTimeout(function() {
-        console.log("-> [Checklist Kinto] Forzando inyección visual sobre los campos...");
+        console.log("-> [Checklist Master Móvil] Sincronizando campos visuales...");
 
+        // 1. Inyectar Patente
         var txtPlate = document.getElementById('plate') || document.getElementById('dominio');
-        if (txtPlate && d.plate) { txtPlate.value = d.plate; }
+        if (txtPlate && d.plate) { 
+          txtPlate.value = d.plate; 
+          if (typeof txtPlate.onchange === "function") txtPlate.onchange();
+        }
 
+        // 2. Inyectar Cliente / Conductor
         var txtRenter = document.getElementById('renter') || document.getElementById('conductor');
         if (txtRenter && d.renter) { txtRenter.value = d.renter; }
 
+        // 3. Inyectar Kilómetros / Odómetro
         var txtKm = document.getElementById('km') || document.getElementById('kilometraje');
-        if (txtKm && d.km && d.km !== "—") { txtKm.value = d.km; }
+        if (txtKm && d.km && d.km !== "—") { 
+          txtKm.value = d.km; 
+          if (typeof txtKm.onchange === "function") txtKm.onchange();
+        }
 
+        // 4. Inyectar Fechas de Entrega y Devolución
         var txtStart = document.getElementById('startDate') || document.getElementById('fecha_entrega');
         if (txtStart && d.startDate) {
           txtStart.value = (txtStart.type === "datetime-local") ? d.startDate + "T" + (d.startTime || "00:00") : d.startDate;
@@ -891,20 +896,21 @@ async function exportarRemitoPDF() {
           txtEnd.value = (txtEnd.type === "datetime-local") ? d.endDate + "T" + (d.endTime || "00:00") : d.endDate;
         }
 
-        // DISPARADOR MAESTRO: Forzamos la ejecución de tu inicializador nativo original de la PC
+        // Despertamos tus inicializadores nativos gráficos de la carrocería
         if (typeof initChecklist === "function") {
           initChecklist();
         } else if (typeof cargarDatosVehiculo === "function" && d.plate) {
           cargarDatosVehiculo(d.plate);
         }
 
-      }, 350);
+      }, 400);
     });
 
   } catch (err) {
-    console.error("Error inicializando variables pasivas de Kinto:", err);
+    console.error("Error en el interceptor inteligente:", err);
   }
 })();
+
 
 
 </script>
