@@ -2779,7 +2779,7 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
     eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
   } else { eDate = rawEnd; }
 
-  // 🚀 MOLDE NATIVO EXACTO (Mismos nombres que tu código original de escritorio)
+    // 🚀 MOLDE NATIVO CORREGIDO (SIN ERRORES DE SINTAXIS)
   var payload = {
     plate:      p,
     resid:      resCode,
@@ -2792,8 +2792,8 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
     tankCap:    veh ? (veh.tankCap || 0) : 0,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
-    // Arrays requeridos por los bucles de neumáticos y accesorios de Kinto
-    tires:      (window.ST && window.ST.tires) ? window.ST.tires :,
+    // CORRECCIÓN: Cerramos el operador ternario con un array vacío legítimo
+    tires:      (window.ST && window.ST.tires) ? window.ST.tires : [],
     tireNums:   ["","","",""],
     accesorios: []
   };
@@ -2803,6 +2803,7 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
   setTimeout(function() {
     window.location.href = "checklist_kinto.html";
   }, 100);
+
 };
 
 // Mapeo de puente para asegurar compatibilidad de clics
