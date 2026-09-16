@@ -344,12 +344,6 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 </div><!-- /page -->
 
 <script>
-
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── INICIALIZADOR DE VARIABLES NATIVAS DE KINTO (REPARACIÓN DE ENTORNO) ──
-// ═══════════════════════════════════════════════════════════════════════════
-
-
 const VEHICLES = {
   "HATCHBACK": {
     label: "Hatchback",
@@ -833,87 +827,86 @@ async function exportarRemitoPDF() {
 
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
-// ═══════════════════════════════════════════════════════════════════════════
-//   ── INTERCEPTOR INTELIGENTE DE ENTRADA (MÓVIL COMPATIBLE / PC INMUNE) ──
-// ═══════════════════════════════════════════════════════════════════════════
-(function() {
-  console.log("-> [Checklist Master] Analizando persistencia de datos en disco...");
-  var rawData = localStorage.getItem('fleetcal_checklist_data');
-  if (!rawData) return;
+window.addEventListener('load', () => {
+  // img load listeners are now wired inside selectVehicle() per vehicle change
 
-  try {
-    var d = JSON.parse(rawData);
-    
-    // 🚀 DETECTOR DE ORIGEN: Si detectamos que el objeto posee la llave 'telemetria_km' 
-    // o viene formateado por el celular, aplicamos el acople móvil.
-    // Si viene de la PC de escritorio, abortamos este script para que use tu lógica original intacta.
-    var esOrdenMovil = d.telemetria_km || !d.start;
-    
-    if (!esOrdenMovil) {
-      console.log("-> [Checklist Master] Conexión de escritorio detectada. Delegando en motor nativo PC.");
-      return; 
+  const raw = localStorage.getItem('fleetcal_checklist_data');
+
+  if (raw) {
+    /* ── Data from Fleet Calendar ── */
+    try {
+      const d = JSON.parse(raw);
+      localStorage.removeItem('fleetcal_checklist_data'); // single-use
+
+      /* Select vehicle image by bodyType */
+      const vkey = (d.bodyType && BODY_TYPE_MAP[d.bodyType])
+        ? BODY_TYPE_MAP[d.bodyType]
+        : 'HATCHBACK';
+      selectVehicle(vkey);
+      currentPlate = d.plate || '';
+      if (currentPlate) loadDamages(currentPlate);
+
+      /* Populate fields */
+      setVars({
+        dominio: d.plate     || '— — —',
+        resid:   d.resid     || '—',
+        entrega: (d.startDate || '—') + (d.startTime ? '  ·  ' + d.startTime : ''),
+        fin:     (d.endDate   || '—') + (d.endTime   ? '  ·  ' + d.endTime   : ''),
+        km:      d.km        || '—',
+        usuario: d.renter    || '—',
+        cap:     d.tankCap   ? d.tankCap + ' L' : '—',
+        hora:    d.startTime || '__:__',
+      });
+
+      /* Update page title */
+      if (d.plate) {
+        document.title = 'KINTO Share · ' + d.plate + ' · Check List';
+      }
+
+      /* Inject tire numbers into tire fields if present */
+      if (d.tireNums && d.tireNums.length >= 1) setVars({ tire_fl: d.tireNums[0] || '—' });
+      if (d.tireNums && d.tireNums.length >= 2) setVars({ tire_fr: d.tireNums[1] || '—' });
+      if (d.tireNums && d.tireNums.length >= 3) setVars({ tire_rl: d.tireNums[2] || '—' });
+      if (d.tireNums && d.tireNums.length >= 4) setVars({ tire_rr: d.tireNums[3] || '—' });
+
+      /* Inject full tire + accessories table */
+      if ((d.tires && d.tires.length) || (d.accesorios && d.accesorios.length)) {
+        const tireHTML = buildTireTable(d.tires || [], d.accesorios || []);
+        if (tireHTML) {
+          /* Look for existing tire section or append before footer */
+          let tireSection = document.getElementById('checklist-tires');
+          if (!tireSection) {
+            tireSection = document.createElement('div');
+            tireSection.id = 'checklist-tires';
+            tireSection.style.cssText = 'margin:8px 16px 0;padding:8px 12px;background:#fafafa;border:0.5px solid #e0e0e0;border-radius:5px;page-break-inside:avoid';
+            const terms = document.querySelector('.terms') || document.querySelector('.sig-block') || document.body.lastElementChild;
+            if (terms && terms.parentNode) {
+              terms.parentNode.insertBefore(tireSection, terms);
+            } else {
+              document.body.appendChild(tireSection);
+            }
+          }
+          tireSection.innerHTML = tireHTML;
+        }
+      }
+
+    } catch(e) {
+      console.error('Fleet Calendar data load error:', e);
+      selectVehicle('HATCHBACK');
     }
 
-    console.log("✓ Conexión móvil detectada. Aplicando bypass de datos cruzados:", d);
-    
-    // Alimentamos las variables globales que consumen tus scripts de Kinto originales
-    window.currentPlate   = d.plate || "";
-    window.currentRenter  = d.renter || "";
-    window.currentResCode = d.resid || "";
-    window.currentKm      = d.km || "";
-
-    document.addEventListener("DOMContentLoaded", function() {
-      // Damos 400ms para que la plantilla estática dibuje el auto, las imágenes y el SVG de forma limpia
-      setTimeout(function() {
-        console.log("-> [Checklist Master Móvil] Sincronizando campos visuales...");
-
-        // 1. Inyectar Patente
-        var txtPlate = document.getElementById('plate') || document.getElementById('dominio');
-        if (txtPlate && d.plate) { 
-          txtPlate.value = d.plate; 
-          if (typeof txtPlate.onchange === "function") txtPlate.onchange();
-        }
-
-        // 2. Inyectar Cliente / Conductor
-        var txtRenter = document.getElementById('renter') || document.getElementById('conductor');
-        if (txtRenter && d.renter) { txtRenter.value = d.renter; }
-
-        // 3. Inyectar Kilómetros / Odómetro
-        var txtKm = document.getElementById('km') || document.getElementById('kilometraje');
-        if (txtKm && d.km && d.km !== "—") { 
-          txtKm.value = d.km; 
-          if (typeof txtKm.onchange === "function") txtKm.onchange();
-        }
-
-        // 4. Inyectar Fechas de Entrega y Devolución
-        var txtStart = document.getElementById('startDate') || document.getElementById('fecha_entrega');
-        if (txtStart && d.startDate) {
-          txtStart.value = (txtStart.type === "datetime-local") ? d.startDate + "T" + (d.startTime || "00:00") : d.startDate;
-        }
-
-        var txtEnd = document.getElementById('endDate') || document.getElementById('fecha_devolucion');
-        if (txtEnd && d.endDate) {
-          txtEnd.value = (txtEnd.type === "datetime-local") ? d.endDate + "T" + (d.endTime || "00:00") : d.endDate;
-        }
-
-        // Despertamos tus inicializadores nativos gráficos de la carrocería
-        if (typeof initChecklist === "function") {
-          initChecklist();
-        } else if (typeof cargarDatosVehiculo === "function" && d.plate) {
-          cargarDatosVehiculo(d.plate);
-        }
-
-      }, 400);
+  } else {
+    /* ── No data: show demo ── */
+    selectVehicle('HATCHBACK');
+    setVars({
+      dominio:'AB 123 CD', resid:'RES-00123', entrega:'11/06/2026  ·  09:42',
+      fin:'30/06/2026  ·  11:00',
+      km:'47.320', usuario:'J. García', cap:'45 L', hora:'09:42',
+      tire_fl:'AT201', tire_fr:'AT202', tire_rl:'AT203', tire_rr:'AT204'
     });
-
-  } catch (err) {
-    console.error("Error en el interceptor inteligente:", err);
   }
-})();
-
-
-
+  
+});
 </script>
-
 </body>
 </html>
