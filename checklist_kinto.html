@@ -346,102 +346,62 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 <script>
 
 // ═══════════════════════════════════════════════════════════════════════════
-//   ── INYECTOR DE DATOS NO INVASIVO CON FORZADO DE VISIBILIDAD DE CAPAS ──
+//   ── INICIALIZADOR DE VARIABLES NATIVAS DE KINTO (REPARACIÓN DE ENTORNO) ──
 // ═══════════════════════════════════════════════════════════════════════════
 (function() {
-  console.log("-> [Checklist Reparación] Iniciando lectura segura de persistencia...");
+  console.log("-> [Checklist Kinto] Leyendo clave de persistencia de flota...");
   
   var rawData = localStorage.getItem('fleetcal_checklist_data');
-  if (!rawData) return;
+  if (!rawData) {
+    console.warn("-> No se detectó 'fleetcal_checklist_data' en el almacenamiento local.");
+    return;
+  }
 
   try {
     var d = JSON.parse(rawData);
-    console.log("✓ Datos recuperados en destino:", d);
+    console.log("✓ Payload cargado de forma exitosa en memoria de Kinto:", d);
     
+    // 1. ALIMENTACIÓN DE VARIABLES GLOBALES IDÉNTICAS A TU MOTOR DE ESCRITORIO
+    // Tu archivo original consume estas variables para dibujar las imágenes y el auto
     window.currentPlate   = d.plate || "";
     window.currentRenter  = d.renter || "";
-    window.currentResCode = d.resid || "";
+    window.currentResCode = d.resid || d.resCode || "";
     window.currentKm      = d.km || d.kilometers || "";
 
-    var fechaInicio = d.startDate || "";
-    var fechaFin    = d.endDate || "";
-    var horaInicio  = d.startTime || "00:00";
-    var horaFin     = d.endTime || "00:00";
+    // Sincronización redundante de propiedades de tiempo
+    window.checklistStartDate = d.startDate || d.start || "";
+    window.checklistEndDate   = d.endDate || d.end || "";
+    window.checklistStartTime = d.startTime || "00:00";
+    window.checklistEndTime   = d.endTime || "00:00";
 
+    // 2. INYECCIÓN PASIVA EN CAMPOS STANDARD (Sin romper listeners ni estructuras HTML)
     document.addEventListener("DOMContentLoaded", function() {
-      
-      setTimeout(function() {
-        console.log("-> [Checklist Reparación] Asignando valores directos a los campos nativos...");
+      // Dejamos que los scripts del SVG y la carrocería de tu Kinto original arranquen solos
+      console.log("-> [Checklist Kinto] DOM cargado. Asignando valores a variables de control...");
 
-        // 1. Inyectar Patente
-        var inpPlate = document.getElementById('plate') || document.getElementById('dominio') || document.getElementById('input-plate');
-        if (inpPlate && d.plate) { 
-          inpPlate.value = d.plate; 
-          if (typeof inpPlate.onchange === "function") inpPlate.onchange();
-        }
+      var txtPlate = document.getElementById('plate') || document.getElementById('dominio');
+      if (txtPlate && d.plate) { txtPlate.value = d.plate; }
 
-        // 2. Inyectar Cliente / Conductor
-        var inpRenter = document.getElementById('renter') || document.getElementById('conductor') || document.getElementById('clientName');
-        if (inpRenter && d.renter) { inpRenter.value = d.renter; }
+      var txtRenter = document.getElementById('renter') || document.getElementById('conductor');
+      if (txtRenter && d.renter) { txtRenter.value = d.renter; }
 
-        // 3. Inyectar Kilómetros / Odómetro
-        var inpKm = document.getElementById('km') || document.getElementById('kilometraje') || document.getElementById('odometro') || document.getElementById('maint_km');
-        if (inpKm && window.currentKm && window.currentKm !== "—") {
-          var kmPlano = String(window.currentKm).replace(/[^\d]/g, '');
-          if (kmPlano) {
-            inpKm.value = kmPlano;
-            if (typeof inpKm.onchange === "function") inpKm.onchange();
-            if (typeof inpKm.oninput === "function") inpKm.oninput();
-          }
-        }
+      var txtKm = document.getElementById('km') || document.getElementById('kilometraje');
+      if (txtKm && d.km && d.km !== "—") { txtKm.value = d.km; }
 
-        // 4. Inyectar Fechas
-        var inpStartDate = document.getElementById('startDate') || document.getElementById('fecha_entrega') || document.getElementById('desde');
-        if (inpStartDate && fechaInicio) {
-          if (inpStartDate.type === "datetime-local" && horaInicio) {
-            inpStartDate.value = fechaInicio + "T" + horaInicio.slice(0, 5);
-          } else {
-            inpStartDate.value = fechaInicio;
-          }
-        }
-
-        var inpEndDate = document.getElementById('endDate') || document.getElementById('fecha_devolucion') || document.getElementById('hasta');
-        if (inpEndDate && fechaFin) {
-          if (inpEndDate.type === "datetime-local" && horaFin) {
-            inpEndDate.value = fechaFin + "T" + horaFin.slice(0, 5);
-          } else {
-            inpEndDate.value = fechaFin;
-          }
-        }
-
-        // 5. Sincronizar el selector desplegable
-        var selectorVeh = document.getElementById('vehicleSelect') || document.getElementById('select-car');
-        if (selectorVeh && d.plate) {
-          selectorVeh.value = d.plate.toUpperCase().trim();
-          if (typeof selectorVeh.onchange === "function") selectorVeh.onchange();
-        }
-
-        // 🚀 6. EL TRUCO MAESTRO: DESTRUIR LOADERS Y FORZAR VISIBILIDAD DE CONTENEDORES
-        // Buscamos cualquier overlay, spinner o loader estático que quede congelado tapando la app
-        var loaders = document.querySelectorAll('#loadingIndicator, #loader, .loading, .spinner, .overlay, #loading, .loading-overlay');
-        loaders.forEach(function(l) {
-          l.style.setProperty('display', 'none', 'important');
-        });
-
-        // Forzamos visibilidad en los bloques principales del formulario, imágenes y SVG
-        var seccionesMaster = document.querySelectorAll('main, #app, .wrapper, .container, form, svg, .car-diagram, .image-container');
-        seccionesMaster.forEach(function(s) {
-          s.style.setProperty('display', 'block', 'important');
-          s.style.setProperty('visibility', 'visible', 'important');
-          s.style.setProperty('opacity', '1', 'important');
-        });
-
-        console.log("✓ Sincronización finalizada y capas forzadas al 100% de visibilidad.");
-      }, 450); // 450ms da margen a que los scripts de la cámara y del auto se armen
+      // ── EJECUCIÓN DE DISPARADORES NATIVOS DE TU COMPONENTE ORIGINAL ──
+      // Si tu archivo de Kinto original tiene funciones para cargar el auto al elegir la patente,
+      // las ejecutamos de forma directa pasándole la patente limpia
+      if (typeof cargarDatosVehiculo === "function" && d.plate) {
+        cargarDatosVehiculo(d.plate);
+      } else if (typeof initChecklist === "function") {
+        initChecklist();
+      } else if (typeof loadCarData === "function" && d.plate) {
+        loadCarData(d.plate);
+      }
     });
 
   } catch (err) {
-    console.error("Error en el inyector de reparación:", err);
+    console.error("Error inicializando variables pasivas de Kinto:", err);
   }
 })();
 
