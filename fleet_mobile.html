@@ -1171,10 +1171,18 @@ function renderCal() {
     '<div id="agenda-mobile-render-box" style="width:100%; padding:0 8px; box-sizing:border-box; font-family:sans-serif;">';
 
   // 4. GENERACIÓN DE TARJETAS VERTICALES
+    // ── DENTRO DE RENDERCAL() EN FLEET_MOBILE.HTML ──
   parqueVehiculos.forEach(function(veh) {
     if (!veh || !veh.plate) return;
     var plate = veh.plate.toUpperCase().trim();
     
+    // 🚀 EXTRACCIÓN RÍGIDA DE KILÓMETROS PARA MÓVIL (BARRIDO ANTI-NULOS)
+    var kmActual = 0;
+    var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
+    if (telGlobal && telGlobal[plate]) {
+      kmActual = parseInt(telGlobal[plate].km || telGlobal[plate].kilometers || telGlobal[plate].cleared_km || 0, 10);
+    }
+
     var viajesDelVehiculo = [];
     if (Array.isArray(todasLasReservas)) {
       viajesDelVehiculo = todasLasReservas.filter(function(r) {
@@ -1183,8 +1191,6 @@ function renderCal() {
     }
 
     var tieneAlerta = false;
-    var tel = window.ST && window.ST.tel ? window.ST.tel : null;
-    var kmActual = (tel && tel[plate]) ? parseInt(tel[plate].km || 0, 10) : 0;
     if (typeof maintAlertInfo === "function" && kmActual > 0) {
       var alerta = maintAlertInfo(String(kmActual), plate);
       if (alerta && alerta.isAlert) tieneAlerta = true;
@@ -1210,7 +1216,7 @@ function renderCal() {
     } else {
       viajesDelVehiculo.sort(function(a, b) { return new Date(a.start || a.desde) - new Date(b.start || b.desde); });
       
-            viajesDelVehiculo.forEach(function(viaje) {
+      viajesDelVehiculo.forEach(function(viaje) {
         if (!viaje) return;
         var ahora = new Date();
         var inicio = new Date(viaje.start || viaje.desde);
@@ -1232,21 +1238,18 @@ function renderCal() {
         var rCode = viaje.code || viaje.id || '0';
         var rRenter = viaje.renter || viaje.cliente || 'Cliente Kinto';
 
-        // 🚀 CONVERSIÓN ISO ESTRICTA (Bloquea el formato largo de inglés con GMT)
         var strStart = "";
         var strEnd = "";
-        
         try {
-          // Extraemos la cadena YYYY-MM-DDTHH:MM directamente de la marca de tiempo de JavaScript
           strStart = inicio.toISOString().slice(0, 16);
           strEnd = fin ? fin.toISOString().slice(0, 16) : "";
         } catch(e) {
-          // Fallback manual si el objeto no es una fecha válida
           strStart = String(viaje.start || viaje.desde || "").replace(" ", "T");
           strEnd = String(viaje.end || viaje.hasta || "").replace(" ", "T");
         }
 
-        var strKm = kmActual ? String(kmActual).replace(/[^\d]/g, '') : "—";
+        // 🚀 INYECCIÓN CRUCIAL: Pasamos kmActual parseado de forma explícita al dataset HTML
+        var strKm = kmActual > 0 ? String(kmActual) : "—";
 
         listaViajes += 
           '<div class="mobile-viaje-row" ' +
@@ -1267,13 +1270,12 @@ function renderCal() {
             '</div>' +
           '</div>';
       });
-
-
     }
 
     listaViajes += '</div></div>';
     HTML_FINAL += cabeceraCard + listaViajes;
   });
+
 
   HTML_FINAL += '</div>';
 
@@ -2805,6 +2807,7 @@ function getAccDataMobile(plate) {
 // ── EMULADOR MAESTRO DE DATOS CON PASO DIRECTO DE TARJETA (INMUNE A FALLAS) ──
 // ── RECEPTOR MAESTRO DATASET (HOMOLOGACIÓN COMPLETA DE ESCRITORIO) ──
 // ── ENLACE MÓVIL CON PAYLOAD ESPEJO DE ESCRITORIO (SOLUCIÓN DEFINITIVA) ──
+// ── ENLACE MÓVIL CON GARANTÍA DE RENDERIZADO GRÁFICO DIRECTO ──
 window.abrirChecklistReserva = function(btnElement) {
   try {
     var row = btnElement.closest('.mobile-viaje-row');
@@ -2817,78 +2820,58 @@ window.abrirChecklistReserva = function(btnElement) {
     var rawStart = row.dataset.start || "";
     var rawEnd = row.dataset.end || "";
 
-    console.log("-> [Mobile Link Dataset] Procesando saltos para patente: " + p);
+    console.log("-> [Mobile Sync Link] Generando persistencia absoluta para: " + p);
 
     var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
     var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
 
-    // Segmentación limpia de fechas (YYYY-MM-DD y HH:MM)
     var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-    
     if (rawStart.includes('T')) {
-      var partesS = rawStart.split('T');
-      sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else { sDate = rawStart.slice(0, 10); }
+      var partesS = rawStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0,5) : "00:00";
+    } else { sDate = rawStart.slice(0,10); }
 
     if (rawEnd.includes('T')) {
-      var partesE = rawEnd.split('T');
-      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
+      var partesE = rawEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0,5) : "00:00";
+    } else if (rawEnd !== "") { eDate = rawEnd.slice(0,10); }
 
     if (!eDate || eDate === "") {
       try {
         var fEntrega = new Date(sDate + "T" + sTime);
         var fDevolucion = new Date(fEntrega.getTime() + 86400000);
-        eDate = fDevolucion.toISOString().slice(0, 10);
-        eTime = sTime;
+        eDate = fDevolucion.toISOString().slice(0, 10); eTime = sTime;
       } catch(err) { eDate = sDate; eTime = "18:00"; }
     }
 
-    // 🚀 FORMATEO DE KILÓMETROS IDÉNTICO AL QUE TU PC INYECTA EN EL DISCO
-    var kmFormateado = "—";
-    if (kmTxt && kmTxt !== "—" && kmTxt !== "0" && kmTxt !== "") {
-      kmFormateado = String(kmTxt).replace(/[^\d]/g, '');
-    }
+    var kmFormateado = kmTxt !== "—" && kmTxt !== "0" ? String(kmTxt).replace(/[^\d]/g, '') : "—";
 
-    // 🚀 REPLICA DE ARRAYS ESTRUCTURALES RELACIONALES DE ESCRITORIO
-    // Si no están en la memoria del celular, inyectamos el formato exacto de Kinto 
-    // para evitar que los bucles de las cubiertas y accesorios crasheen la pantalla
-    var tiresEstricto = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
-    var tireNumsEstricto = ["", "", "", "", ""];
-    var accesoriosEstricto = [];
-
-    // Intentamos recuperar si tu celular guardó datos previos de Supabase en LocalStorage
-    try {
-      var tData = localStorage.getItem('fleet_tires_' + p) || localStorage.getItem(STORE_PREFIX + p + '_tires');
-      if (tData) tiresEstricto = JSON.parse(tData);
-      
-      var tnData = localStorage.getItem('fleet_tire_nums_' + p);
-      if (tnData) tireNumsEstricto = JSON.parse(tnData);
-
-      var aData = localStorage.getItem('fleet_acc_' + p);
-      if (aData) accesoriosEstricto = JSON.parse(aData);
-    } catch(e) { console.warn("Usando moldes de arrays por defecto para Kinto."); }
-
-    // MOLDE NATIVO ABSOLUTO REQUERIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
+    // 🚀 EL SECRETO: Réplica idéntica y forzado de llaves secundarias en el disco rígido
     var payload = {
       plate:      p,
       resid:      resCode,
       renter:     decodeURIComponent(renterName),
-      startDate:  sDate, // YYYY-MM-DD
-      startTime:  sTime, // HH:MM
-      endDate:    eDate, // YYYY-MM-DD
-      endTime:    eTime, // HH:MM
-      km:         kmFormateado, // Kilómetros planos inyectables en el value
+      startDate:  sDate,
+      startTime:  sTime,
+      endDate:    eDate,
+      endTime:    eTime,
+      km:         kmFormateado,
       tankCap:    veh ? (veh.tankCap || 50) : 50,
       bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
-      tires:      tiresEstricto,
-      tireNums:   tireNumsEstricto,
-      accesorios: accesoriosEstricto
+      tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
+      tireNums:   ["", "", "", "", ""],
+      accesorios: []
     };
 
+    // Purgamos y pisamos el almacenamiento local
     localStorage.removeItem('fleetcal_checklist_data');
     localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-    console.log("✓ Objeto espejo consolidado inyectado en disco mediante dataset:", payload);
+    
+    // 🚀 TRUCO MAESTRO DE CONTROL: Guardamos copias sueltas redundantes en disco.
+    // Muchos scripts nativos de Kinto leen estas llaves si el objeto maestro falla.
+    localStorage.setItem('activePlate', p);
+    localStorage.setItem('currentPlate', p);
+    localStorage.setItem('currentKm', kmFormateado);
+
+    console.log("✓ Objeto espejo consolidado inyectado en LocalStorage:", payload);
 
     // Redirección fluida de pestaña
     setTimeout(function() {
