@@ -2792,101 +2792,108 @@ function getAccDataMobile(plate) {
 // ═══════════════════════════════════════════════════════════════════════════
 /// ── ENLACE MÓVIL DIRECTO CON CALCULO DE DEVOLUCIÓN PREDICTIVO (SOLUCIÓN DEFINITIVA) ──
 // ── EMULADOR MAESTRO DE DATOS CON PASO DIRECTO DE TARJETA (INMUNE A FALLAS) ──
-window.abrirChecklistReserva = function(plate, resCode, renterName, kmForzado, isoStart, isoEnd) {
-  if (!plate) return;
-  var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Sync Absolute] Empaquetando datos directo de tarjeta para: " + p);
-
-  var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
-  var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
-
-  // 1. ASIGNACIÓN MATEMÁTICA DE KILÓMETROS DESDE EL PARSER DE LA TARJETA
-  var kmTxt = "—";
-  if (kmForzado && kmForzado > 0) {
-    kmTxt = String(kmForzado).replace(/[^\d]/g, '');
-  } else {
-    // Tercera capa de rescate si el on-click viene nulo
-    var telRescate = window.ST && window.ST.tel ? window.ST.tel[p] : null;
-    if (telRescate) kmTxt = String(telRescate.km || telRescate.kilometers || "—").replace(/[^\d]/g, '');
-  }
-
-  // 2. PARSER DIRECTO DE LAS MARCAS DE TIEMPO ISO DE LA RESERVA ACTIVE
-  var rawStart = isoStart || "";
-  var rawEnd = isoEnd || "";
-
-  var sDate = "", sTime = "08:00", eDate = "", eTime = "18:00";
-  
-  if (rawStart !== "") {
-    if (String(rawStart).includes('T')) {
-      var partesS = String(rawStart).split('T');
-      sDate = partesS[0]; 
-      sTime = partesS[1] ? partesS[1].slice(0, 5) : "08:00";
-    } else if (String(rawStart).includes(' ')) {
-      var partesEspacio = String(rawStart).split(' ');
-      sDate = partesEspacio[0];
-      sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "08:00";
-    } else {
-      sDate = String(rawStart).slice(0, 10);
+// ── RECEPTOR MAESTRO DATASET (HOMOLOGACIÓN COMPLETA DE ESCRITORIO) ──
+window.abrirChecklistReserva = function(btnElement) {
+  try {
+    // Capturamos el contenedor padre de la fila que guarda los atributos data
+    var row = btnElement.closest('.mobile-viaje-row');
+    if (!row) {
+      console.error("No se encontró el contenedor de la reserva.");
+      return;
     }
-  }
 
-  if (rawEnd !== "") {
-    if (String(rawEnd).includes('T')) {
-      var partesE = String(rawEnd).split('T');
-      eDate = partesE[0]; 
-      eTime = partesE[1] ? partesE[1].slice(0, 5) : "18:00";
-    } else if (String(rawEnd).includes(' ')) {
-      var partesEspacioE = String(rawEnd).split(' ');
-      eDate = partesEspacioE[0];
-      eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "18:00";
-    } else {
-      eDate = String(rawEnd).slice(0, 10);
-    }
-  }
+    // Raspamos los strings limpios directamente de las etiquetas HTML del celular
+    var p = String(row.dataset.plate || "").toUpperCase().trim();
+    var resCode = row.dataset.code || "0";
+    var renterName = row.dataset.renter || "";
+    var kmTxt = row.dataset.km || "—";
+    var rawStart = row.dataset.start || "";
+    var rawEnd = row.dataset.end || "";
 
-  // Si no hay fecha de fin en el string, calculamos de forma predictiva +24 horas desde la entrega
-  if (!eDate || eDate === "") {
-    try {
-      var fEntrega = new Date(sDate + "T" + sTime);
-      var fDevolucion = new Date(fEntrega.getTime() + 86400000);
-      eDate = fDevolucion.toISOString().slice(0, 10);
-      eTime = sTime;
-    } catch(err) {
-      eDate = sDate; eTime = "18:00";
-    }
-  }
+    console.log("-> [Mobile Link Dataset] Procesando saltos para patente: " + p);
 
-  // 3. ARMADO DEL MOLDE NATIVO IDENTICO AL REQUERIDO POR CHECKLIST_KINTO.HTML
-  var payload = {
-    plate:      p,
-    resid:      resCode || "0",
-    renter:     decodeURIComponent(renterName || "Cliente Kinto"),
-    startDate:  sDate, // ¡Garantizado lleno desde el origen visual!
-    startTime:  sTime, // ¡Hora real!
-    endDate:    eDate, // ¡Fecha de devolución calculada real!
-    endTime:    eTime, // ¡Hora real!
-    km:         kmTxt !== "—" ? kmTxt : "—",
-    tankCap:    veh ? (veh.tankCap || 50) : 50,
-    bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
+    var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
+    var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
+
+    // Parser limpio de marcas de tiempo YYYY-MM-DD
+    var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
     
-    tires:      (typeof getTireDataMobile === "function") ? getTireDataMobile(p) : ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
-    tireNums:   ["","","","",""],
-    accesorios: []
-  };
+    if (rawStart.includes('T')) {
+      var partesS = rawStart.split('T');
+      sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else if (rawStart.includes(' ')) {
+      var partesEspacio = rawStart.split(' ');
+      sDate = partesEspacio[0]; sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "00:00";
+    } else { sDate = rawStart.slice(0, 10); }
 
-  // Guardamos en la persistencia local síncrona
-  localStorage.removeItem('fleetcal_checklist_data');
-  localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Objeto inyectado de forma directa al disco:", payload);
+    if (rawEnd.includes('T')) {
+      var partesE = rawEnd.split('T');
+      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd.includes(' ')) {
+      var partesEspacioE = rawEnd.split(' ');
+      eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "00:00";
+    } else { eDate = rawEnd.slice(0, 10); }
 
-  // Redirección fluida de pestaña
-  setTimeout(function() {
-    window.location.href = "checklist_kinto.html";
-  }, 100);
+    // Fallback si no hay fecha de devolución: calcula +24 horas desde la entrega
+    if (!eDate || eDate === "") {
+      try {
+        var fEntrega = new Date(sDate + "T" + sTime);
+        var fDevolucion = new Date(fEntrega.getTime() + 86400000);
+        eDate = fDevolucion.toISOString().slice(0, 10);
+        eTime = sTime;
+      } catch(err) { eDate = sDate; eTime = "18:00"; }
+    }
+
+    // Extracción de datos síncronos locales para Neumáticos y Accesorios
+    var tiresLocal = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
+    try {
+      var tData = localStorage.getItem('fleet_tires_' + p);
+      if (tData) tiresLocal = JSON.parse(tData);
+    } catch(e) {}
+
+    var tireNumsLocal = ["", "", "", "", ""];
+    try {
+      var tnData = localStorage.getItem('fleet_tire_nums_' + p);
+      if (tnData) tireNumsLocal = JSON.parse(tnData);
+    } catch(e) {}
+
+    var accLocal = [];
+    try {
+      var aData = localStorage.getItem('fleet_acc_' + p);
+      if (aData) accLocal = JSON.parse(aData);
+    } catch(e) {}
+
+    // MOLDE NATIVO COMPLETO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
+    var payload = {
+      plate:      p,
+      resid:      resCode,
+      renter:     decodeURIComponent(renterName),
+      startDate:  sDate, // YYYY-MM-DD limpio sin GMT
+      startTime:  sTime, // HH:MM
+      endDate:    eDate, // YYYY-MM-DD limpio sin GMT
+      endTime:    eTime, // HH:MM
+      km:         kmTxt !== "0" && kmTxt !== "" ? kmTxt : "—",
+      tankCap:    veh ? (veh.tankCap || 50) : 50,
+      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
+      tires:      tiresLocal,
+      tireNums:   tireNumsLocal,
+      accesorios: accLocal
+    };
+
+    localStorage.removeItem('fleetcal_checklist_data');
+    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+    console.log("✓ Objeto simétrico inyectado con éxito en disco mediante dataset:", payload);
+
+    setTimeout(function() {
+      window.location.href = "checklist_kinto.html";
+    }, 100);
+
+  } catch(err) {
+    console.error("Fallo crítico en openChecklistFromMobile:", err);
+  }
 };
 
 window.openChecklistFromMobile = window.abrirChecklistReserva;
-
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
 window.addEventListener('DOMContentLoaded', function() {
