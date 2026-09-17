@@ -2782,89 +2782,112 @@ function getAccDataMobile(plate) {
 
 // 2. Función de enlace y empaquetado simétrico absoluto
 // ═══════════════════════════════════════════════════════════════════════════
-//   ── EMULADOR MAESTRO DE DATOS CON EXTRACCIÓN OMNÍVORA (SOLUCIÓN DEFINITIVA) ──
-// ═══════════════════════════════════════════════════════════════════════════
+/// ── ENLACE MÓVIL DIRECTO CON CALCULO DE DEVOLUCIÓN PREDICTIVO (SOLUCIÓN DEFINITIVA) ──
 window.abrirChecklistReserva = function(plate, resCode, renterName) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link Master] Procesando empaquetado redundante para: " + p);
+  console.log("-> [Mobile Link Master] Procesando empaquetado predictivo para: " + p);
 
-  // 1. CAPTURA SEGURO DE KILÓMETROS DESDE LA TELEMETRÍA GLOBAL (ST.tel)
-  var kmFinal = "0";
-  try {
-    var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
-    if (telGlobal) {
-      // Soportamos que telGlobal sea un array indexado o un diccionario directo de patentes
-      var datosVehiculo = telGlobal[p] || telGlobal.find?.(function(t) { return t.plate === p; });
-      if (datosVehiculo) {
-        var valorRaw = datosVehiculo.km || datosVehiculo.kilometers || datosVehiculo.cleared_km || "0";
-        kmFinal = String(valorRaw).replace(/[^\d]/g, '');
-      }
+  var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
+  var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
+  var resList = window.ST?.res || window.ST?.reservations || window.reservas || [];
+
+  var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
+  var tel = telList ? telList[p] : null;
+  
+  // Buscar la reserva en la memoria indexada
+  var viaje = resList.find(function(r) { 
+    if (!r) return false;
+    var c = String(r.code || r.id || r.codigo || "").trim();
+    return c === String(resCode).trim() || (r.plate && r.plate.toUpperCase().trim() === p);
+  });
+
+  // 1. EXTRACTOR DE KILÓMETROS PLANO INMUNE A DESCALCES
+  var kmTxt = "—";
+  if (tel) {
+    // Si la telemetría viene como objeto directo, extraemos su número limpio
+    var valorKm = tel.km || tel.kilometers || tel.cleared_km || "";
+    if (valorKm !== "") {
+      kmTxt = String(valorKm).replace(/[^\d]/g, '');
     }
-  } catch(e) { console.warn("Aviso controlado: Error extrayendo kilómetros en caliente.", e); }
-
-  // 2. CAPTURA SEGURO DE FECHAS (BARRIDO HORIZONTAL DE RESERVAS EN MEMORIA)
-  var sDate = "", sTime = "08:00", eDate = "", eTime = "18:00";
-  try {
-    var resGlobal = window.ST && (window.ST.res || window.ST.reservations) ? (window.ST.res || window.ST.reservations) : [];
-    if (Array.isArray(resGlobal)) {
-      var viajeActivo = resGlobal.find(function(r) { 
-        return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode) || r.plate === p); 
-      });
-
-      if (viajeActivo) {
-        var stringInicio = viajeActivo.start || viajeActivo.desde || "";
-        var stringFin = viajeActivo.end || viajeActivo.hasta || "";
-
-        if (stringInicio.includes('T')) {
-          var pS = stringInicio.split('T');
-          sDate = pS[0]; sTime = pS[1] ? pS[1].slice(0, 5) : "08:00";
-        } else { sDate = stringInicio; sTime = viajeActivo.startTime || "08:00"; }
-
-        if (stringFin.includes('T')) {
-          var pE = stringFin.split('T');
-          eDate = pE[0]; eTime = pE[1] ? pE[1].slice(0, 5) : "18:00";
-        } else { eDate = stringFin; eTime = viajeActivo.endTime || "18:00"; }
-      }
-    }
-  } catch(e) { console.warn("Aviso controlado: Error procesando fechas de reserva.", e); }
-
-  // PLAN DE EMERGENGIA: Si las variables del CDN llegaron vacías, ponemos la fecha de hoy
-  // para que el motor de Kinto no aborte y pinte el formulario de forma normal
-  if (!sDate || sDate === "") {
-    sDate = new Date().toISOString().slice(0, 10);
-    eDate = sDate;
   }
 
-  // 3. RECUPERAR INFORMACIÓN TÉCNICA DEL PARQUE (Para silueta, capacidad y neumáticos)
-  var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
-  var vehInfo = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
+  // 2. 🚀 PARSER PREDICTIVO DE VIAJE ÚNICO (SOPORTE SOLO FECHA DE ENTREGA)
+  var rawStart = viaje ? (viaje.start || viaje.desde || viaje.startDate || "") : "";
+  var rawEnd = viaje ? (viaje.end || viaje.hasta || viaje.endDate || "") : "";
 
-  // 🚀 EL MOLDE ESCRITORIO IDÉNTICO REAL EXIGIDO POR TU CHECKLIST_KINTO.HTML
+  var sDate = "", sTime = "08:00", eDate = "", eTime = "18:00";
+
+  // Procesamos la fecha de entrega que ya se ve en tu pantalla
+  if (rawStart !== "") {
+    if (String(rawStart).includes('T')) {
+      var partesS = String(rawStart).split('T');
+      sDate = partesS[0]; 
+      sTime = partesS[1] ? partesS[1].slice(0, 5) : "08:00";
+    } else if (String(rawStart).includes(' ')) {
+      // Si viene separado por un espacio ("2026-09-17 08:00")
+      var partesEspacio = String(rawStart).split(' ');
+      sDate = partesEspacio[0];
+      sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "08:00";
+    } else {
+      sDate = String(rawStart).slice(0, 10);
+      sTime = viaje.startTime || "08:00";
+    }
+  } else {
+    // Fallback de seguridad si el objeto no se pobló a tiempo
+    sDate = new Date().toISOString().slice(0, 10);
+  }
+
+  // 🚀 CÁLCULO DE DEVOLUCIÓN INTELIGENTE (Si el CDN móvil no trae fecha de fin, calcula +24 horas)
+  if (rawEnd !== "" && rawEnd !== rawStart) {
+    if (String(rawEnd).includes('T')) {
+      var partesE = String(rawEnd).split('T');
+      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "18:00";
+    } else if (String(rawEnd).includes(' ')) {
+      var partesEspacioE = String(rawEnd).split(' ');
+      eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "18:00";
+    } else {
+      eDate = String(rawEnd).slice(0, 10);
+      eTime = viaje.endTime || "18:00";
+    }
+  } else {
+    // Ingeniería predictiva: sumamos 1 día completo (86400000 ms) a la fecha de entrega
+    try {
+      var fechaEntregaObjeto = new Date(sDate + "T" + sTime);
+      var fechaDevolucionObjeto = new Date(fechaEntregaObjeto.getTime() + 86400000);
+      eDate = fechaDevolucionObjeto.toISOString().slice(0, 10);
+      eTime = sTime; // Misma hora de devolución que de entrega
+      console.log("-> [Bypass Predictivo] Calculada ventana de devolución móvil de 24hs: " + eDate);
+    } catch(err) {
+      eDate = sDate;
+      eTime = "18:00";
+    }
+  }
+
+  // 3. ARMADO DEL PAYLOAD CON LLAVES REDUNDANTES
   var payload = {
     plate:      p,
-    resid:      resCode || "0",
-    renter:     decodeURIComponent(renterName || "Cliente Kinto"),
-    startDate:  sDate, // ¡Garantizado lleno YYYY-MM-DD!
-    startTime:  sTime, // ¡Garantizado lleno HH:MM!
-    endDate:    eDate, // ¡Garantizado lleno YYYY-MM-DD!
-    endTime:    eTime, // ¡Garantizado lleno HH:MM!
-    km:         kmFinal !== "0" ? kmFinal : "—",
-    tankCap:    vehInfo ? (vehInfo.tankCap || 50) : 50,
-    bodyType:   vehInfo ? (vehInfo.bodyType || 'HATCHBACK') : 'HATCHBACK',
+    resid:      resCode || (viaje ? (viaje.code || viaje.id) : "0"),
+    renter:     decodeURIComponent(renterName || (viaje ? (viaje.renter || viaje.cliente) : "Cliente Kinto")),
+    startDate:  sDate,
+    startTime:  sTime,
+    endDate:    eDate,
+    endTime:    eTime,
+    km:         kmTxt !== "" ? kmTxt : "—",
+    tankCap:    veh ? (veh.tankCap || 50) : 50,
+    bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
-    // Inyectamos las firmas estructurales para que tu código nativo dibuje las cubiertas sin crasheos
-    tires:      (typeof getTireData === "function") ? getTireData(p) : ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
-    tireNums:   (typeof getTireNumbers === "function") ? getTireNumbers(p) : ["", "", "", "", ""],
-    accesorios: (typeof getAccData === "function") ? getAccData(p) : []
+    // Arrays exigidos por el motor de Kinto para no colgar las cubiertas ni accesorios
+    tires:      (window.ST && window.ST.tires) ? window.ST.tires : ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
+    tireNums:   ["","","","",""],
+    accesorios: []
   };
 
-  // 4. PERSISTENCIA SÍNCRONA EN EL ALMACENAMIENTO LOCAL DEL DISCO
-  localStorage.removeItem('fleetcal_checklist_data'); // Limpieza preventiva
+  // Escribimos la persistencia en el disco del teléfono
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Objeto simétrico consolidado e inyectado con éxito en disco:", payload);
+  console.log("✓ Payload predictivo unificado inyectado con éxito en disco:", payload);
 
-  // 5. REDIRECCIÓN FLUIDA EN LA MISMA VENTANA (Evita bloqueos de ventanas emergentes en móviles)
+  // Redirección directa fluida en la misma pestaña
   setTimeout(function() {
     var urlDestino = "checklist_kinto.html";
     if (window.location.search && window.location.search.includes('sid')) {
@@ -2873,10 +2896,11 @@ window.abrirChecklistReserva = function(plate, resCode, renterName) {
       if (sid) urlDestino += "?sid=" + encodeURIComponent(sid);
     }
     window.location.href = urlDestino;
-  }, 120);
+  }, 100);
 };
 
 window.openChecklistFromMobile = window.abrirChecklistReserva;
+
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
 window.addEventListener('DOMContentLoaded', function() {
