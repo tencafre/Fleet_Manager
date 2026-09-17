@@ -1229,20 +1229,25 @@ function renderCal() {
         }
 
         var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+       // ── REEMPLAZAR LA LÍNEA DEL BOTÓN CHECKLIST DENTRO DEL LOOP DE RENDERCAL ──
+        var fechaEntregaFormateada = inicio.toLocaleDateString('es-AR', opcionesFecha);
         var rCode = viaje.code || viaje.id || '0';
         var rRenter = encodeURIComponent(viaje.renter || viaje.cliente || 'User');
 
+        // Le inyectamos los datos en caliente del bucle de renderizado al disparador del clic
         listaViajes += 
           '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px; margin-bottom:4px; font-size:11px;">' +
             '<div>' +
               '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || viaje.cliente || 'Kinto User') + '</div>' +
-              '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + inicio.toLocaleDateString('es-AR', opcionesFecha) + '</div>' +
+              '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + fechaEntregaFormateada + '</div>' +
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              '<button onclick="window.abrirChecklistReserva(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\')" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+              // NUEVO: Le pasamos el kmActual numérico puro y el string ISO del viaje directo en el OnClick
+              '<button onclick="window.openChecklistFromMobile(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\', ' + kmActual + ', \'' + (viaje.start || viaje.desde || '') + '\', \'' + (viaje.end || viaje.hasta || '') + '\')" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
             '</div>' +
           '</div>';
+
       });
     }
 
@@ -2777,119 +2782,97 @@ function getAccDataMobile(plate) {
 // 2. Función de enlace y empaquetado simétrico absoluto
 // ═══════════════════════════════════════════════════════════════════════════
 /// ── ENLACE MÓVIL DIRECTO CON CALCULO DE DEVOLUCIÓN PREDICTIVO (SOLUCIÓN DEFINITIVA) ──
-window.abrirChecklistReserva = function(plate, resCode, renterName) {
+// ── EMULADOR MAESTRO DE DATOS CON PASO DIRECTO DE TARJETA (INMUNE A FALLAS) ──
+window.abrirChecklistReserva = function(plate, resCode, renterName, kmForzado, isoStart, isoEnd) {
   if (!plate) return;
   var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link Master] Procesando empaquetado predictivo para: " + p);
+  console.log("-> [Mobile Sync Absolute] Empaquetando datos directo de tarjeta para: " + p);
 
   var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
-  var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
-  var resList = window.ST?.res || window.ST?.reservations || window.reservas || [];
-
   var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
-  var tel = telList ? telList[p] : null;
-  
-  // Buscar la reserva en la memoria indexada
-  var viaje = resList.find(function(r) { 
-    if (!r) return false;
-    var c = String(r.code || r.id || r.codigo || "").trim();
-    return c === String(resCode).trim() || (r.plate && r.plate.toUpperCase().trim() === p);
-  });
 
-  // 1. EXTRACTOR DE KILÓMETROS PLANO INMUNE A DESCALCES
+  // 1. ASIGNACIÓN MATEMÁTICA DE KILÓMETROS DESDE EL PARSER DE LA TARJETA
   var kmTxt = "—";
-  if (tel) {
-    // Si la telemetría viene como objeto directo, extraemos su número limpio
-    var valorKm = tel.km || tel.kilometers || tel.cleared_km || "";
-    if (valorKm !== "") {
-      kmTxt = String(valorKm).replace(/[^\d]/g, '');
-    }
+  if (kmForzado && kmForzado > 0) {
+    kmTxt = String(kmForzado).replace(/[^\d]/g, '');
+  } else {
+    // Tercera capa de rescate si el on-click viene nulo
+    var telRescate = window.ST && window.ST.tel ? window.ST.tel[p] : null;
+    if (telRescate) kmTxt = String(telRescate.km || telRescate.kilometers || "—").replace(/[^\d]/g, '');
   }
 
-  // 2. 🚀 PARSER PREDICTIVO DE VIAJE ÚNICO (SOPORTE SOLO FECHA DE ENTREGA)
-  var rawStart = viaje ? (viaje.start || viaje.desde || viaje.startDate || "") : "";
-  var rawEnd = viaje ? (viaje.end || viaje.hasta || viaje.endDate || "") : "";
+  // 2. PARSER DIRECTO DE LAS MARCAS DE TIEMPO ISO DE LA RESERVA ACTIVE
+  var rawStart = isoStart || "";
+  var rawEnd = isoEnd || "";
 
   var sDate = "", sTime = "08:00", eDate = "", eTime = "18:00";
-
-  // Procesamos la fecha de entrega que ya se ve en tu pantalla
+  
   if (rawStart !== "") {
     if (String(rawStart).includes('T')) {
       var partesS = String(rawStart).split('T');
       sDate = partesS[0]; 
       sTime = partesS[1] ? partesS[1].slice(0, 5) : "08:00";
     } else if (String(rawStart).includes(' ')) {
-      // Si viene separado por un espacio ("2026-09-17 08:00")
       var partesEspacio = String(rawStart).split(' ');
       sDate = partesEspacio[0];
       sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "08:00";
     } else {
       sDate = String(rawStart).slice(0, 10);
-      sTime = viaje.startTime || "08:00";
     }
-  } else {
-    // Fallback de seguridad si el objeto no se pobló a tiempo
-    sDate = new Date().toISOString().slice(0, 10);
   }
 
-  // 🚀 CÁLCULO DE DEVOLUCIÓN INTELIGENTE (Si el CDN móvil no trae fecha de fin, calcula +24 horas)
-  if (rawEnd !== "" && rawEnd !== rawStart) {
+  if (rawEnd !== "") {
     if (String(rawEnd).includes('T')) {
       var partesE = String(rawEnd).split('T');
-      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "18:00";
+      eDate = partesE[0]; 
+      eTime = partesE[1] ? partesE[1].slice(0, 5) : "18:00";
     } else if (String(rawEnd).includes(' ')) {
       var partesEspacioE = String(rawEnd).split(' ');
-      eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "18:00";
+      eDate = partesEspacioE[0];
+      eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "18:00";
     } else {
       eDate = String(rawEnd).slice(0, 10);
-      eTime = viaje.endTime || "18:00";
-    }
-  } else {
-    // Ingeniería predictiva: sumamos 1 día completo (86400000 ms) a la fecha de entrega
-    try {
-      var fechaEntregaObjeto = new Date(sDate + "T" + sTime);
-      var fechaDevolucionObjeto = new Date(fechaEntregaObjeto.getTime() + 86400000);
-      eDate = fechaDevolucionObjeto.toISOString().slice(0, 10);
-      eTime = sTime; // Misma hora de devolución que de entrega
-      console.log("-> [Bypass Predictivo] Calculada ventana de devolución móvil de 24hs: " + eDate);
-    } catch(err) {
-      eDate = sDate;
-      eTime = "18:00";
     }
   }
 
-  // 3. ARMADO DEL PAYLOAD CON LLAVES REDUNDANTES
+  // Si no hay fecha de fin en el string, calculamos de forma predictiva +24 horas desde la entrega
+  if (!eDate || eDate === "") {
+    try {
+      var fEntrega = new Date(sDate + "T" + sTime);
+      var fDevolucion = new Date(fEntrega.getTime() + 86400000);
+      eDate = fDevolucion.toISOString().slice(0, 10);
+      eTime = sTime;
+    } catch(err) {
+      eDate = sDate; eTime = "18:00";
+    }
+  }
+
+  // 3. ARMADO DEL MOLDE NATIVO IDENTICO AL REQUERIDO POR CHECKLIST_KINTO.HTML
   var payload = {
     plate:      p,
-    resid:      resCode || (viaje ? (viaje.code || viaje.id) : "0"),
-    renter:     decodeURIComponent(renterName || (viaje ? (viaje.renter || viaje.cliente) : "Cliente Kinto")),
-    startDate:  sDate,
-    startTime:  sTime,
-    endDate:    eDate,
-    endTime:    eTime,
-    km:         kmTxt !== "" ? kmTxt : "—",
+    resid:      resCode || "0",
+    renter:     decodeURIComponent(renterName || "Cliente Kinto"),
+    startDate:  sDate, // ¡Garantizado lleno desde el origen visual!
+    startTime:  sTime, // ¡Hora real!
+    endDate:    eDate, // ¡Fecha de devolución calculada real!
+    endTime:    eTime, // ¡Hora real!
+    km:         kmTxt !== "—" ? kmTxt : "—",
     tankCap:    veh ? (veh.tankCap || 50) : 50,
     bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
     
-    // Arrays exigidos por el motor de Kinto para no colgar las cubiertas ni accesorios
-    tires:      (window.ST && window.ST.tires) ? window.ST.tires : ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
+    tires:      (typeof getTireDataMobile === "function") ? getTireDataMobile(p) : ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
     tireNums:   ["","","","",""],
     accesorios: []
   };
 
-  // Escribimos la persistencia en el disco del teléfono
+  // Guardamos en la persistencia local síncrona
+  localStorage.removeItem('fleetcal_checklist_data');
   localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Payload predictivo unificado inyectado con éxito en disco:", payload);
+  console.log("✓ Objeto inyectado de forma directa al disco:", payload);
 
-  // Redirección directa fluida en la misma pestaña
+  // Redirección fluida de pestaña
   setTimeout(function() {
-    var urlDestino = "checklist_kinto.html";
-    if (window.location.search && window.location.search.includes('sid')) {
-      var urlParams = new URLSearchParams(window.location.search);
-      var sid = urlParams.get('sid');
-      if (sid) urlDestino += "?sid=" + encodeURIComponent(sid);
-    }
-    window.location.href = urlDestino;
+    window.location.href = "checklist_kinto.html";
   }, 100);
 };
 
