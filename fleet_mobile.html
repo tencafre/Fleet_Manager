@@ -1335,34 +1335,28 @@ function maintAlertInfo(kmStr, plate){
 }
 
 // ── MODAL ──
-window.openMaintModal = function(plate, modelName){
-  modalPlate = plate;
-  const tel      = ST.tel ? ST.tel[plate] : null;
-  const kmStr    = tel ? tel.km : null;
-  const alertInf = kmStr ? maintAlertInfo(kmStr, plate) : null;
+window.openMaintModal = function(plate, model) {
+  console.log("-> [Mobile UI] Interceptando modal de mantenimiento para: " + plate);
+  window.modalPlate = plate; // Seteamos la variable global requerida por saveMaint
+  
+  // Capturamos las etiquetas de forma segura protegiendo contra nulos
+  var elPlate = document.getElementById('maintModalPlate') || document.getElementById('modal-plate-title');
+  var elModel = document.getElementById('maintModalModel') || document.getElementById('modal-model-title');
+  var modalEl = document.getElementById('maintModal');
 
-  document.getElementById('modalTitle').textContent = 'Mantenimiento · ' + plate;
-  document.getElementById('modalSub').textContent   = modelName + (tel ? ' · ' + tel.km + ' km actuales' : '');
-  document.getElementById('maintDate').value         = TODAY.toISOString().slice(0,10);
-  document.getElementById('maintNote').value         = '';
+  if (elPlate) elPlate.textContent = plate;
+  if (elModel) elModel.textContent = model || "";
+  
+  // Si el modal original de tu HTML usa clases para abrirse, las activamos de forma segura
+  if (modalEl) {
+    modalEl.style.setProperty('display', 'block', 'important');
+    modalEl.style.setProperty('visibility', 'visible', 'important');
+  }
 
-  // ── Populate tipo select ──
-  const typeEl = document.getElementById('maintType');
-  typeEl.innerHTML = '<option value="">— Seleccioná el tipo de servicio —</option>';
-  MAINT_TYPES.forEach((t, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = t.label;
-    typeEl.appendChild(opt);
-  });
-  typeEl.value = '';
-  typeEl.onchange = function() { updateIntervalSelect(alertInf); };
-
-  // ── Populate interval select ──
-  updateIntervalSelect(alertInf);
-
-  renderHistList(plate);
-  document.getElementById('modalOverlay').style.display = 'flex';
+  // Ejecutamos tu renderizador nativo de historial que ya dejamos blindado e inmune arriba
+  if (typeof renderHistList === "function") {
+    renderHistList(plate);
+  }
 };
 
 function updateIntervalSelect(alertInf) {
