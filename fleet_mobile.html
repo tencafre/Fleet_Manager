@@ -2804,6 +2804,7 @@ function getAccDataMobile(plate) {
 /// ── ENLACE MÓVIL DIRECTO CON CALCULO DE DEVOLUCIÓN PREDICTIVO (SOLUCIÓN DEFINITIVA) ──
 // ── EMULADOR MAESTRO DE DATOS CON PASO DIRECTO DE TARJETA (INMUNE A FALLAS) ──
 // ── RECEPTOR MAESTRO DATASET (HOMOLOGACIÓN COMPLETA DE ESCRITORIO) ──
+// ── ENLACE MÓVIL CON PAYLOAD ESPEJO DE ESCRITORIO (SOLUCIÓN DEFINITIVA) ──
 window.abrirChecklistReserva = function(btnElement) {
   try {
     var row = btnElement.closest('.mobile-viaje-row');
@@ -2826,21 +2827,14 @@ window.abrirChecklistReserva = function(btnElement) {
     
     if (rawStart.includes('T')) {
       var partesS = rawStart.split('T');
-      sDate = partesS[0]; 
-      sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else {
-      sDate = rawStart.slice(0, 10);
-    }
+      sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else { sDate = rawStart.slice(0, 10); }
 
     if (rawEnd.includes('T')) {
       var partesE = rawEnd.split('T');
-      eDate = partesE[0]; 
-      eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else if (rawEnd !== "") {
-      eDate = rawEnd.slice(0, 10);
-    }
+      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
 
-    // Si falta la fecha de devolución, calculamos +24 horas de forma automática
     if (!eDate || eDate === "") {
       try {
         var fEntrega = new Date(sDate + "T" + sTime);
@@ -2850,25 +2844,32 @@ window.abrirChecklistReserva = function(btnElement) {
       } catch(err) { eDate = sDate; eTime = "18:00"; }
     }
 
-    var tiresLocal = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
-    try {
-      var tData = localStorage.getItem('fleet_tires_' + p);
-      if (tData) tiresLocal = JSON.parse(tData);
-    } catch(e) {}
+    // 🚀 FORMATEO DE KILÓMETROS IDÉNTICO AL QUE TU PC INYECTA EN EL DISCO
+    var kmFormateado = "—";
+    if (kmTxt && kmTxt !== "—" && kmTxt !== "0" && kmTxt !== "") {
+      kmFormateado = String(kmTxt).replace(/[^\d]/g, '');
+    }
 
-    var tireNumsLocal = ["", "", "", "", ""];
+    // 🚀 REPLICA DE ARRAYS ESTRUCTURALES RELACIONALES DE ESCRITORIO
+    // Si no están en la memoria del celular, inyectamos el formato exacto de Kinto 
+    // para evitar que los bucles de las cubiertas y accesorios crasheen la pantalla
+    var tiresEstricto = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
+    var tireNumsEstricto = ["", "", "", "", ""];
+    var accesoriosEstricto = [];
+
+    // Intentamos recuperar si tu celular guardó datos previos de Supabase en LocalStorage
     try {
+      var tData = localStorage.getItem('fleet_tires_' + p) || localStorage.getItem(STORE_PREFIX + p + '_tires');
+      if (tData) tiresEstricto = JSON.parse(tData);
+      
       var tnData = localStorage.getItem('fleet_tire_nums_' + p);
-      if (tnData) tireNumsLocal = JSON.parse(tnData);
-    } catch(e) {}
+      if (tnData) tireNumsEstricto = JSON.parse(tnData);
 
-    var accLocal = [];
-    try {
       var aData = localStorage.getItem('fleet_acc_' + p);
-      if (aData) accLocal = JSON.parse(aData);
-    } catch(e) {}
+      if (aData) accesoriosEstricto = JSON.parse(aData);
+    } catch(e) { console.warn("Usando moldes de arrays por defecto para Kinto."); }
 
-    // MOLDE NATIVO EXACTO REQUERIDO POR TU CHECKLIST_KINTO.HTML
+    // MOLDE NATIVO ABSOLUTO REQUERIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
     var payload = {
       plate:      p,
       resid:      resCode,
@@ -2877,21 +2878,22 @@ window.abrirChecklistReserva = function(btnElement) {
       startTime:  sTime, // HH:MM
       endDate:    eDate, // YYYY-MM-DD
       endTime:    eTime, // HH:MM
-      km:         kmTxt !== "—" && kmTxt !== "0" ? kmTxt : "—",
+      km:         kmFormateado, // Kilómetros planos inyectables en el value
       tankCap:    veh ? (veh.tankCap || 50) : 50,
       bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
-      tires:      tiresLocal,
-      tireNums:   tireNumsLocal,
-      accesorios: accLocal
+      tires:      tiresEstricto,
+      tireNums:   tireNumsEstricto,
+      accesorios: accesoriosEstricto
     };
 
     localStorage.removeItem('fleetcal_checklist_data');
     localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-    console.log("✓ Objeto simétrico inyectado con éxito en disco mediante dataset:", payload);
+    console.log("✓ Objeto espejo consolidado inyectado en disco mediante dataset:", payload);
 
+    // Redirección fluida de pestaña
     setTimeout(function() {
       window.location.href = "checklist_kinto.html";
-    }, 100);
+    }, 120);
 
   } catch(err) {
     console.error("Fallo crítico en openChecklistFromMobile:", err);
@@ -2899,6 +2901,7 @@ window.abrirChecklistReserva = function(btnElement) {
 };
 
 window.openChecklistFromMobile = window.abrirChecklistReserva;
+
 
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
