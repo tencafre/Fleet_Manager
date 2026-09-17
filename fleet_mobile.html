@@ -1210,7 +1210,7 @@ function renderCal() {
     } else {
       viajesDelVehiculo.sort(function(a, b) { return new Date(a.start || a.desde) - new Date(b.start || b.desde); });
       
-      viajesDelVehiculo.forEach(function(viaje) {
+            viajesDelVehiculo.forEach(function(viaje) {
         if (!viaje) return;
         var ahora = new Date();
         var inicio = new Date(viaje.start || viaje.desde);
@@ -1229,26 +1229,35 @@ function renderCal() {
         }
 
         var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
-       // ── REEMPLAZAR LA LÍNEA DEL BOTÓN CHECKLIST DENTRO DEL LOOP DE RENDERCAL ──
-        var fechaEntregaFormateada = inicio.toLocaleDateString('es-AR', opcionesFecha);
         var rCode = viaje.code || viaje.id || '0';
-        var rRenter = encodeURIComponent(viaje.renter || viaje.cliente || 'User');
+        var rRenter = viaje.renter || viaje.cliente || 'Cliente Kinto';
 
-        // Le inyectamos los datos en caliente del bucle de renderizado al disparador del clic
+        // Sanitización estricta de variables de red antes de inyectar en el HTML
+        var strStart = viaje.start || viaje.desde || "";
+        var strEnd = viaje.end || viaje.hasta || "";
+        var strKm = kmActual ? String(kmActual).replace(/[^\d]/g, '') : "0";
+
         listaViajes += 
-          '<div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px; margin-bottom:4px; font-size:11px;">' +
+          '<div class="mobile-viaje-row" ' +
+               'data-plate="' + plate + '" ' +
+               'data-code="' + rCode + '" ' +
+               'data-renter="' + encodeURIComponent(rRenter) + '" ' +
+               'data-km="' + strKm + '" ' +
+               'data-start="' + strStart + '" ' +
+               'data-end="' + strEnd + '" ' +
+               'style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px; margin-bottom:4px; font-size:11px;">' +
             '<div>' +
-              '<div style="color:#1e293b; font-weight:600;">' + (viaje.renter || viaje.cliente || 'Kinto User') + '</div>' +
-              '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + fechaEntregaFormateada + '</div>' +
+              '<div style="color:#1e293b; font-weight:600;">' + rRenter + '</div>' +
+              '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + inicio.toLocaleDateString('es-AR', opcionesFecha) + '</div>' +
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              // NUEVO: Le pasamos el kmActual numérico puro y el string ISO del viaje directo en el OnClick
-              '<button onclick="window.openChecklistFromMobile(\'' + plate + '\', \'' + rCode + '\', \'' + rRenter + '\', ' + kmActual + ', \'' + (viaje.start || viaje.desde || '') + '\', \'' + (viaje.end || viaje.hasta || '') + '\')" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+              // El botón ahora llama a la función pasándole de referencia 'this' (la propia tarjeta visible)
+              '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
             '</div>' +
           '</div>';
-
       });
+
     }
 
     listaViajes += '</div></div>';
