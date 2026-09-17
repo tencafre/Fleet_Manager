@@ -1232,10 +1232,21 @@ function renderCal() {
         var rCode = viaje.code || viaje.id || '0';
         var rRenter = viaje.renter || viaje.cliente || 'Cliente Kinto';
 
-        // Sanitización estricta de variables de red antes de inyectar en el HTML
-        var strStart = viaje.start || viaje.desde || "";
-        var strEnd = viaje.end || viaje.hasta || "";
-        var strKm = kmActual ? String(kmActual).replace(/[^\d]/g, '') : "0";
+        // 🚀 CONVERSIÓN ISO ESTRICTA (Bloquea el formato largo de inglés con GMT)
+        var strStart = "";
+        var strEnd = "";
+        
+        try {
+          // Extraemos la cadena YYYY-MM-DDTHH:MM directamente de la marca de tiempo de JavaScript
+          strStart = inicio.toISOString().slice(0, 16);
+          strEnd = fin ? fin.toISOString().slice(0, 16) : "";
+        } catch(e) {
+          // Fallback manual si el objeto no es una fecha válida
+          strStart = String(viaje.start || viaje.desde || "").replace(" ", "T");
+          strEnd = String(viaje.end || viaje.hasta || "").replace(" ", "T");
+        }
+
+        var strKm = kmActual ? String(kmActual).replace(/[^\d]/g, '') : "—";
 
         listaViajes += 
           '<div class="mobile-viaje-row" ' +
@@ -1252,11 +1263,11 @@ function renderCal() {
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              // El botón ahora llama a la función pasándole de referencia 'this' (la propia tarjeta visible)
               '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
             '</div>' +
           '</div>';
       });
+
 
     }
 
@@ -2795,14 +2806,9 @@ function getAccDataMobile(plate) {
 // ── RECEPTOR MAESTRO DATASET (HOMOLOGACIÓN COMPLETA DE ESCRITORIO) ──
 window.abrirChecklistReserva = function(btnElement) {
   try {
-    // Capturamos el contenedor padre de la fila que guarda los atributos data
     var row = btnElement.closest('.mobile-viaje-row');
-    if (!row) {
-      console.error("No se encontró el contenedor de la reserva.");
-      return;
-    }
+    if (!row) return;
 
-    // Raspamos los strings limpios directamente de las etiquetas HTML del celular
     var p = String(row.dataset.plate || "").toUpperCase().trim();
     var resCode = row.dataset.code || "0";
     var renterName = row.dataset.renter || "";
@@ -2815,26 +2821,26 @@ window.abrirChecklistReserva = function(btnElement) {
     var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
     var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
 
-    // Parser limpio de marcas de tiempo YYYY-MM-DD
+    // Segmentación limpia de fechas (YYYY-MM-DD y HH:MM)
     var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
     
     if (rawStart.includes('T')) {
       var partesS = rawStart.split('T');
-      sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else if (rawStart.includes(' ')) {
-      var partesEspacio = rawStart.split(' ');
-      sDate = partesEspacio[0]; sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "00:00";
-    } else { sDate = rawStart.slice(0, 10); }
+      sDate = partesS[0]; 
+      sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else {
+      sDate = rawStart.slice(0, 10);
+    }
 
     if (rawEnd.includes('T')) {
       var partesE = rawEnd.split('T');
-      eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else if (rawEnd.includes(' ')) {
-      var partesEspacioE = rawEnd.split(' ');
-      eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "00:00";
-    } else { eDate = rawEnd.slice(0, 10); }
+      eDate = partesE[0]; 
+      eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd !== "") {
+      eDate = rawEnd.slice(0, 10);
+    }
 
-    // Fallback si no hay fecha de devolución: calcula +24 horas desde la entrega
+    // Si falta la fecha de devolución, calculamos +24 horas de forma automática
     if (!eDate || eDate === "") {
       try {
         var fEntrega = new Date(sDate + "T" + sTime);
@@ -2844,7 +2850,6 @@ window.abrirChecklistReserva = function(btnElement) {
       } catch(err) { eDate = sDate; eTime = "18:00"; }
     }
 
-    // Extracción de datos síncronos locales para Neumáticos y Accesorios
     var tiresLocal = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
     try {
       var tData = localStorage.getItem('fleet_tires_' + p);
@@ -2863,16 +2868,16 @@ window.abrirChecklistReserva = function(btnElement) {
       if (aData) accLocal = JSON.parse(aData);
     } catch(e) {}
 
-    // MOLDE NATIVO COMPLETO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
+    // MOLDE NATIVO EXACTO REQUERIDO POR TU CHECKLIST_KINTO.HTML
     var payload = {
       plate:      p,
       resid:      resCode,
       renter:     decodeURIComponent(renterName),
-      startDate:  sDate, // YYYY-MM-DD limpio sin GMT
+      startDate:  sDate, // YYYY-MM-DD
       startTime:  sTime, // HH:MM
-      endDate:    eDate, // YYYY-MM-DD limpio sin GMT
+      endDate:    eDate, // YYYY-MM-DD
       endTime:    eTime, // HH:MM
-      km:         kmTxt !== "0" && kmTxt !== "" ? kmTxt : "—",
+      km:         kmTxt !== "—" && kmTxt !== "0" ? kmTxt : "—",
       tankCap:    veh ? (veh.tankCap || 50) : 50,
       bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
       tires:      tiresLocal,
@@ -2894,6 +2899,7 @@ window.abrirChecklistReserva = function(btnElement) {
 };
 
 window.openChecklistFromMobile = window.abrirChecklistReserva;
+
 
 // ── INYECTOR DE ENTRADA ASÍNCRO MÓVIL AUTOMÁTICO ──
 window.addEventListener('DOMContentLoaded', function() {
