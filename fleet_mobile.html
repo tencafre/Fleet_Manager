@@ -1122,10 +1122,10 @@ function renderCal() {
   
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
     console.log("-> [Render Saneado] Esperando datos del parque automotor...");
-    return;
+    return; // Este return SÍ es legal porque está adentro de la función principal renderCal
   }
 
-  // 🚀 FILTRO ESTRICTO ANTI-DUPLICADOS PARA LAS RESERVAS EN VIVO
+  // Filtro estricto anti-duplicados para las reservas en vivo
   var todasLasReservas = [];
   var codigosProcesados = {};
   if (Array.isArray(todasLasReservasRaw)) {
@@ -1138,6 +1138,7 @@ function renderCal() {
       }
     });
   }
+
 
   // 2. CALCULAR LOS ÍNDICES REALES EN CALIENTE PARA EL PANEL SUPERIOR (Garantiza Conteo Exacto)
   var totalFlota = parqueVehiculos.length;
@@ -1348,7 +1349,11 @@ function renderCal() {
   // Si los datos del CDN aún no impactaron la memoria global, esperamos el próximo ciclo asíncrono
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
     console.log("-> [Render Nuclear] Esperando que el CDN pueble las variables del parque automotor...");
-    return;
+     // ── FILTRO ANTI-RESERVAS PASADAS MÓVIL (LÍNEA 1350-1360) ──
+        if (fin < ahora) {
+          // Cambiamos el escape rígido por un return limpio que salta al siguiente viaje del forEach
+          return; 
+        }
   }
 
   // 2. CÁLCULO EN CALIENTE DE INDICADORES (PANEL SUPERIOR)
@@ -1505,7 +1510,7 @@ function renderCal() {
   document.body.style.padding = "0";
   
   console.log("-> [Render Nuclear] ¡Estructura móvil de agenda inyectada de forma atómica y exitosa!");
-}
+
 
 // Función puente antibugs para el enrutador de inspección móvil
 // ═══════════════════════════════════════════════════════════════════════════
