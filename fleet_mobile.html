@@ -1439,8 +1439,10 @@ function renderCal() {
     } else {
       viajesDelVehiculo.sort(function(a, b) { return new Date(a.start || a.desde) - new Date(b.start || b.desde); });
       
+            // ── CORRECCIÓN QUIRÚRGICA DE LA LÍNEA 1355 (SINTAXIS MAESTRA ANTI-CRASHES) ──
       viajesDelVehiculo.forEach(function(viaje) {
-        if (!viaje) return;
+        if (!viaje) return; // Callback válido
+        
         var ahora = new Date();
         var inicio = new Date(viaje.start || viaje.desde);
         var fin = new Date(viaje.end || viaje.hasta);
@@ -1449,50 +1451,53 @@ function renderCal() {
         var colorBadge = "#64748b";
         var bgBadge = "#f1f5f9";
 
+        // Filtro condicional tolerante: Solo procesamos si el viaje es corriente o futuro
         if (ahora >= inicio && ahora <= fin) {
           estadoReserva = "CORRIENTE";
           colorBadge = "#16a34a";
           bgBadge = "#dcfce7";
-        } else if (fin < ahora) {
-          return; 
         }
 
-        var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
-        var rCode = viaje.code || viaje.id || '0';
-        var rRenter = viaje.renter || viaje.cliente || 'Cliente Kinto';
+        // CONTROL EXCLUSIVO: Si el viaje ya finalizó, envolvemos el flujo para evitar el return ilegal
+        if (fin >= ahora) {
+          
+          var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+          var rCode = viaje.code || viaje.id || '0';
+          var rRenter = viaje.renter || viaje.cliente || 'Cliente Kinto';
 
-        var strStart = "";
-        var strEnd = "";
-        try {
-          strStart = inicio.toISOString().slice(0, 16);
-          strEnd = fin ? fin.toISOString().slice(0, 16) : "";
-        } catch(e) {
-          strStart = String(viaje.start || viaje.desde || "").replace(" ", "T");
-          strEnd = String(viaje.end || viaje.hasta || "").replace(" ", "T");
+          var strStart = "";
+          var strEnd = "";
+          try {
+            strStart = inicio.toISOString().slice(0, 16);
+            strEnd = fin ? fin.toISOString().slice(0, 16) : "";
+          } catch(e) {
+            strStart = String(viaje.start || viaje.desde || "");
+            strEnd = String(viaje.end || viaje.hasta || "");
+          }
+
+          var strKm = kmActual > 0 ? String(kmActual) : "0";
+
+          listaViajes += 
+            '<div class="mobile-viaje-row" ' +
+                 'data-plate="' + plate + '" ' +
+                 'data-code="' + rCode + '" ' +
+                 'data-renter="' + encodeURIComponent(rRenter) + '" ' +
+                 'data-km="' + strKm + '" ' +
+                 'data-start="' + strStart + '" ' +
+                 'data-end="' + strEnd + '" ' +
+                 'style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px; margin-bottom:4px; font-size:11px;">' +
+              '<div>' +
+                '<div style="color:#1e293b; font-weight:600;">' + rRenter + '</div>' +
+                '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + inicio.toLocaleDateString('es-AR', opcionesFecha) + '</div>' +
+              '</div>' +
+              '<div style="text-align:right;">' +
+                '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
+                '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+              '</div>' +
+            '</div>';
         }
+      }); // Fin del forEach seguro
 
-        // 🚀 INYECCIÓN CRUCIAL: Pasamos kmActual parseado de forma explícita al dataset HTML
-        var strKm = kmActual > 0 ? String(kmActual) : "—";
-
-        listaViajes += 
-          '<div class="mobile-viaje-row" ' +
-               'data-plate="' + plate + '" ' +
-               'data-code="' + rCode + '" ' +
-               'data-renter="' + encodeURIComponent(rRenter) + '" ' +
-               'data-km="' + strKm + '" ' +
-               'data-start="' + strStart + '" ' +
-               'data-end="' + strEnd + '" ' +
-               'style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px; margin-bottom:4px; font-size:11px;">' +
-            '<div>' +
-              '<div style="color:#1e293b; font-weight:600;">' + rRenter + '</div>' +
-              '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + inicio.toLocaleDateString('es-AR', opcionesFecha) + '</div>' +
-            '</div>' +
-            '<div style="text-align:right;">' +
-              '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
-            '</div>' +
-          '</div>';
-      });
     }
 
     listaViajes += '</div></div>';
