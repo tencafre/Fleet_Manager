@@ -3177,102 +3177,121 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
 (function() {
   console.log("-> [Interceptor Maestro] Activando escucha global de toques táctiles...");
 
-  // Escuchamos absolutamente todos los clics que ocurran en la pantalla del celular
   document.addEventListener('click', function(event) {
     var el = event.target;
     
-    // Si el usuario presionó un botón que contiene la palabra CHECKLIST o INSPECCIÓN
+    // Detectamos si el operario hizo clic en el botón de Checklist de la tarjeta móvil
     if (el && (el.tagName === 'BUTTON' || el.tagName === 'A') && el.textContent.includes('CHECKLIST')) {
-      console.log("-> [Interceptor Maestro] ¡Clic legítimo detectado en botón Checklist móvil!");
+      console.log("-> [Interceptor Maestro] Clic detectado en botón Checklist. Extrayendo variables...");
       
-      // Detenemos cualquier redirección vacía nativa de la plantilla vieja
       event.preventDefault();
       event.stopPropagation();
 
-      // 1. RASPADO DE LA TARJETA VISUAL (Buscamos la fila contenedora del vehículo)
-      var filaReserva = el.closest('.mobile-viaje-row') || el.parentElement.parentElement || el.closest('div');
-      
+      // 1. RASPADO SEMÁNTICO DE LA TARJETA VISUAL
+      var filaReserva = el.closest('.mobile-viaje-row') || el.parentElement.parentElement;
       if (!filaReserva) {
-        console.error("No se encontró el contenedor visual de la unidad.");
+        console.error("No se encontró el contenedor visual de la reserva.");
         return;
       }
 
-      // 2. EXTRACCIÓN DE DATOS MEDIANTE CAPAS CAÍDAS DE SEGURIDAD (Dataset o Texto plano)
-      var patente = String(filaReserva.dataset?.plate || filaReserva.getAttribute('data-plate') || "").toUpperCase().trim();
-      var codigoViaje = filaReserva.dataset?.code || filaReserva.getAttribute('data-code') || "0";
-      var cliente = decodeURIComponent(filaReserva.dataset?.renter || filaReserva.getAttribute('data-renter') || "Cliente Kinto");
-      var odometro = String(filaReserva.dataset?.km || filaReserva.getAttribute('data-km') || "—").replace(/[^\d]/g, '');
+      // 2. EXTRAER PATENTE Y CLIENTE LIMPIOS DE LOS ATRIBUTOS DATA
+      var patente = String(filaReserva.dataset.plate || filaReserva.getAttribute('data-plate') || "").toUpperCase().trim();
+      var codigoViaje = filaReserva.dataset.code || filaReserva.getAttribute('data-code') || "0";
+      var cliente = decodeURIComponent(filaReserva.dataset.renter || filaReserva.getAttribute('data-renter') || "Cliente Kinto");
 
-      // 🚀 BARRIDO MAESTRO ANTI-NULOS: Si por el Render Nuclear el dataset vino vacío,
-      // raspamos la patente y los kilómetros leyendo los textos impresos en la pantalla del celular
-      if (!patente || patente.length < 5) {
-        var textoFila = filaReserva.innerHTML || "";
-        // Expresión regular para capturar patentes estándar (ej: AA123BB o AB123CD)
-        var coincidenciaPatente = textoFila.match(/[A-Z]{2}\d{3}[A-Z]{2}/i) || textoFila.match(/[A-Z]{3}\d{3}/i);
-        patente = coincidenciaPatente ? coincidenciaPatente[0].toUpperCase().trim() : "AG269JN"; // Fallback tu unidad de prueba
-      }
-
-      if (!odometro || odometro === "") {
-        // Buscamos si en el objeto global ST está guardado el km real de esta patente
-        if (window.ST && window.ST.tel && window.ST.tel[patente]) {
-          var tObj = window.ST.tel[patente];
-          odometro = String(tObj.km || tObj.kilometers || "—").replace(/[^\d]/g, '');
+      // 3. 🚀 EXTRACCIÓN EN TIEMPO REAL DE KILÓMETROS (EVITA VARIABLES VACÍAS DEL SEGUNDO CERO)
+      var odometro = "—";
+      var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
+      if (telGlobal && telGlobal[patente]) {
+        var rawKm = telGlobal[patente].km || telGlobal[patente].kilometers || telGlobal[patente].last_km || "";
+        if (rawKm !== "") {
+          odometro = String(rawKm).replace(/[^\d]/g, ''); // Deja solo números planos sin puntos
         }
       }
 
-      // 3. CAPTURAR EL MODELO TÉCNICO DEL VEHÍCULO PARA LA SILUETA (HATCHBACK, SUV, PICKUP)
-      var siluetaAuto = "HATCHBACK"; // Silueta por defecto
+      // Fallback si la telemetría global falló, raspamos el data de la fila
+      if ((odometro === "—" || odometro === "0" || odometro === "") && filaReserva.dataset.km) {
+        odometro = String(filaReserva.dataset.km).replace(/[^\d]/g, '');
+      }
+
+      // 4. 🚀 EXTRACTOR DEL TIPO DE CARROCERÍA PARA SELECCIÓN AUTOMÁTICA DE SILUETA
+      var siluetaAuto = "HATCHBACK"; // Valor base de respaldo corporativo
       var capacidadTanque = 50;
-      if (window.ST && window.ST.pque) {
-        var parqueArr = Array.isArray(window.ST.pque) ? window.ST.pque : Object.values(window.ST.pque);
-        var vehEnc = parqueArr.find?.(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === patente; });
-        if (vehEnc) {
-          siluetaAuto = vehEnc.bodyType || "HATCHBACK";
-          capacidadTanque = vehEnc.tankCap || 50;
+      
+      var pqueGlobal = window.ST && window.ST.pque ? window.ST.pque : [];
+      if (Array.isArray(pqueGlobal)) {
+        var vehiculoEncontrado = pqueGlobal.find(function(v) {
+          return v && v.plate && v.plate.toUpperCase().trim() === patente;
+        });
+        if (vehiculoEncontrado) {
+          // Extraemos las propiedades técnicas exactas que el checklist de escritorio necesita
+          siluetaAuto = String(vehiculoEncontrado.bodyType || vehiculoEncontrado.silhouette || "HATCHBACK").toUpperCase().trim();
+          capacidadTanque = vehiculoEncontrado.tankCap || 50;
         }
       }
 
-      // 4. PARSER DE TIEMPOS SEGURO (Forzamos marcas de tiempo limpias para evitar strings GMT en inglés)
-      var sDate = filaReserva.dataset?.start || new Date().toISOString().slice(0, 10);
-      var eDate = filaReserva.dataset?.end || new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+      // 5. PARSER DE FECHAS SEGURO (Soporte strings continuos e ISO)
+      var rawStart = filaReserva.dataset.start || "";
+      var rawEnd = filaReserva.dataset.end || "";
       
-      if (sDate.includes('T')) sDate = sDate.split('T');
-      if (eDate.includes('T')) eDate = eDate.split('T');
+      var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
 
-      // 🚀 EL MOLDE MATEMÁTICO REAL EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
+      if (rawStart.includes('T')) {
+        var partesS = rawStart.split('T'); sDate = partesS; sTime = partesS ? partesS.slice(0, 5) : "00:00";
+      } else if (rawStart.includes(' ')) {
+        var partesEspacio = rawStart.split(' '); sDate = partesEspacio; sTime = partesEspacio ? partesEspacio.slice(0, 5) : "00:00";
+      } else { sDate = rawStart.slice(0, 10); }
+
+      if (rawEnd.includes('T')) {
+        var partesE = rawEnd.split('T'); eDate = partesE; eTime = partesE ? partesE.slice(0, 5) : "00:00";
+      } else if (rawEnd.includes(' ')) {
+        var partesEspacioE = rawEnd.split(' '); eDate = partesEspacioE; eTime = partesEspacioE ? partesEspacioE.slice(0, 5) : "00:00";
+      } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
+
+      // Cálculo predictivo de devolución de 24 horas si el CDN móvil no trajo fecha de fin
+      if (!eDate || eDate === "") {
+        try {
+          var fEntrega = new Date(sDate + "T" + sTime);
+          var fDevolucion = new Date(fEntrega.getTime() + 86400000);
+          eDate = fDevolucion.toISOString().slice(0, 10); eTime = sTime;
+        } catch(err) { eDate = sDate; eTime = "18:00"; }
+      }
+
+      // 🚀 EL PAYLOAD CON EL MOLDE EXACTO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
       var payload = {
         plate:      patente,
         resid:      codigoViaje,
         renter:     cliente,
-        startDate:  sDate, // YYYY-MM-DD
-        startTime:  "08:00",
-        endDate:    eDate, // YYYY-MM-DD
-        endTime:    "18:00",
-        km:         odometro !== "" ? odometro : "—", // Odómetro numérico inyectable puro
+        startDate:  sDate, // YYYY-MM-DD real de la reserva
+        startTime:  sTime, // HH:MM real
+        endDate:    eDate, // YYYY-MM-DD de devolución real o calculada
+        endTime:    eTime, // HH:MM real
+        km:         odometro !== "—" && odometro !== "" ? odometro : "—", // Odómetro plano para el value
         tankCap:    capacidadTanque,
-        bodyType:   siluetaAuto, // ¡Garantiza que el selector se mueva y dibuje el auto correcto!
+        bodyType:   siluetaAuto, // Llave técnica que mueve tu selector y activa el SVG
         tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
         tireNums:   ["", "", "", "", ""],
         accesorios: []
       };
 
-      // 5. ESCRIBIR EN EL DISCO MÓVIL Y REDIRIGIR
+      // Guardado rígido síncrono en la clave compartida de Kinto
       localStorage.removeItem('fleetcal_checklist_data');
       localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
       
-      // Respaldos rígidos para los scripts reactivos secundarios de Kinto
+      // Copias de variables directas para alimentar scripts reactivos secundarios de la plantilla
       localStorage.setItem('activePlate', patente);
       localStorage.setItem('currentPlate', patente);
       localStorage.setItem('currentKm', odometro);
 
-      console.log("-> [Interceptor] Payload definitivo consolidado en LocalStorage:", payload);
+      console.log("✓ Objeto espejo unificado consolidado de forma inmune en disco:", payload);
 
-      // Redireccionamos fluidamente en la misma ventana
+      // Redirección síncrona controlada
       window.location.href = "checklist_kinto.html";
     }
-  }, true); // El parámetro true activa la captura estricta en la fase inicial del clic
+  }, true); // Fase de captura activada para adelantarnos a limpiezas de la plantilla
 })();
 </script>
+
 
 </body>
 </html>
