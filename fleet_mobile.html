@@ -1342,6 +1342,16 @@ function renderCal() {
   // ... (Todo el resto de tu código de renderCal con el bucle .forEach y el htmlPanelSuperior se mantiene exactamente igual abajo) ...
 
 
+  // 1. EXTRAER VARIABLES DEL ESTADO GLOBAL DIRECTO
+  var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
+  var todasLasReservas = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
+  
+  // Si los datos del CDN aún no impactaron la memoria global, esperamos el próximo ciclo asíncrono
+  if (!parqueVehiculos || parqueVehiculos.length === 0) {
+    console.log("-> [Render Nuclear] Esperando que el CDN pueble las variables del parque automotor...");
+     // ── FILTRO ANTI-RESERVAS PASADAS MÓVIL (LÍNEA 1350-1360) ──
+       
+  }
 
   // 2. CÁLCULO EN CALIENTE DE INDICADORES (PANEL SUPERIOR)
   var totalFlota = parqueVehiculos.length;
