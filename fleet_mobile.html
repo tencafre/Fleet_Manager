@@ -3332,6 +3332,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   </div>
 </div>
 <!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
+<!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
 <script>
 (function() {
   console.log("-> [Interceptor Maestro] Activando escucha global de toques táctiles...");
@@ -3339,7 +3340,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   document.addEventListener('click', function(event) {
     var el = event.target;
     
-    // Detectamos si el operario hizo clic en el botón de Checklist de la tarjeta móvil
+    // Detectamos si el operario hizo clic en el botón de Checklist
     if (el && (el.tagName === 'BUTTON' || el.tagName === 'A') && el.textContent.includes('CHECKLIST')) {
       console.log("-> [Interceptor Maestro] Clic detectado en botón Checklist. Extrayendo variables...");
       
@@ -3353,28 +3354,29 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         return;
       }
 
-      // 2. EXTRAER PATENTE Y CLIENTE LIMPIOS DE LOS ATRIBUTOS DATA
+      // 2. EXTRAER VARIABLES BASE DEL DATASET MÓVIL
       var patente = String(filaReserva.dataset.plate || filaReserva.getAttribute('data-plate') || "").toUpperCase().trim();
       var codigoViaje = filaReserva.dataset.code || filaReserva.getAttribute('data-code') || "0";
       var cliente = decodeURIComponent(filaReserva.dataset.renter || filaReserva.getAttribute('data-renter') || "Cliente Kinto");
+      var kmData = filaReserva.dataset.km || filaReserva.getAttribute('data-km') || "—";
 
-      // 3. 🚀 EXTRACCIÓN EN TIEMPO REAL DE KILÓMETROS (EVITA VARIABLES VACÍAS DEL SEGUNDO CERO)
+      // 3. EXTRACCIÓN EN TIEMPO REAL DE KILÓMETROS DESDE TELEMETRÍA GLOBAL (ST.tel)
       var odometro = "—";
       var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
       if (telGlobal && telGlobal[patente]) {
         var rawKm = telGlobal[patente].km || telGlobal[patente].kilometers || telGlobal[patente].last_km || "";
         if (rawKm !== "") {
-          odometro = String(rawKm).replace(/[^\d]/g, ''); // Deja solo números planos sin puntos
+          odometro = String(rawKm).replace(/[^\d]/g, ''); 
         }
       }
 
-      // Fallback si la telemetría global falló, raspamos el data de la fila
-      if ((odometro === "—" || odometro === "0" || odometro === "") && filaReserva.dataset.km) {
-        odometro = String(filaReserva.dataset.km).replace(/[^\d]/g, '');
+      // Fallback si la telemetría global falló, usamos el data-km de la tarjeta
+      if ((odometro === "—" || odometro === "0" || odometro === "") && kmData !== "—") {
+        odometro = String(kmData).replace(/[^\d]/g, '');
       }
 
-      // 4. 🚀 EXTRACTOR DEL TIPO DE CARROCERÍA PARA SELECCIÓN AUTOMÁTICA DE SILUETA
-      var siluetaAuto = "HATCHBACK"; // Valor base de respaldo corporativo
+      // 4. EXTRACTOR DEL TIPO DE CARROCERÍA PARA SELECCIÓN AUTOMÁTICA DE SILUETA
+      var siluetaAuto = "HATCHBACK"; 
       var capacidadTanque = 50;
       
       var pqueGlobal = window.ST && window.ST.pque ? window.ST.pque : [];
@@ -3383,20 +3385,19 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
           return v && v.plate && v.plate.toUpperCase().trim() === patente;
         });
         if (vehiculoEncontrado) {
-          // Extraemos las propiedades técnicas exactas que el checklist de escritorio necesita
-          siluetaAuto = String(vehiculoEncontrado.bodyType || vehiculoEncontrado.silhouette || "HATCHBACK").toUpperCase().trim();
+          siluetaAuto = String(vehiculoEncontrado.bodyType || "HATCHBACK").toUpperCase().trim();
           capacidadTanque = vehiculoEncontrado.tankCap || 50;
         }
       }
-      
-            // 🚀 EN EL INTERCEPTOR GENERAL (DENTRO DE FLEET_MOBILE.HTML)
-      // Segmentación limpia de fechas (Asegura formato YYYY-MM-DD sin concatenar)
-      var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-      
-      // Limpiamos strings corruptos que vengan con comas de la caché del navegador
-      var cleanStart = String(rawStart).split(',')[0].trim();
-      var cleanEnd = String(rawEnd).split(',')[0].trim();
 
+      // 5. 🚀 PARSER DE FECHAS SEGURO HOMOLOGADO (INMUNE A REFERENCEERROR)
+      var strStart = filaReserva.dataset.start || filaReserva.getAttribute('data-start') || "";
+      var strEnd = filaReserva.dataset.end || filaReserva.getAttribute('data-end') || "";
+      
+      var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
+
+      // Procesamos string de inicio (Toleramos arrays de caché limpiando por comas si existen)
+      var cleanStart = String(strStart).split(',')[0];
       if (cleanStart.includes('T')) {
         var partesS = cleanStart.split('T');
         sDate = partesS[0]; 
@@ -3405,6 +3406,8 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         sDate = cleanStart.slice(0, 10);
       }
 
+      // Procesamos string de fin
+      var cleanEnd = String(strEnd).split(',')[0];
       if (cleanEnd.includes('T')) {
         var partesE = cleanEnd.split('T');
         eDate = partesE[0]; 
@@ -3413,7 +3416,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         eDate = cleanEnd.slice(0, 10);
       }
 
-      // Cálculo predictivo de devolución de 24 horas si el CDN móvil no trajo fecha de fin
+      // Cálculo predictivo de devolución de 24 horas si falta la fecha de fin
       if (!eDate || eDate === "") {
         try {
           var fEntrega = new Date(sDate + "T" + sTime);
@@ -3422,40 +3425,41 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         } catch(err) { eDate = sDate; eTime = "18:00"; }
       }
 
-      // 🚀 EL PAYLOAD CON EL MOLDE EXACTO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
+      // 6. EL PAYLOAD CON EL MOLDE EXACTO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
       var payload = {
         plate:      patente,
         resid:      codigoViaje,
         renter:     cliente,
-        startDate:  sDate, // YYYY-MM-DD real de la reserva
-        startTime:  sTime, // HH:MM real
-        endDate:    eDate, // YYYY-MM-DD de devolución real o calculada
-        endTime:    eTime, // HH:MM real
-        km:         odometro !== "—" && odometro !== "" ? odometro : "—", // Odómetro plano para el value
+        startDate:  sDate, // YYYY-MM-DD
+        startTime:  sTime, // HH:MM
+        endDate:    eDate, // YYYY-MM-DD
+        endTime:    eTime, // HH:MM
+        km:         odometro !== "—" && odometro !== "" ? odometro : "—", 
         tankCap:    capacidadTanque,
-        bodyType:   siluetaAuto, // Llave técnica que mueve tu selector y activa el SVG
+        bodyType:   siluetaAuto, // Activa el selector y la silueta en la PC y celular
         tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
         tireNums:   ["", "", "", "", ""],
         accesorios: []
       };
 
-      // Guardado rígido síncrono en la clave compartida de Kinto
+      // Guardado síncrono rígido en disco local
       localStorage.removeItem('fleetcal_checklist_data');
       localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
       
-      // Copias de variables directas para alimentar scripts reactivos secundarios de la plantilla
+      // Variables secundarias de control reactivo
       localStorage.setItem('activePlate', patente);
       localStorage.setItem('currentPlate', patente);
       localStorage.setItem('currentKm', odometro);
 
-      console.log("✓ Objeto espejo unificado consolidado de forma inmune en disco:", payload);
+      console.log("-> [Interceptor Success] Payload consolidado en disco:", payload);
 
-      // Redirección síncrona controlada
+      // Redirección directa fluida en la misma pestaña hacia el archivo común
       window.location.href = "checklist_kinto.html";
     }
-  }, true); // Fase de captura activada para adelantarnos a limpiezas de la plantilla
+  }, true); 
 })();
 </script>
+
 
 
 </body>
