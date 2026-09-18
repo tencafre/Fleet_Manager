@@ -2808,6 +2808,7 @@ function getAccDataMobile(plate) {
 // ── RECEPTOR MAESTRO DATASET (HOMOLOGACIÓN COMPLETA DE ESCRITORIO) ──
 // ── ENLACE MÓVIL CON PAYLOAD ESPEJO DE ESCRITORIO (SOLUCIÓN DEFINITIVA) ──
 // ── ENLACE MÓVIL CON GARANTÍA DE RENDERIZADO GRÁFICO DIRECTO ──
+// ── EMULADOR ABSOLUTO DE DATOS — SOLUCIÓN FINAL A KILÓMETROS Y SILUETAS ──
 window.abrirChecklistReserva = function(btnElement) {
   try {
     var row = btnElement.closest('.mobile-viaje-row');
@@ -2816,23 +2817,47 @@ window.abrirChecklistReserva = function(btnElement) {
     var p = String(row.dataset.plate || "").toUpperCase().trim();
     var resCode = row.dataset.code || "0";
     var renterName = row.dataset.renter || "";
-    var kmTxt = row.dataset.km || "—";
     var rawStart = row.dataset.start || "";
     var rawEnd = row.dataset.end || "";
 
-    console.log("-> [Mobile Sync Link] Generando persistencia absoluta para: " + p);
+    console.log("-> [Mobile Sync Absolute] Procesando datos para patente: " + p);
 
-    var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
-    var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
+    // 1. EXTRAER INFORMACIÓN TÉCNICA DIRECTAMENTE DE LOS OBJETOS CRUDOS DEL CDN
+    // Protegemos el flujo ante caídas o congelamientos del objeto ST global
+    var pqueList = window.parqueCompleto || (window.ST && window.ST.pque) ? (window.ST.pque || window.parqueCompleto) : [];
+    if (!Array.isArray(pqueList) && typeof pqueList === "object") {
+      pqueList = Object.values(pqueList); // Tolerancia si viene indexado como diccionario
+    }
+    
+    var veh = pqueList.find?.(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
 
+    // 2. EXTRACCIÓN MAESTRA DE KILÓMETROS DESDE LA TELEMETRÍA CRUDA
+    var kmFormateado = "—";
+    var telGlobal = window.telemetriaActiva || window.ST?.tel || window.telData;
+    
+    if (telGlobal) {
+      var datosVehiculo = telGlobal[p];
+      if (datosVehiculo) {
+        var rawKm = datosVehiculo.km || datosVehiculo.kilometers || datosVehiculo.cleared_km || "";
+        if (rawKm !== "") kmFormateado = String(rawKm).replace(/[^\d]/g, '');
+      }
+    }
+
+    // Si por el error de histList la telemetría quedó en cero, raspamos el data-km asignado en la tarjeta
+    if ((kmFormateado === "—" || kmFormateado === "") && row.dataset.km && row.dataset.km !== "—") {
+      kmFormateado = row.dataset.km;
+    }
+
+    // 3. SEGMENTACIÓN HORARIA LIMPIA COMPATIBLE CON DATETIME-LOCAL
     var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
+    
     if (rawStart.includes('T')) {
-      var partesS = rawStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0,5) : "00:00";
-    } else { sDate = rawStart.slice(0,10); }
+      var partesS = rawStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else { sDate = rawStart.slice(0, 10); }
 
     if (rawEnd.includes('T')) {
-      var partesE = rawEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0,5) : "00:00";
-    } else if (rawEnd !== "") { eDate = rawEnd.slice(0,10); }
+      var partesE = rawEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
 
     if (!eDate || eDate === "") {
       try {
@@ -2842,9 +2867,18 @@ window.abrirChecklistReserva = function(btnElement) {
       } catch(err) { eDate = sDate; eTime = "18:00"; }
     }
 
-    var kmFormateado = kmTxt !== "—" && kmTxt !== "0" ? String(kmTxt).replace(/[^\d]/g, '') : "—";
+    // 4. AISLAR ARRAYS DE NEUMÁTICOS Y ACCESORIOS PARA EVITAR CRASHES EN EL DESTINO
+    var tiresEstricto = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
+    var tireNumsEstricto = ["", "", "", "", ""];
+    var accesoriosEstricto = [];
 
-    // 🚀 EL SECRETO: Réplica idéntica y forzado de llaves secundarias en el disco rígido
+    try {
+      var tData = localStorage.getItem('fleet_tires_' + p); if (tData) tiresEstricto = JSON.parse(tData);
+      var tnData = localStorage.getItem('fleet_tire_nums_' + p); if (tnData) tireNumsEstricto = JSON.parse(tnData);
+      var aData = localStorage.getItem('fleet_acc_' + p); if (aData) accesoriosEstricto = JSON.parse(aData);
+    } catch(e) {}
+
+    // 🚀 EL MOLDE EXACTO ADAPTADO QUE ACTIVA EL CONFIGURADOR DE SILUETAS DE KINTO
     var payload = {
       plate:      p,
       resid:      resCode,
@@ -2853,30 +2887,29 @@ window.abrirChecklistReserva = function(btnElement) {
       startTime:  sTime,
       endDate:    eDate,
       endTime:    eTime,
-      km:         kmFormateado,
+      km:         kmFormateado !== "—" ? kmFormateado : "", // Evita mandar rayas que bloqueen el odómetro
       tankCap:    veh ? (veh.tankCap || 50) : 50,
-      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
-      tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
-      tireNums:   ["", "", "", "", ""],
-      accesorios: []
+      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK', // Llave crucial para la silueta del auto
+      tires:      tiresEstricto,
+      tireNums:   tireNumsEstricto,
+      accesorios: accesoriosEstricto
     };
 
-    // Purgamos y pisamos el almacenamiento local
+    // Almacenamos de forma síncrona en el disco rígido local
     localStorage.removeItem('fleetcal_checklist_data');
     localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
     
-    // 🚀 TRUCO MAESTRO DE CONTROL: Guardamos copias sueltas redundantes en disco.
-    // Muchos scripts nativos de Kinto leen estas llaves si el objeto maestro falla.
+    // Inyectamos las claves directas de respaldo para forzar la reacción de los scripts de Kinto
     localStorage.setItem('activePlate', p);
     localStorage.setItem('currentPlate', p);
     localStorage.setItem('currentKm', kmFormateado);
 
-    console.log("✓ Objeto espejo consolidado inyectado en LocalStorage:", payload);
+    console.log("✓ Payload simétrico unificado consolidado con éxito:", payload);
 
-    // Redirección fluida de pestaña
+    // Redirección directa fluida en la misma pestaña hacia el archivo legítimo común
     setTimeout(function() {
       window.location.href = "checklist_kinto.html";
-    }, 120);
+    }, 100);
 
   } catch(err) {
     console.error("Fallo crítico en openChecklistFromMobile:", err);
@@ -2884,6 +2917,14 @@ window.abrirChecklistReserva = function(btnElement) {
 };
 
 window.openChecklistFromMobile = window.abrirChecklistReserva;
+
+// Reparación de escape preventivo para el modal de mantenimiento
+if (!document.getElementById('histList')) {
+  var divHistVirtual = document.createElement('div');
+  divHistVirtual.id = 'histList';
+  divHistVirtual.style.display = 'none';
+  document.body.appendChild(divHistVirtual);
+}
 
 
 
