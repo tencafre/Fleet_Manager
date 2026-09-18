@@ -1114,7 +1114,184 @@ window.updateStats = function() {
 window._mobileRenderLayoutActivo = false;
 
 function renderCal() {
-  console.log("-> [Render Absolute] Iniciando compilación de interfaz móvil unificada...");
+  console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
+
+  // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
+  var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
+  var todasLasReservasRaw = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
+  
+  if (!parqueVehiculos || parqueVehiculos.length === 0) {
+    console.log("-> [Render Saneado] Esperando datos del parque automotor...");
+    return;
+  }
+
+  // 🚀 FILTRO ESTRICTO ANTI-DUPLICADOS PARA LAS RESERVAS EN VIVO
+  var todasLasReservas = [];
+  var codigosProcesados = {};
+  if (Array.isArray(todasLasReservasRaw)) {
+    todasLasReservasRaw.forEach(function(res) {
+      if (!res) return;
+      var idUnico = res.code || res.id || (res.plate + "_" + (res.start || res.desde));
+      if (!codigosProcesados[idUnico]) {
+        codigosProcesados[idUnico] = true;
+        todasLasReservas.push(res);
+      }
+    });
+  }
+
+  // 2. CALCULAR LOS ÍNDICES REALES EN CALIENTE PARA EL PANEL SUPERIOR (Garantiza Conteo Exacto)
+  var totalFlota = parqueVehiculos.length;
+  var totalReservas = todasLasReservas.length; // Reflejará de forma exacta las 6 reservas reales
+  var totalAlertas = 0;
+
+  parqueVehiculos.forEach(function(v) {
+    if (!v || !v.plate) return;
+    var tel = (window.ST && window.ST.tel) ? window.ST.tel : null;
+    var vehTel = tel ? tel[v.plate] : null;
+    if (vehTel && typeof maintAlertInfo === "function") {
+      var a = maintAlertInfo(String(vehTel.km || "0"), v.plate);
+      if (a && a.isAlert) totalAlertas++;
+    }
+  });
+
+  // 3. COMPILAR EL PANEL SUPERIOR OSCURO CORPORATIVO
+  var htmlPanelSuperior = 
+    '<div id="mobile-stats-panel" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; padding:12px 10px; background:#1e293b; border-radius:8px; margin:10px 8px 15px 8px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; color:#ffffff; font-family:sans-serif;">' +
+      '<div style="border-right:1px solid #334155;">' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Flota Total</div>' +
+        '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#38bdf8;">' + totalFlota + '</div>' +
+      '</div>' +
+      '<div style="border-right:1px solid #334155;">' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Reservas</div>' +
+        '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#34d399;">' + totalReservas + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:10px; text-transform:uppercase; color:#94a3b8; font-weight:600; letter-spacing:0.3px;">Alertas</div>' +
+        '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#f87171;">' + totalAlertas + '</div>' +
+      '</div>' +
+    '</div>' +
+    
+    '<div id="agenda-mobile-render-box" style="width:100%; padding:0 8px; box-sizing:border-box; font-family:sans-serif; display:block !important; clear:both !important;">';
+
+  // 4. GENERACIÓN DE TARJETAS VERTICALES SANEADAS
+  parqueVehiculos.forEach(function(veh) {
+    if (!veh || !veh.plate) return;
+    var plate = veh.plate.toUpperCase().trim();
+    
+    // Extraer kilómetros de telemetría de forma segura
+    var kmActual = 0;
+    var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
+    if (telGlobal && telGlobal[plate]) {
+      kmActual = parseInt(telGlobal[plate].km || telGlobal[plate].kilometers || 0, 10);
+    }
+
+    var viajesDelVehiculo = todasLasReservas.filter(function(r) {
+      return r && r.plate && r.plate.toUpperCase().trim() === plate;
+    });
+
+    var tieneAlerta = false;
+    if (typeof maintAlertInfo === "function" && kmActual > 0) {
+      var alerta = maintAlertInfo(String(kmActual), plate);
+      if (alerta && alerta.isAlert) tieneAlerta = true;
+    }
+
+    var cabeceraCard = 
+      '<div class="vehicle-mobile-card" style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:12px; box-shadow:0 2px 4px rgba(0,0,0,0.02); display:block !important; clear:both !important;">' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:6px; margin-bottom:8px;">' +
+          '<div>' +
+            '<span style="font-family:monospace; font-size:12px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; margin-right:6px;">' + plate + '</span>' +
+            '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota Flota') + '</strong>' +
+          '</div>' +
+          '<div>' +
+            '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + (veh.model || '') + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">' +
+              (tieneAlerta ? '⚠️ SERVICE' : '🔧 SERVICE') +
+            '</button>' +
+          '</div>' +
+        '</div>';
+
+    var listaViajes = '<div style="margin-top:5px; display:block !important;">';
+    if (viajesDelVehiculo.length === 0) {
+      listaViajes += '<div style="color:#94a3b8; font-style:italic; font-size:11px; padding:4px 0;">✓ Unidad Disponible: Sin reservas registradas.</div>';
+    } else {
+      viajesDelVehiculo.sort(function(a, b) { return new Date(a.start || a.desde) - new Date(b.start || b.desde); });
+      
+      viajesDelVehiculo.forEach(function(viaje) {
+        if (!viaje) return;
+        var ahora = new Date();
+        var inicio = new Date(viaje.start || viaje.desde);
+        var fin = new Date(viaje.end || viaje.hasta);
+        
+        var estadoReserva = "PENDIENTE";
+        var colorBadge = "#64748b";
+        var bgBadge = "#f1f5f9";
+
+        if (ahora >= inicio && ahora <= fin) {
+          estadoReserva = "CORRIENTE";
+          colorBadge = "#16a34a";
+          bgBadge = "#dcfce7";
+        } else if (fin < ahora) {
+          return; 
+        }
+
+        var opcionesFecha = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+        var rCode = viaje.code || viaje.id || '0';
+        var rRenter = viaje.renter || viaje.cliente || 'Cliente Kinto';
+
+        // 🚀 SANITIZACIÓN ATÓMICA DE FECHA EN STRING ISO PLANO UNIFICADO (Previene concatenaciones)
+        var strStart = "";
+        var strEnd = "";
+        try {
+          if (viaje.start && String(viaje.start).includes('T')) {
+            strStart = String(viaje.start).split(',')[0]; // Cortamos cualquier array duplicado de la caché
+          } else {
+            strStart = inicio.toISOString().slice(0, 16);
+          }
+          
+          if (viaje.end && String(viaje.end).includes('T')) {
+            strEnd = String(viaje.end).split(',')[0];
+          } else {
+            strEnd = fin ? fin.toISOString().slice(0, 16) : "";
+          }
+        } catch(e) {
+          strStart = String(viaje.start || viaje.desde || "");
+          strEnd = String(viaje.end || viaje.hasta || "");
+        }
+
+        var strKm = kmActual > 0 ? String(kmActual) : "0";
+
+        listaViajes += 
+          '<div class="mobile-viaje-row" ' +
+               'data-plate="' + plate + '" ' +
+               'data-code="' + rCode + '" ' +
+               'data-renter="' + encodeURIComponent(rRenter) + '" ' +
+               'data-km="' + strKm + '" ' +
+               'data-start="' + strStart + '" ' +
+               'data-end="' + strEnd + '" ' +
+               'style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:6px; margin-bottom:4px; font-size:11px;">' +
+            '<div>' +
+              '<div style="color:#1e293b; font-weight:600;">' + rRenter + '</div>' +
+              '<div style="color:#475569; font-size:10px; margin-top:1px;">📅 ' + inicio.toLocaleDateString('es-AR', opcionesFecha) + '</div>' +
+            '</div>' +
+            '<div style="text-align:right;">' +
+              '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
+              '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+            '</div>' +
+          '</div>';
+      });
+    }
+
+    listaViajes += '</div></div>';
+    htmlPanelSuperior += cabeceraCard + listaViajes;
+  });
+
+  htmlPanelSuperior += '</div>';
+
+  // Volcado definitivo sobre el lienzo visible
+  document.body.innerHTML = htmlPanelSuperior;
+  document.body.style.background = "#f8fafc";
+  
+  console.log("-> [Render Saneado] ¡Estructura de agenda inyectada de forma atómica y exitosa!");
+}
 
   // ═══════════════════════════════════════════════════════════════════════════
   //   ── CONSOLA DE DIAGNÓSTICO EN VIVO (VERIFICACIÓN DE ARRANQUE MÓVIL) ──
@@ -3230,23 +3407,29 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         }
       }
 
-      // 5. PARSER DE FECHAS SEGURO (Soporte strings continuos e ISO)
-      var rawStart = filaReserva.dataset.start || "";
-      var rawEnd = filaReserva.dataset.end || "";
-      
+            // 🚀 EN EL INTERCEPTOR GENERAL (DENTRO DE FLEET_MOBILE.HTML)
+      // Segmentación limpia de fechas (Asegura formato YYYY-MM-DD sin concatenar)
       var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
+      
+      // Limpiamos strings corruptos que vengan con comas de la caché del navegador
+      var cleanStart = String(rawStart).split(',')[0].trim();
+      var cleanEnd = String(rawEnd).split(',')[0].trim();
 
-      if (rawStart.includes('T')) {
-        var partesS = rawStart.split('T'); sDate = partesS; sTime = partesS ? partesS.slice(0, 5) : "00:00";
-      } else if (rawStart.includes(' ')) {
-        var partesEspacio = rawStart.split(' '); sDate = partesEspacio; sTime = partesEspacio ? partesEspacio.slice(0, 5) : "00:00";
-      } else { sDate = rawStart.slice(0, 10); }
+      if (cleanStart.includes('T')) {
+        var partesS = cleanStart.split('T');
+        sDate = partesS[0]; 
+        sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+      } else {
+        sDate = cleanStart.slice(0, 10);
+      }
 
-      if (rawEnd.includes('T')) {
-        var partesE = rawEnd.split('T'); eDate = partesE; eTime = partesE ? partesE.slice(0, 5) : "00:00";
-      } else if (rawEnd.includes(' ')) {
-        var partesEspacioE = rawEnd.split(' '); eDate = partesEspacioE; eTime = partesEspacioE ? partesEspacioE.slice(0, 5) : "00:00";
-      } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
+      if (cleanEnd.includes('T')) {
+        var partesE = cleanEnd.split('T');
+        eDate = partesE[0]; 
+        eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+      } else if (cleanEnd !== "") {
+        eDate = cleanEnd.slice(0, 10);
+      }
 
       // Cálculo predictivo de devolución de 24 horas si el CDN móvil no trajo fecha de fin
       if (!eDate || eDate === "") {
