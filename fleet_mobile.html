@@ -2850,122 +2850,7 @@ function getAccDataMobile(plate) {
 // ── ENLACE MÓVIL CON PAYLOAD ESPEJO DE ESCRITORIO (SOLUCIÓN DEFINITIVA) ──
 // ── ENLACE MÓVIL CON GARANTÍA DE RENDERIZADO GRÁFICO DIRECTO ──
 // ── EMULADOR ABSOLUTO DE DATOS — SOLUCIÓN FINAL A KILÓMETROS Y SILUETAS ──
-window.abrirChecklistReserva = function(btnElement) {
-  try {
-    var row = btnElement.closest('.mobile-viaje-row');
-    if (!row) return;
 
-    var p = String(row.dataset.plate || "").toUpperCase().trim();
-    var resCode = row.dataset.code || "0";
-    var renterName = row.dataset.renter || "";
-    var rawStart = row.dataset.start || "";
-    var rawEnd = row.dataset.end || "";
-
-    console.log("-> [Mobile Sync Absolute] Procesando datos para patente: " + p);
-
-    // 1. EXTRAER INFORMACIÓN TÉCNICA DIRECTAMENTE DE LOS OBJETOS CRUDOS DEL CDN
-    // Protegemos el flujo ante caídas o congelamientos del objeto ST global
-    var pqueList = window.parqueCompleto || (window.ST && window.ST.pque) ? (window.ST.pque || window.parqueCompleto) : [];
-    if (!Array.isArray(pqueList) && typeof pqueList === "object") {
-      pqueList = Object.values(pqueList); // Tolerancia si viene indexado como diccionario
-    }
-    
-    var veh = pqueList.find?.(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
-
-    // 2. EXTRACCIÓN MAESTRA DE KILÓMETROS DESDE LA TELEMETRÍA CRUDA
-    var kmFormateado = "—";
-    var telGlobal = window.telemetriaActiva || window.ST?.tel || window.telData;
-    
-    if (telGlobal) {
-      var datosVehiculo = telGlobal[p];
-      if (datosVehiculo) {
-        var rawKm = datosVehiculo.km || datosVehiculo.kilometers || datosVehiculo.cleared_km || "";
-        if (rawKm !== "") kmFormateado = String(rawKm).replace(/[^\d]/g, '');
-      }
-    }
-
-    // Si por el error de histList la telemetría quedó en cero, raspamos el data-km asignado en la tarjeta
-    if ((kmFormateado === "—" || kmFormateado === "") && row.dataset.km && row.dataset.km !== "—") {
-      kmFormateado = row.dataset.km;
-    }
-
-    // 3. SEGMENTACIÓN HORARIA LIMPIA COMPATIBLE CON DATETIME-LOCAL
-    var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-    
-    if (rawStart.includes('T')) {
-      var partesS = rawStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else { sDate = rawStart.slice(0, 10); }
-
-    if (rawEnd.includes('T')) {
-      var partesE = rawEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
-
-    if (!eDate || eDate === "") {
-      try {
-        var fEntrega = new Date(sDate + "T" + sTime);
-        var fDevolucion = new Date(fEntrega.getTime() + 86400000);
-        eDate = fDevolucion.toISOString().slice(0, 10); eTime = sTime;
-      } catch(err) { eDate = sDate; eTime = "18:00"; }
-    }
-
-    // 4. AISLAR ARRAYS DE NEUMÁTICOS Y ACCESORIOS PARA EVITAR CRASHES EN EL DESTINO
-    var tiresEstricto = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
-    var tireNumsEstricto = ["", "", "", "", ""];
-    var accesoriosEstricto = [];
-
-    try {
-      var tData = localStorage.getItem('fleet_tires_' + p); if (tData) tiresEstricto = JSON.parse(tData);
-      var tnData = localStorage.getItem('fleet_tire_nums_' + p); if (tnData) tireNumsEstricto = JSON.parse(tnData);
-      var aData = localStorage.getItem('fleet_acc_' + p); if (aData) accesoriosEstricto = JSON.parse(aData);
-    } catch(e) {}
-
-    // 🚀 EL MOLDE EXACTO ADAPTADO QUE ACTIVA EL CONFIGURADOR DE SILUETAS DE KINTO
-    var payload = {
-      plate:      p,
-      resid:      resCode,
-      renter:     decodeURIComponent(renterName),
-      startDate:  sDate,
-      startTime:  sTime,
-      endDate:    eDate,
-      endTime:    eTime,
-      km:         kmFormateado !== "—" ? kmFormateado : "", // Evita mandar rayas que bloqueen el odómetro
-      tankCap:    veh ? (veh.tankCap || 50) : 50,
-      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK', // Llave crucial para la silueta del auto
-      tires:      tiresEstricto,
-      tireNums:   tireNumsEstricto,
-      accesorios: accesoriosEstricto
-    };
-
-    // Almacenamos de forma síncrona en el disco rígido local
-    localStorage.removeItem('fleetcal_checklist_data');
-    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-    
-    // Inyectamos las claves directas de respaldo para forzar la reacción de los scripts de Kinto
-    localStorage.setItem('activePlate', p);
-    localStorage.setItem('currentPlate', p);
-    localStorage.setItem('currentKm', kmFormateado);
-
-    console.log("✓ Payload simétrico unificado consolidado con éxito:", payload);
-
-    // Redirección directa fluida en la misma pestaña hacia el archivo legítimo común
-    setTimeout(function() {
-      window.location.href = "checklist_kinto.html";
-    }, 100);
-
-  } catch(err) {
-    console.error("Fallo crítico en openChecklistFromMobile:", err);
-  }
-};
-
-window.openChecklistFromMobile = window.abrirChecklistReserva;
-
-// Reparación de escape preventivo para el modal de mantenimiento
-if (!document.getElementById('histList')) {
-  var divHistVirtual = document.createElement('div');
-  divHistVirtual.id = 'histList';
-  divHistVirtual.style.display = 'none';
-  document.body.appendChild(divHistVirtual);
-}
 
 
 
@@ -3023,6 +2908,105 @@ window.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── PARSER ABSOLUTO MÓVIL SÍNCRONO (SOLUCIÓN GRÁFICA DEFINITIVA) ──
+// ═══════════════════════════════════════════════════════════════════════════
+window.abrirChecklistReserva = function(btnElement) {
+  try {
+    // 1. RASPADO DIRECTO DE LA TARJETA HTML ACTIVA (Inmune a fallas de arrays)
+    var row = btnElement.closest('.mobile-viaje-row') || btnElement.parentElement.parentElement;
+    if (!row) {
+      console.error("No se encontró la fila contenedora.");
+      return;
+    }
+
+    var p = String(row.dataset.plate || "").toUpperCase().trim();
+    var resCode = row.dataset.code || "0";
+    var renterName = row.dataset.renter || "Cliente Kinto";
+    var kmTxt = row.dataset.km || "—";
+    var rawStart = row.dataset.start || "";
+    var rawEnd = row.dataset.end || "";
+
+    console.log("-> [Mobile Link Absolute] Desplegando traspaso para: " + p);
+
+    // 2. RECUPERAR DATOS DEL PARQUE DESDE EL ARRAY GLOBAL ACTIVO
+    var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
+    var veh = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
+
+    // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA
+    var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
+    
+    if (rawStart.includes('T')) {
+      var partesS = rawStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else if (rawStart.includes(' ')) {
+      var partesEspacio = rawStart.split(' '); sDate = partesEspacio[0]; sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "00:00";
+    } else { sDate = rawStart.slice(0, 10); }
+
+    if (rawEnd.includes('T')) {
+      var partesE = rawEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd.includes(' ')) {
+      var partesEspacioE = rawEnd.split(' '); eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
+
+    // Fallback predictivo automático de devolución (+24 horas)
+    if (!eDate || eDate === "") {
+      try {
+        var fEntrega = new Date(sDate + "T" + sTime);
+        var fDevolucion = new Date(fEntrega.getTime() + 86400000);
+        eDate = fDevolucion.toISOString().slice(0, 10); eTime = sTime;
+      } catch(err) { eDate = sDate; eTime = "18:00"; }
+    }
+
+    // 4. LIMPIEZA RIGIDA DE KILÓMETROS
+    var kmFormateado = "—";
+    if (kmTxt && kmTxt !== "—" && kmTxt !== "0" && kmTxt !== "") {
+      kmFormateado = String(kmTxt).replace(/[^\d]/g, '');
+    } else {
+      // Intento final por telemetría si el dataset falló
+      var telRescate = window.ST && window.ST.tel ? window.ST.tel[p] : null;
+      if (telRescate) kmFormateado = String(telRescate.km || telRescate.kilometers || "—").replace(/[^\d]/g, '');
+    }
+
+    // 5. MOLDE NATIVO CORPORATIVO REDUNDANTE
+    // Inyectamos las estructuras de sub-arrays completas requeridas de forma estricta por el checklist original
+    var payload = {
+      plate:      p,
+      resid:      resCode,
+      renter:     decodeURIComponent(renterName),
+      startDate:  sDate, // YYYY-MM-DD
+      startTime:  sTime, // HH:MM
+      endDate:    eDate, // YYYY-MM-DD
+      endTime:    eTime, // HH:MM
+      km:         kmFormateado !== "" && kmFormateado !== "—" ? kmFormateado : "—",
+      tankCap:    veh ? (veh.tankCap || 50) : 50,
+      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK', // Llave estructural de siluetas
+      tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
+      tireNums:   ["", "", "", "", ""],
+      accesorios: []
+    };
+
+    // Purgamos y pisamos el almacenamiento de Kinto
+    localStorage.removeItem('fleetcal_checklist_data');
+    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+    
+    // Inyectamos las variables sueltas requeridas por tus scripts reactivos secundarios
+    localStorage.setItem('activePlate', p);
+    localStorage.setItem('currentPlate', p);
+    localStorage.setItem('currentKm', kmFormateado);
+
+    console.log("✓ Objeto espejo consolidado inyectado en LocalStorage con éxito:", payload);
+
+    // Redirección síncrona controlada
+    setTimeout(function() {
+      window.location.href = "checklist_kinto.html";
+    }, 100);
+
+  } catch(err) {
+    console.error("Fallo crítico en openChecklistFromMobile:", err);
+  }
+};
+
+window.openChecklistFromMobile = window.abrirChecklistReserva;
 
 </script>
 
