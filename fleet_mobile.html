@@ -1117,7 +1117,55 @@ window.updateStats = function() {
 window._mobileRenderLayoutActivo = false;
 
 function renderCal() {
-  console.log("-> [Render Nuclear] Compilando interfaz móvil sobre lienzo limpio...");
+  console.log("-> [Render Absolute] Iniciando compilación de interfaz móvil unificada...");
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  //   ── CONSOLA DE DIAGNÓSTICO EN VIVO (VERIFICACIÓN DE ARRANQUE MÓVIL) ──
+  // ═══════════════════════════════════════════════════════════════════════════
+  var panelDiagnostico = document.getElementById('mobile-debug-console');
+  if (!panelDiagnostico) {
+    panelDiagnostico = document.createElement('div');
+    panelDiagnostico.id = 'mobile-debug-console';
+    panelDiagnostico.style.background = '#eff6ff'; // Fondo azul claro de control
+    panelDiagnostico.style.border = '2px dashed #1d4ed8';
+    panelDiagnostico.style.borderRadius = '8px';
+    panelDiagnostico.style.padding = '12px';
+    panelDiagnostico.style.margin = '10px 8px';
+    panelDiagnostico.style.fontFamily = 'monospace';
+    panelDiagnostico.style.fontSize = '11px';
+    panelDiagnostico.style.color = '#1e3a8a';
+    panelDiagnostico.style.clear = 'both';
+    
+    // Lo acoplamos inmediatamente abajo de tu letrero verde visible
+    var letreroVerde = document.getElementById('letrero-control-movil');
+    if (letreroVerde) letreroVerde.parentNode.insertBefore(panelDiagnostico, letreroVerde.nextSibling);
+    else document.body.insertBefore(panelDiagnostico, document.body.firstChild);
+  }
+
+  // Raspamos qué hay guardado en la memoria en caliente del teléfono celular
+  var debugPque = (window.ST && window.ST.pque) ? window.ST.pque.length : 0;
+  var debugRes  = (window.ST && window.ST.res) ? window.ST.res.length : 0;
+  var debugTel  = (window.ST && window.ST.tel) ? Object.keys(window.ST.tel).length : 0;
+  
+  // Tomamos una patente de ejemplo para auditar si guarda los kilómetros adentro
+  var patenteMuestra = (window.ST && window.ST.pque && window.ST.pque[0]) ? window.ST.pque[0].plate : "NINGUNA";
+  var kmMuestra = "NO DETECTADO";
+  if (window.ST && window.ST.tel && window.ST.tel[patenteMuestra]) {
+    var tObj = window.ST.tel[patenteMuestra];
+    kmMuestra = tObj.km || tObj.kilometers || tObj.cleared_km || JSON.stringify(tObj);
+  }
+
+  panelDiagnostico.innerHTML = 
+    '<strong style="font-size:12px; display:block; margin-bottom:5px;">🔍 AUDITORÍA DE INICIALIZACIÓN MÓVIL:</strong>' +
+    '• Unidades en ST.pque: <strong>' + debugPque + '</strong><br>' +
+    '• Viajes en ST.res: <strong>' + debugRes + '</strong><br>' +
+    '• Registros en ST.tel: <strong>' + debugTel + '</strong><br>' +
+    '• Unidad de Muestra: <strong>' + patenteMuestra + '</strong><br>' +
+    '• KM extraídos de Muestra: <span style="background:#dbeafe; padding:1px 4px; border-radius:3px;">' + kmMuestra + '</span>';
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ... (Todo el resto de tu código de renderCal con el bucle .forEach y el htmlPanelSuperior se mantiene exactamente igual abajo) ...
+
 
   // 1. EXTRAER VARIABLES DEL ESTADO GLOBAL DIRECTO
   var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
