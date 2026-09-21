@@ -3806,7 +3806,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
           capacidadTanque = vehiculoEncontrado.tankCap || 50;
         }
       }
-
+       var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
             // 🚀 EN EL INTERCEPTOR GENERAL (DENTRO DE FLEET_MOBILE.HTML)
       // Segmentación limpia de fechas (Asegura formato YYYY-MM-DD sin concatenar)
       var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
