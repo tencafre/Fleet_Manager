@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 /*
  * Design System — Fleet Operations Dashboard
@@ -576,6 +577,41 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
   border-radius:3px;padding:1px 5px;display:inline-flex;align-items:center;gap:2px;
   font-family:'JetBrains Mono',monospace}
 
+/* ── DAMAGES (MÓDULO A) ── */
+.dmg-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.dmg-header{font-size:11px;font-weight:600;color:var(--c-error);display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.dmg-badge{display:inline-flex;align-items:center;gap:3px;background:var(--cl-error);color:var(--c-error);
+  font-size:10px;font-weight:600;border-radius:4px;padding:3px 8px;margin-left:auto}
+.dmg-row{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--surface2);
+  border-radius:4px;margin-bottom:5px;font-size:10px;border-left:3px solid var(--c-error)}
+.dmg-dot{width:6px;height:6px;border-radius:50%;background:var(--c-error);flex-shrink:0}
+.dmg-type{font-weight:600;color:var(--text);flex:1}
+.dmg-meta{color:var(--text2);font-size:9px}
+.dmg-repair-btn{background:none;border:none;cursor:pointer;color:var(--accent);font-weight:600;
+  padding:2px 6px;border-radius:3px;transition:all .12s;font-size:10px}
+.dmg-repair-btn:hover{background:var(--accent-mid);color:var(--accent-2)}
+.dmg-empty{color:var(--text3);font-size:10px;font-style:italic;padding:6px 8px}
+
+/* ── MAINTENANCE (MÓDULO B) ── */
+.maint-section{margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.maint-header{font-size:11px;font-weight:600;color:var(--c-service);display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.maint-badge{display:inline-flex;align-items:center;gap:3px;background:var(--cl-service);color:var(--c-service);
+  font-size:10px;font-weight:600;border-radius:4px;padding:3px 8px}
+.maint-form{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.maint-field{display:flex;flex-direction:column;gap:3px}
+.maint-field label{font-size:10px;font-weight:600;color:var(--text2)}
+.maint-field input,.maint-field select{background:var(--surface);border:1px solid var(--border-s);
+  border-radius:4px;padding:6px 8px;font-size:11px;color:var(--text);font-family:inherit;outline:none}
+.maint-field input:focus,.maint-field select:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-mid)}
+.maint-hist-row{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;
+  background:var(--surface2);border-radius:4px;margin-bottom:4px;font-size:10px}
+.maint-hist-type{font-weight:600;color:var(--text);flex:1}
+.maint-hist-date{color:var(--text2);font-size:9px;font-family:'JetBrains Mono',monospace}
+.maint-hist-delete{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;
+  padding:2px 5px;border-radius:3px;transition:all .12s}
+.maint-hist-delete:hover{color:var(--c-error);background:var(--cl-error)}
+.maint-empty{color:var(--text3);font-size:10px;font-style:italic;padding:6px 8px}
+
 /* ── FLEET MAP MODAL ── */
 .map-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
   z-index:2500;display:none;align-items:center;justify-content:center;padding:16px}
@@ -701,6 +737,42 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
   padding:4px 6px;font-size:11px;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
 .qtire-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-mid)}
 .qtire-input.wide{min-width:80px}
+
+/* ── MAP BOTTOM SHEET (MÓDULO C) ── */
+.map-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);
+  border-radius:16px 16px 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.15);
+  z-index:3000;max-height:85vh;display:flex;flex-direction:column;
+  animation:slideUp .3s ease-out}
+
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes slideDown{from{transform:translateY(0)}to{transform:translateY(100%)}}
+
+.map-sheet-handle{width:40px;height:4px;background:var(--border-m);border-radius:2px;
+  margin:12px auto 8px}
+
+.map-sheet-header{padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start}
+
+.map-sheet-title{font-size:14px;font-weight:700;color:var(--text)}
+.map-sheet-sub{font-size:10px;color:var(--text2);margin-top:2px;
+  font-family:'JetBrains Mono',monospace}
+
+.map-sheet-close{background:none;border:none;cursor:pointer;color:var(--text3);
+  font-size:18px;padding:0;transition:color .12s}
+.map-sheet-close:hover{color:var(--text)}
+
+#mapSheetContainer{flex:1;position:relative;overflow:hidden;
+  border-radius:12px;margin:0 12px}
+
+.map-sheet-footer{padding:12px 16px 24px;text-align:right}
+
+/* ── QUICK TIRE GRID IMPROVEMENTS ── */
+.quick-tire-toggle{display:inline-flex;align-items:center;gap:3px;
+  font-size:9px;color:var(--accent);cursor:pointer;padding:4px 8px;
+  border-radius:4px;background:var(--accent-mid);border:none;
+  font-family:inherit;transition:all .12s;font-weight:600}
+.quick-tire-toggle:hover{background:var(--accent-l)}
+
 /* ═════════════════════════════════════════════════════════════
    ── FILTRO DE MAQUETACIÓN MÓVIL ESTRICTO (ANTI-SUPERPOSICIÓN) ──
    ═════════════════════════════════════════════════════════════ */
@@ -1275,7 +1347,8 @@ function renderCal() {
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+              '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">📋 CHECKLIST</button>' +
+              '<button onclick="generatePDFFromSheet(\'' + rCode + '\')" style="background:#0369a1; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;" title="Descargar checklist en PDF">📄 PDF</button>' +
             '</div>' +
           '</div>';
       });
@@ -1350,7 +1423,10 @@ function renderCal() {
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
     console.log("-> [Render Nuclear] Esperando que el CDN pueble las variables del parque automotor...");
      // ── FILTRO ANTI-RESERVAS PASADAS MÓVIL (LÍNEA 1350-1360) ──
-       
+        if (fin < ahora) {
+          // Cambiamos el escape rígido por un return limpio que salta al siguiente viaje del forEach
+          return; 
+        }
   }
 
   // 2. CÁLCULO EN CALIENTE DE INDICADORES (PANEL SUPERIOR)
@@ -1489,7 +1565,8 @@ function renderCal() {
               '</div>' +
               '<div style="text-align:right;">' +
                 '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-                '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">📋 CHECKLIST</button>' +
+                '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">📋 CHECKLIST</button>' +
+                '<button onclick="generatePDFFromSheet(\'' + rCode + '\')" style="background:#0369a1; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;" title="Descargar checklist en PDF">📄 PDF</button>' +
               '</div>' +
             '</div>';
         }
@@ -2504,6 +2581,8 @@ window.closeMapModal = function(e) {
 /* ── TIRES & ACCESSORIES STORAGE & UI ─────────────────────────────────────── */
 const TIRE_PREFIX = 'fleetcal_tires_';
 const ACC_PREFIX  = 'fleetcal_acc_';
+const DMG_PREFIX = 'fleetcal_dmg_';
+const STORE_PREFIX = 'fleetcal_maint_';
 
 const TIRE_POSITIONS = [
   'Delantera Izq','Delantera Der','Trasera Izq','Trasera Der',
@@ -2522,6 +2601,21 @@ const TIRE_5_STANDARD = [
 const ACC_TYPES = [
   'Matafuego','Balizas','Botiquín','Chaleco','Crique',
   'Llave de rueda','Cable de arranque','Triángulo','Linterna','Otro'
+];
+
+const MAINT_TYPES = [
+  { label: 'Cambio de aceite y filtro',              km: 10000  },
+  { label: 'Rotación de neumáticos',                 km: 10000  },
+  { label: 'Filtro de aire',                         km: 20000  },
+  { label: 'Filtro de combustible',                  km: 20000  },
+  { label: 'Bujías',                                 km: 20000  },
+  { label: 'Líquido de frenos',                      km: 30000  },
+  { label: 'Correa / cadena de distribución',        km: 40000  },
+  { label: 'Amortiguadores',                         km: 50000  },
+  { label: 'Revisión general (service mayor)',       km: 0      },
+  { label: 'Revisión de frenos',                     km: 0      },
+  { label: 'Alineación y balanceo',                  km: 0      },
+  { label: 'Otro (ver observaciones)',               km: 0      },
 ];
 
 let tireModalPlate = null;
@@ -2546,6 +2640,104 @@ function getTireNumbers(plate){
   return getTireData(plate).filter(t=>t.numero).map(t=>t.numero);
 }
 //PROCESO DE DAÑOS//
+
+/* ── FUNCTION: CARGAR DAÑOS LOCAL ── */
+function loadDamages(plate) {
+  if (!plate) return [];
+  const p = plate.toUpperCase().trim();
+  try {
+    const raw = localStorage.getItem(DMG_PREFIX + p);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+/* ── FUNCTION: GUARDAR DAÑOS LOCAL ── */
+function saveDamages(plate, damages) {
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+  try {
+    localStorage.setItem(DMG_PREFIX + p, JSON.stringify(damages || []));
+  } catch(e) {}
+}
+
+/* ── FUNCTION: OBTENER HISTORIAL DE MANTENIMIENTO ── */
+function getMaintHistory(plate) {
+  if (!plate) return [];
+  const p = plate.toUpperCase().trim();
+  try {
+    const raw = localStorage.getItem(STORE_PREFIX + p);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+/* ── FUNCTION: GUARDAR HISTORIAL DE MANTENIMIENTO ── */
+function saveMaintHistory(plate, history) {
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+  try {
+    localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history || []));
+  } catch(e) {}
+}
+
+/* ── FUNCTION: RENDERIZAR DAÑOS EN UI ── */
+function renderDamagesList(plate) {
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+  const damages = loadDamages(p);
+  const container = document.getElementById('damagesList');
+  
+  if (!container) return;
+  
+  if (!damages || damages.length === 0) {
+    container.innerHTML = '<div class="dmg-empty">✅ Sin daños registrados</div>';
+    return;
+  }
+  
+  let html = damages.map((dmg, idx) => `
+    <div class="dmg-row">
+      <div class="dmg-dot"></div>
+      <div style="flex:1">
+        <div class="dmg-type">${dmg.type || 'Daño'}</div>
+        <div class="dmg-meta">📍 Vista ${dmg.view_num || '?'} · ${dmg.date || new Date().toLocaleDateString('es-AR')}</div>
+        ${dmg.notes ? `<div class="dmg-meta" style="margin-top:2px">${dmg.notes}</div>` : ''}
+      </div>
+      <button class="dmg-repair-btn" onclick="markDamageAsRepaired('${p}', ${idx})" title="Marcar como reparado">
+        ✓ Reparar
+      </button>
+    </div>
+  `).join('');
+  
+  container.innerHTML = html;
+}
+
+/* ── FUNCTION: MARCAR DAÑO COMO REPARADO (LOCAL + REMOTE) ── */
+async function markDamageAsRepaired(plate, damageIndex) {
+  if (!plate) return;
+  const p = plate.toUpperCase().trim();
+  const damages = loadDamages(p);
+  
+  if (!damages[damageIndex]) return;
+  
+  const dmg = damages[damageIndex];
+  
+  // Sincronizar con remoto si tiene ID
+  if (dmg.id) {
+    const repaired = await markDamageAsRepairedRemote(dmg.id);
+    if (!repaired) {
+      alert('Error al marcar en la nube. Se removió localmente.');
+    }
+  }
+  
+  // Remover localmente
+  damages.splice(damageIndex, 1);
+  saveDamages(p, damages);
+  renderDamagesList(p);
+}
+
   // ── FUNCIÓN: ENVIAR NUEVO GOLPE MARCADO A SUPABASE ──
 async function pushNewDamageToRemote(x, y, viewNum, type, notes = "") {
   if (!tireModalPlate) { // Asumiendo que usas la variable global de la patente activa
@@ -2609,6 +2801,233 @@ async function markDamageAsRepairedRemote(damageId, repairNotes = "") {
     return false;
   }
 }
+
+/* ── DAMAGES MODAL OPEN / CLOSE ── */
+window.openDamagesModal = function(plate, modelName) {
+  if (!plate) {
+    alert('Selecciona un vehículo primero.');
+    return;
+  }
+  
+  const p = plate.toUpperCase().trim();
+  document.getElementById('damagesModalOverlay').style.display = 'flex';
+  document.getElementById('damagesModalTitle').textContent = 'Daños · ' + plate;
+  document.getElementById('damagesModalSub').textContent = modelName || '';
+  renderDamagesList(p);
+};
+
+window.closeDamagesModal = function(e) {
+  if (e && e.target !== document.getElementById('damagesModalOverlay')) return;
+  document.getElementById('damagesModalOverlay').style.display = 'none';
+};
+
+/* ── MAP BOTTOM SHEET FUNCTIONS (MÓDULO C) ── */
+window.openMapSheet = function(plate, modelName) {
+  const p = plate.toUpperCase().trim();
+  const telData = window.ST && window.ST.tel ? window.ST.tel[p] : null;
+  
+  if (!telData || !telData.lat || !telData.lng) {
+    alert('Sin datos de ubicación para este vehículo');
+    return;
+  }
+  
+  const sheet = document.getElementById('mapBottomSheet');
+  if (!sheet) {
+    alert('Error: elemento de mapa no encontrado en DOM');
+    return;
+  }
+  
+  sheet.style.display = 'flex';
+  document.getElementById('mapSheetTitle').textContent = 'Ubicación · ' + plate;
+  document.getElementById('mapSheetCoords').textContent = 
+    telData.lat.toFixed(5) + ', ' + telData.lng.toFixed(5);
+  
+  // Renderizar mapa con delay para animación
+  setTimeout(() => {
+    renderMapSheet(p, telData.lat, telData.lng, modelName);
+  }, 100);
+};
+
+window.closeMapSheet = function() {
+  const sheet = document.getElementById('mapBottomSheet');
+  if (!sheet) return;
+  sheet.style.animation = 'slideDown .3s ease-in';
+  setTimeout(() => { sheet.style.display = 'none'; sheet.style.animation = ''; }, 300);
+};
+
+function renderMapSheet(plate, lat, lng, model) {
+  const container = document.getElementById('mapSheetContainer');
+  if (!container) return;
+  
+  // Inicializar o actualizar mapa Leaflet
+  if (!window._mapSheetInstance) {
+    window._mapSheetInstance = L.map(container, { zoomControl: true }).setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(window._mapSheetInstance);
+  } else {
+    window._mapSheetInstance.setView([lat, lng], 15);
+    // Remover markers antiguos
+    window._mapSheetInstance.eachLayer(function(layer) {
+      if (layer instanceof L.Marker) window._mapSheetInstance.removeLayer(layer);
+    });
+  }
+  
+  // Agregar marker
+  L.marker([lat, lng], {
+    title: plate + ' · ' + (model || 'Vehículo')
+  }).addTo(window._mapSheetInstance)
+    .bindPopup('<strong>' + plate + '</strong><br>' + (model || 'Vehículo'));
+  
+  // Invalidar size después de animación
+  setTimeout(() => {
+    window._mapSheetInstance.invalidateSize(false);
+  }, 350);
+  
+  // Set OSM link
+  const osmLink = document.getElementById('mapSheetOsm');
+  if (osmLink) {
+    osmLink.href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=15`;
+  }
+}
+
+/* ── PDF EXPORT (MÓDULO E) ── */
+window.generatePDFFromSheet = async function(resCode) {
+  if (!resCode) {
+    alert('No se especificó reserva');
+    return;
+  }
+  
+  // Buscar reserva
+  const res = window.ST && window.ST.res ? 
+    window.ST.res.find(r => r.code === resCode) : null;
+  
+  if (!res) {
+    alert('No se encontró la reserva');
+    return;
+  }
+  
+  // Construir HTML del PDF
+  const htmlContent = `
+    <div style="font-family: 'Arial', sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
+      <h1 style="text-align: center; color: #1e293b; margin-bottom: 5px;">Checklist de Vehículo</h1>
+      <p style="text-align: center; color: #64748b; font-size: 12px; margin-bottom: 20px;">
+        Retiro CERRITO CAR · Fleet Management
+      </p>
+      <hr style="border: none; border-top: 2px solid #e2e8f0; margin: 20px 0;">
+      
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <tr>
+          <td style="padding: 8px; width: 25%; font-weight: 600; color: #475569;">Patente:</td>
+          <td style="padding: 8px; width: 25%; color: #1e293b; font-family: 'Courier', monospace; font-weight: 700;">
+            ${res.plate || '—'}
+          </td>
+          <td style="padding: 8px; width: 25%; font-weight: 600; color: #475569;">Cliente:</td>
+          <td style="padding: 8px; width: 25%; color: #1e293b;">${res.renter || '—'}</td>
+        </tr>
+        <tr style="background: #f8fafc;">
+          <td style="padding: 8px; font-weight: 600; color: #475569;">Modelo:</td>
+          <td style="padding: 8px; color: #1e293b;">${res.vehicle || '—'}</td>
+          <td style="padding: 8px; font-weight: 600; color: #475569;">Código:</td>
+          <td style="padding: 8px; color: #1e293b; font-family: 'Courier', monospace;">${res.code || '—'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; font-weight: 600; color: #475569;">Inicio:</td>
+          <td style="padding: 8px; color: #1e293b;">
+            ${res.start ? new Date(res.start).toLocaleString('es-AR', {
+              year: 'numeric', month: '2-digit', day: '2-digit', 
+              hour: '2-digit', minute: '2-digit'
+            }) : '—'}
+          </td>
+          <td style="padding: 8px; font-weight: 600; color: #475569;">Devolución:</td>
+          <td style="padding: 8px; color: #1e293b;">
+            ${res.end ? new Date(res.end).toLocaleString('es-AR', {
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit'
+            }) : '—'}
+          </td>
+        </tr>
+      </table>
+      
+      <h2 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 20px 0 10px 0;">Condición del Vehículo</h2>
+      
+      <table style="width: 100%; border-collapse: collapse; border: 1px solid #cbd5e1;">
+        <tr style="background: #e2e8f0;">
+          <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: left; font-weight: 600; color: #475569;">Componente</th>
+          <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: left; font-weight: 600; color: #475569;">Estado</th>
+          <th style="border: 1px solid #cbd5e1; padding: 10px; text-align: left; font-weight: 600; color: #475569;">Observaciones</th>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: 600;">Neumáticos</td>
+          <td style="border: 1px solid #cbd5e1; padding: 10px;">________________</td>
+          <td style="border: 1px solid #cbd5e1; padding: 10px;">________________________________</td>
+        </tr>
+        <tr style="background: #f8fafc;">
+          <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: 600;">Daños</td>
+          <td style="border: 1px solid #cbd5e1; padding: 10px;">________________</td>
+          <td style="border: 1px solid #cbd5e1; padding: 10px;">________________________________</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #cbd5e1; padding: 10px; font-weight: 600;">Combustible</td>
+          <td style="border: 1px solid #cbd5e1; padding: 10px;">________________</td>
+          <td style="border: 1px solid #cbd5e1; padding: 10px;">________________________________</td>
+        </tr>
+      </table>
+      
+      <div style="margin-top: 40px;">
+        <p style="font-size: 12px; color: #475569; margin: 0 0 30px 0;"><strong>Firmas:</strong></p>
+        <table style="width: 100%;">
+          <tr>
+            <td style="width: 48%; border-bottom: 1px solid #1e293b; height: 40px;"></td>
+            <td style="width: 4%;"></td>
+            <td style="width: 48%; border-bottom: 1px solid #1e293b; height: 40px;"></td>
+          </tr>
+          <tr style="font-size: 10px; color: #64748b;">
+            <td style="padding-top: 5px;">Operario</td>
+            <td></td>
+            <td style="padding-top: 5px;">Cliente</td>
+          </tr>
+        </table>
+      </div>
+      
+      <p style="text-align: center; font-size: 9px; color: #94a3b8; margin-top: 40px;">
+        Documento generado automáticamente · ${new Date().toLocaleString('es-AR')}
+      </p>
+    </div>
+  `;
+  
+  // Crear elemento temporal
+  const element = document.createElement('div');
+  element.innerHTML = htmlContent;
+  element.style.position = 'absolute';
+  element.style.left = '-9999px';
+  document.body.appendChild(element);
+  
+  // Configurar opciones de PDF
+  const opt = {
+    margin: 10,
+    filename: `checklist_${res.plate}_${new Date().toISOString().split('T')[0]}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+  };
+  
+  try {
+    // Generar PDF
+    if (typeof html2pdf !== 'undefined') {
+      await html2pdf().set(opt).from(element).save();
+      showSyncToast('✅ PDF descargado', false);
+    } else {
+      alert('Error: librería PDF no cargada');
+    }
+  } catch(e) {
+    console.error('PDF error:', e);
+    alert('Error al generar PDF');
+  } finally {
+    document.body.removeChild(element);
+  }
+};
 
 /* ── MODAL OPEN / CLOSE ── */
 /* ── MODAL OPEN / CLOSE (CORREGIDO ORDEN DEL DOM) ── */
@@ -2697,6 +3116,85 @@ window.switchTireTab = function(tab){
   document.getElementById('panelQuick').style.display  = tab==='quick' ?'block':'none';
   document.getElementById('panelAcc').style.display    = tab==='acc'   ?'block':'none';
   if(tab==='quick') renderQuickTireGrid(tireModalPlate);
+};
+
+/* ── QUICK TIRE GRID (MÓDULO D) ── */
+function renderQuickTireGrid(plate) {
+  const p = plate.toUpperCase().trim();
+  const container = document.getElementById('quickTireGrid');
+  
+  if (!container) return;
+  
+  // Usar datos existentes o template estándar
+  let tireData = getTireData(p) || [];
+  let grid = tireData.length > 0 ? tireData.slice(0, 5) : JSON.parse(JSON.stringify(TIRE_5_STANDARD));
+  
+  // Asegurar que tengamos exactamente 5
+  while (grid.length < 5) {
+    grid.push(JSON.parse(JSON.stringify(TIRE_5_STANDARD[grid.length])));
+  }
+  grid = grid.slice(0, 5);
+  
+  let html = `
+    <table class="qtire-table">
+      <thead>
+        <tr>
+          <th>Posición</th>
+          <th>Marca</th>
+          <th>Rodado</th>
+          <th>DOT</th>
+          <th>Km</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  grid.forEach((tire, idx) => {
+    html += `
+      <tr>
+        <td style="font-weight:600;color:var(--text2)">${tire.posicion || 'Pos ' + idx}</td>
+        <td><input type="text" class="qtire-input" id="qtire_marca_${idx}" 
+                   value="${tire.marca || ''}" placeholder="Bridgestone"></td>
+        <td><input type="text" class="qtire-input" id="qtire_rodado_${idx}" 
+                   value="${tire.rodado || ''}" placeholder="195/60R15"></td>
+        <td><input type="text" class="qtire-input" id="qtire_dot_${idx}" 
+                   value="${tire.dot || ''}" placeholder="4126"></td>
+        <td><input type="number" class="qtire-input" id="qtire_km_${idx}" 
+                   value="${tire.km || ''}" placeholder="50000"></td>
+      </tr>
+    `;
+  });
+  
+  html += `
+      </tbody>
+    </table>
+  `;
+  
+  container.innerHTML = html;
+}
+
+window.applyCommonFields = function() {
+  const marca = document.getElementById('qtire_marca_0')?.value || '';
+  const rodado = document.getElementById('qtire_rodado_0')?.value || '';
+  
+  if (!marca && !rodado) {
+    alert('Completa marca y rodado en el primer neumático primero');
+    return;
+  }
+  
+  // Aplicar a los otros 4
+  for (let i = 1; i < 5; i++) {
+    if (marca) {
+      const marcaEl = document.getElementById(`qtire_marca_${i}`);
+      if (marcaEl) marcaEl.value = marca;
+    }
+    if (rodado) {
+      const rodadoEl = document.getElementById(`qtire_rodado_${i}`);
+      if (rodadoEl) rodadoEl.value = rodado;
+    }
+  }
+  
+  showSyncToast('✓ Marca y rodado replicados a todos', false);
 };
 
 /* ── TIRE CARDS ── */
@@ -2875,18 +3373,60 @@ const _origSaveTireData = window.saveTireData;
 window.saveTireData = function() {
   if (tireTab === 'quick') {
     if (!tireModalPlate) { alert('No hay vehículo seleccionado'); return; }
-    // Merge quick data into tireWorkingCopy
-    // Keep any existing tires not in the standard 5 positions
+    
+    // Leer datos desde tabla rápida (MÓDULO D)
+    const quickData = [];
+    for (let i = 0; i < 5; i++) {
+      const marcaEl = document.getElementById(`qtire_marca_${i}`);
+      const rodadoEl = document.getElementById(`qtire_rodado_${i}`);
+      const dotEl = document.getElementById(`qtire_dot_${i}`);
+      const kmEl = document.getElementById(`qtire_km_${i}`);
+      
+      quickData.push({
+        posicion: TIRE_5_STANDARD[i].posicion,
+        numero: '',
+        marca: marcaEl?.value || '',
+        rodado: rodadoEl?.value || '',
+        dot: dotEl?.value || '',
+        fecha: new Date().toISOString().split('T')[0],
+        km: kmEl?.value || ''
+      });
+    }
+    
+    // Merge con datos existentes (mantener neumáticos extra)
     const stdPositions = new Set(TIRE_5_STANDARD.map(t => t.posicion));
     const extras = (getTireData(tireModalPlate) || []).filter(t => !stdPositions.has(t.posicion));
-    const merged = [...quickTireData.filter(t => t.numero || t.marca || t.rodado), ...extras];
+    const merged = [...quickData.filter(t => t.numero || t.marca || t.rodado), ...extras];
+    
     saveTireDataStore(tireModalPlate, merged);
     saveAccDataStore(tireModalPlate, accWorkingCopy);
     document.getElementById('tireModalOverlay').style.display = 'none';
-    renderCal();
+    
+    // Sync remoto
+    if (typeof pushTiresAccToRemote === 'function') {
+      pushTiresAccToRemote().then(ok => {
+        if(ok) showSyncToast('✅ Neumáticos (carga rápida) sincronizados', false);
+      }).catch(e => console.error('Sync error:', e));
+    }
+    
+    if (typeof renderCal === 'function') renderCal();
     return;
   }
-  if (_origSaveTireData) _origSaveTireData();
+  
+  // Modo completo (neumáticos normales)
+  if(!tireModalPlate){ alert('No hay vehículo seleccionado'); return; }
+  saveTireDataStore(tireModalPlate, tireWorkingCopy);
+  saveAccDataStore(tireModalPlate, accWorkingCopy);
+  document.getElementById('tireModalOverlay').style.display='none';
+  
+  // Sync remoto
+  if (typeof pushTiresAccToRemote === 'function') {
+    pushTiresAccToRemote().then(ok => {
+      if(ok) showSyncToast('✅ Neumáticos sincronizados', false);
+    }).catch(e => console.error('Sync error:', e));
+  }
+  
+  if (typeof renderCal === 'function') renderCal();
 };
 
 /* ── ACCESSORIES ── */
@@ -2923,18 +3463,6 @@ window.addAccRow = function(){
 window.removeAccRow = function(i){ accWorkingCopy.splice(i,1); rebuildAccTable(); };
 
 /* ── SAVE ── */
-window.saveTireData = function(){
-  if(!tireModalPlate){ alert('No hay vehículo seleccionado'); return; }
-  saveTireDataStore(tireModalPlate, tireWorkingCopy);
-  saveAccDataStore(tireModalPlate, accWorkingCopy);
-  document.getElementById('tireModalOverlay').style.display='none';
-  renderCal();
-  // push to remote for cross-device sync
-  pushTiresAccToRemote().then(ok => {
-    if(ok) showSyncToast('✅ Neumáticos sincronizados con GitHub');
-  });
-};
-
 window.openChecklist = function(el) {
   try {
     var d = JSON.parse(el.dataset.checklist.replace(/&quot;/g, '"'));
@@ -2987,6 +3515,18 @@ function tryRender(){
 
 
 
+// ── FUNCIÓN GLOBAL DE ENLACE AL CHECKLIST DESDE RESERVA MÓVIL ──
+// ── ENLACE MÓVIL SINCRONIZADO DE ALTA FIDELIDAD CON LOCALSTORAGE NATIVO ──
+// ── ENLACE MÓVIL DIRECTO CON PARSER DE TELEMETRÍA Y FECHAS ESTRICTO ──
+// ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO Y REDUNDANTE (ANTI-FALLAS DE FECHA Y KM) ──
+// ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO CON SEGURO DE ESCRITURA EN DISCO ──
+// ── ENLACE MÓVIL TOTALMENTE SINCRONIZADO CON SEGURO DE ESCRITURA EN DISCO ──
+// ── ENLACE MÓVIL DIRECTO CON PARSER DE FECHAS DE ALTA PREDECIBILIDAD ──
+
+// ── ENLACE MÓVIL HOMOLOGADO CON EL DATASET DE ESCRITORIO (ANTI-FALLAS) ──
+// ═══════════════════════════════════════════════════════════════════════════
+//   ── SERIALIZADOR COMPATIBLE MÓVIL HÍBRIDO (MOLDE ORIGINAL ESCRITORIO) ──
+// ═══════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════
 //   ── EMULADOR MAESTRO DE DATOS DE ESCRITORIO PARA SALTO AL CHECKLIST ──
 // ═══════════════════════════════════════════════════════════════════════════
@@ -3083,88 +3623,101 @@ window.addEventListener('DOMContentLoaded', function() {
 // ═══════════════════════════════════════════════════════════════════════════
 //   ── PARSER ABSOLUTO MÓVIL SÍNCRONO (SOLUCIÓN GRÁFICA DEFINITIVA) ──
 // ═══════════════════════════════════════════════════════════════════════════
-window.abrirChecklistReserva = function(plate, resCode, renterName) {
-  if (!plate) return;
-  var p = plate.toUpperCase().trim();
-  console.log("-> [Mobile Link] Generando payload simétrico para Kinto: " + p);
+window.abrirChecklistReserva = function(btnElement) {
+  try {
+    // 1. RASPADO DIRECTO DE LA TARJETA HTML ACTIVA (Inmune a fallas de arrays)
+    var row = btnElement.closest('.mobile-viaje-row') || btnElement.parentElement.parentElement;
+    if (!row) {
+      console.error("No se encontró la fila contenedora.");
+      return;
+    }
 
-  var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
-  var telList = (window.ST && window.ST.tel) ? window.ST.tel : null;
-  
-  // RASTREO MULTICAPA DEL ARRAY DE RESERVAS
-  var resList = window.ST?.res || window.ST?.reservations || window.reservas || [];
+    var p = String(row.dataset.plate || "").toUpperCase().trim();
+    var resCode = row.dataset.code || "0";
+    var renterName = row.dataset.renter || "Cliente Kinto";
+    var kmTxt = row.dataset.km || "—";
+    var rawStart = row.dataset.start || "";
+    var rawEnd = row.dataset.end || "";
 
-  var veh = pqueList.find(function(v) { return v.plate && v.plate.toUpperCase().trim() === p; });
-  var tel = telList ? telList[p] : null;
-  var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
+    console.log("-> [Mobile Link Absolute] Desplegando traspaso para: " + p);
 
-  // 1. EXTRACTOR SEGURO DE KILÓMETROS
-  var kmTxt = "0";
-  if (tel) {
-    kmTxt = String(tel.km || tel.kilometers || "0").replace(/[^\d]/g, '');
-  }
+    // 2. RECUPERAR DATOS DEL PARQUE DESDE EL ARRAY GLOBAL ACTIVO
+    var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
+    var veh = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
 
-  // 2. 🚀 RESCATE ABSOLUTO DE FECHAS (Paso predictivo multifallback)
-  var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
-  var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
-
-  // Si por fallas de variables el string ISO viene vacío, forzamos la fecha de HOY
-  // para evitar que el checklist se rompa o quede congelado en blanco
-  if (!rawStart || rawStart === "") {
-    console.warn("-> [Bypass] Reserva no encontrada en ST.res. Forzando marcas de tiempo actuales...");
-    var hoyISO = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    rawStart = hoyISO + "T08:00";
-    rawEnd = hoyISO + "T18:00";
-  }
-
-  var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-  
-  if (String(rawStart).includes('T')) {
-    var partesS = String(rawStart).split('T');
-    sDate = partesS[0]; 
-    sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-  } else {
-    sDate = String(rawStart).slice(0, 10);
-    sTime = "00:00";
-  }
-
-  if (String(rawEnd).includes('T')) {
-    var partesE = String(rawEnd).split('T');
-    eDate = partesE[0]; 
-    eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-  } else {
-    eDate = String(rawEnd).slice(0, 10);
-    eTime = "00:00";
-  }
-
-  // Molde nativo idéntico y cruzado con todas las llaves posibles
-  var payload = {
-    plate:      p,
-    resid:      resCode,
-    renter:     decodeURIComponent(renterName),
-    startDate:  sDate, // Garantizado lleno YYYY-MM-DD
-    startTime:  sTime, // Garantizado lleno HH:MM
-    endDate:    eDate, // Garantizado lleno YYYY-MM-DD
-    endTime:    eTime, // Garantizado lleno HH:MM
+    // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA
+    var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
     
-    start:      rawStart,
-    end:        rawEnd,
-    km:         kmTxt,
-    telemetria_km: "FORCED_MOBILE_OK", // Activa el bypass de origen en checklist_kinto
-    tankCap:    veh ? (veh.tankCap || 0) : 0,
-    bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
-    tires:      [],
-    tireNums:   ["","","",""],
-    accesorios: []
-  };
+    if (rawStart.includes('T')) {
+      var partesS = rawStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else if (rawStart.includes(' ')) {
+      var partesEspacio = rawStart.split(' '); sDate = partesEspacio[0]; sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "00:00";
+    } else { sDate = rawStart.slice(0, 10); }
 
-  localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-  console.log("✓ Payload predictivo forzado inyectado con éxito:", payload);
-  
-  setTimeout(function() {
-    window.location.href = "checklist_kinto.html";
-  }, 100);
+    if (rawEnd.includes('T')) {
+      var partesE = rawEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd.includes(' ')) {
+      var partesEspacioE = rawEnd.split(' '); eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "00:00";
+    } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
+
+    // Fallback predictivo automático de devolución (+24 horas)
+    if (!eDate || eDate === "") {
+      try {
+        var fEntrega = new Date(sDate + "T" + sTime);
+        var fDevolucion = new Date(fEntrega.getTime() + 86400000);
+        eDate = fDevolucion.toISOString().slice(0, 10); eTime = sTime;
+      } catch(err) { eDate = sDate; eTime = "18:00"; }
+    }
+
+    // 4. LIMPIEZA RIGIDA DE KILÓMETROS
+    var kmFormateado = "—";
+    if (kmTxt && kmTxt !== "—" && kmTxt !== "0" && kmTxt !== "") {
+      kmFormateado = String(kmTxt).replace(/[^\d]/g, '');
+    } else {
+      // Intento final por telemetría si el dataset falló
+      var telRescate = window.ST && window.ST.tel ? window.ST.tel[p] : null;
+      if (telRescate) kmFormateado = String(telRescate.km || telRescate.kilometers || "—").replace(/[^\d]/g, '');
+    }
+
+    // 5. MOLDE NATIVO CORPORATIVO REDUNDANTE
+    // Inyectamos las estructuras de sub-arrays completas requeridas de forma estricta por el checklist original
+    var payload = {
+      plate:      p,
+      resid:      resCode,
+      renter:     decodeURIComponent(renterName),
+      startDate:  sDate, // YYYY-MM-DD
+      startTime:  sTime, // HH:MM
+      endDate:    eDate, // YYYY-MM-DD
+      endTime:    eTime, // HH:MM
+      km:         kmFormateado !== "" && kmFormateado !== "—" ? kmFormateado : "—",
+      tankCap:    veh ? (veh.tankCap || 50) : 50,
+      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK', // Llave estructural de siluetas
+      tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
+      tireNums:   ["", "", "", "", ""],
+      accesorios: []
+    };
+
+    // Purgamos y pisamos el almacenamiento de Kinto
+    localStorage.removeItem('fleetcal_checklist_data');
+    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+    
+    // Inyectamos las variables sueltas requeridas por tus scripts reactivos secundarios
+    localStorage.setItem('activePlate', p);
+    localStorage.setItem('currentPlate', p);
+    localStorage.setItem('currentKm', kmFormateado);
+
+    console.log("✓ Objeto espejo consolidado inyectado en LocalStorage con éxito:", payload);
+
+    // Redirección síncrona controlada
+    setTimeout(function() {
+      window.location.href = "checklist_kinto.html";
+    }, 100);
+
+  } catch(err) {
+    console.error("Fallo crítico en openChecklistFromMobile:", err);
+  }
 };
+
 window.openChecklistFromMobile = window.abrirChecklistReserva;
 
 </script>
@@ -3253,6 +3806,112 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   </div>
 </div>
 
+<!-- ── MAP BOTTOM SHEET (MÓDULO C) ── -->
+<div id="mapBottomSheet" class="map-sheet" style="display:none">
+  <div class="map-sheet-handle"></div>
+  <div class="map-sheet-header">
+    <div>
+      <div class="map-sheet-title" id="mapSheetTitle">Ubicación</div>
+      <div class="map-sheet-sub" id="mapSheetCoords">—</div>
+    </div>
+    <button class="map-sheet-close" onclick="closeMapSheet()">✕</button>
+  </div>
+  <div id="mapSheetContainer" style="height:55vh;width:100%;"></div>
+  <div class="map-sheet-footer">
+    <a class="map-btn-osm" id="mapSheetOsm" href="#" target="_blank" 
+       style="display:inline-flex;align-items:center;gap:6px;background:var(--accent);
+       color:#fff;padding:8px 12px;border-radius:6px;text-decoration:none;font-size:11px;
+       font-weight:600;transition:background .12s;cursor:pointer;">
+      <i class="ti ti-external-link" style="font-size:12px"></i> Ver en OpenStreetMap
+    </a>
+  </div>
+</div>
+
+<!-- ── DAMAGES MODAL (MÓDULO A) ── -->
+<div class="tmodal-overlay" id="damagesModalOverlay" style="display:none" onclick="closeDamagesModal(event)">
+  <div class="tmodal" onclick="event.stopPropagation()">
+    <div class="tmodal-head">
+      <div>
+        <div class="tmodal-title" id="damagesModalTitle">Daños Registrados</div>
+        <div class="tmodal-sub" id="damagesModalSub"></div>
+      </div>
+      <button class="tmodal-close" onclick="closeDamagesModal()" aria-label="cerrar"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="tmodal-body">
+      <div id="damagesList"></div>
+    </div>
+    <div class="tmodal-foot">
+      <button class="btn-cancel" onclick="closeDamagesModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAINTENANCE MODAL (MÓDULO B) ── -->
+<div class="tmodal-overlay" id="maintModalOverlay" style="display:none" onclick="closeMaintModal(event)">
+  <div class="tmodal" onclick="event.stopPropagation()">
+    <div class="tmodal-head">
+      <div>
+        <div class="tmodal-title" id="maintModalTitle">Mantenimiento</div>
+        <div class="tmodal-sub" id="maintModalSub"></div>
+      </div>
+      <button class="tmodal-close" onclick="closeMaintModal()" aria-label="cerrar"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="tmodal-body">
+      <div class="maint-form">
+        <div class="maint-field">
+          <label for="maintType">Tipo de servicio</label>
+          <select id="maintType" onchange="updateIntervalSelect()">
+            <option value="">— Selecciona —</option>
+            <option value="0">Cambio de aceite y filtro</option>
+            <option value="1">Rotación de neumáticos</option>
+            <option value="2">Filtro de aire</option>
+            <option value="3">Filtro de combustible</option>
+            <option value="4">Bujías</option>
+            <option value="5">Líquido de frenos</option>
+            <option value="6">Correa / cadena de distribución</option>
+            <option value="7">Amortiguadores</option>
+            <option value="8">Revisión general (service mayor)</option>
+            <option value="9">Revisión de frenos</option>
+            <option value="10">Alineación y balanceo</option>
+            <option value="11">Otro (ver observaciones)</option>
+          </select>
+        </div>
+        <div class="maint-field">
+          <label for="maintInterval">Intervalo (km)</label>
+          <select id="maintInterval">
+            <option value="">— Auto-calculado —</option>
+            <option value="10000">10.000 km</option>
+            <option value="20000">20.000 km</option>
+            <option value="30000">30.000 km</option>
+            <option value="40000">40.000 km</option>
+            <option value="50000">50.000 km</option>
+          </select>
+        </div>
+        <div class="maint-field">
+          <label for="maintDate">Fecha</label>
+          <input type="date" id="maintDate">
+        </div>
+        <div class="maint-field">
+          <label for="maintNote">Observaciones</label>
+          <input type="text" id="maintNote" placeholder="Detalles adicionales...">
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div class="maint-header" style="margin-bottom:8px">
+          <i class="ti ti-history" style="font-size:12px"></i> Historial
+        </div>
+        <div id="maintHistList" style="max-height:200px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="tmodal-foot">
+      <button class="btn-cancel" onclick="closeMaintModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveMaintEntry()">
+        <i class="ti ti-device-floppy" style="font-size:12px"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ── TIRES / ACCESSORIES MODAL ── -->
 <div class="tmodal-overlay" id="tireModalOverlay" style="display:none" onclick="closeTireModal(event)">
   <div class="tmodal" onclick="event.stopPropagation()">
@@ -3287,7 +3946,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
       </div>
       <div id="quickTireGrid"></div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="add-tire-btn" style="flex:1;justify-content:center" onclick="applyCommonFields()">
+        <button class="quick-tire-toggle" style="flex:1;justify-content:center" onclick="applyCommonFields()">
           <i class="ti ti-copy" style="font-size:11px"></i> Replicar marca y rodado a todos
         </button>
       </div>
@@ -3332,7 +3991,6 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   </div>
 </div>
 <!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
-<!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
 <script>
 (function() {
   console.log("-> [Interceptor Maestro] Activando escucha global de toques táctiles...");
@@ -3340,7 +3998,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   document.addEventListener('click', function(event) {
     var el = event.target;
     
-    // Detectamos si el operario hizo clic en el botón de Checklist
+    // Detectamos si el operario hizo clic en el botón de Checklist de la tarjeta móvil
     if (el && (el.tagName === 'BUTTON' || el.tagName === 'A') && el.textContent.includes('CHECKLIST')) {
       console.log("-> [Interceptor Maestro] Clic detectado en botón Checklist. Extrayendo variables...");
       
@@ -3354,29 +4012,28 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         return;
       }
 
-      // 2. EXTRAER VARIABLES BASE DEL DATASET MÓVIL
+      // 2. EXTRAER PATENTE Y CLIENTE LIMPIOS DE LOS ATRIBUTOS DATA
       var patente = String(filaReserva.dataset.plate || filaReserva.getAttribute('data-plate') || "").toUpperCase().trim();
       var codigoViaje = filaReserva.dataset.code || filaReserva.getAttribute('data-code') || "0";
       var cliente = decodeURIComponent(filaReserva.dataset.renter || filaReserva.getAttribute('data-renter') || "Cliente Kinto");
-      var kmData = filaReserva.dataset.km || filaReserva.getAttribute('data-km') || "—";
 
-      // 3. EXTRACCIÓN EN TIEMPO REAL DE KILÓMETROS DESDE TELEMETRÍA GLOBAL (ST.tel)
+      // 3. 🚀 EXTRACCIÓN EN TIEMPO REAL DE KILÓMETROS (EVITA VARIABLES VACÍAS DEL SEGUNDO CERO)
       var odometro = "—";
       var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
       if (telGlobal && telGlobal[patente]) {
         var rawKm = telGlobal[patente].km || telGlobal[patente].kilometers || telGlobal[patente].last_km || "";
         if (rawKm !== "") {
-          odometro = String(rawKm).replace(/[^\d]/g, ''); 
+          odometro = String(rawKm).replace(/[^\d]/g, ''); // Deja solo números planos sin puntos
         }
       }
 
-      // Fallback si la telemetría global falló, usamos el data-km de la tarjeta
-      if ((odometro === "—" || odometro === "0" || odometro === "") && kmData !== "—") {
-        odometro = String(kmData).replace(/[^\d]/g, '');
+      // Fallback si la telemetría global falló, raspamos el data de la fila
+      if ((odometro === "—" || odometro === "0" || odometro === "") && filaReserva.dataset.km) {
+        odometro = String(filaReserva.dataset.km).replace(/[^\d]/g, '');
       }
 
-      // 4. EXTRACTOR DEL TIPO DE CARROCERÍA PARA SELECCIÓN AUTOMÁTICA DE SILUETA
-      var siluetaAuto = "HATCHBACK"; 
+      // 4. 🚀 EXTRACTOR DEL TIPO DE CARROCERÍA PARA SELECCIÓN AUTOMÁTICA DE SILUETA
+      var siluetaAuto = "HATCHBACK"; // Valor base de respaldo corporativo
       var capacidadTanque = 50;
       
       var pqueGlobal = window.ST && window.ST.pque ? window.ST.pque : [];
@@ -3385,19 +4042,20 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
           return v && v.plate && v.plate.toUpperCase().trim() === patente;
         });
         if (vehiculoEncontrado) {
-          siluetaAuto = String(vehiculoEncontrado.bodyType || "HATCHBACK").toUpperCase().trim();
+          // Extraemos las propiedades técnicas exactas que el checklist de escritorio necesita
+          siluetaAuto = String(vehiculoEncontrado.bodyType || vehiculoEncontrado.silhouette || "HATCHBACK").toUpperCase().trim();
           capacidadTanque = vehiculoEncontrado.tankCap || 50;
         }
       }
 
-      // 5. 🚀 PARSER DE FECHAS SEGURO HOMOLOGADO (INMUNE A REFERENCEERROR)
-      var strStart = filaReserva.dataset.start || filaReserva.getAttribute('data-start') || "";
-      var strEnd = filaReserva.dataset.end || filaReserva.getAttribute('data-end') || "";
-      
+            // 🚀 EN EL INTERCEPTOR GENERAL (DENTRO DE FLEET_MOBILE.HTML)
+      // Segmentación limpia de fechas (Asegura formato YYYY-MM-DD sin concatenar)
       var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
+      
+      // Limpiamos strings corruptos que vengan con comas de la caché del navegador
+      var cleanStart = String(rawStart).split(',')[0].trim();
+      var cleanEnd = String(rawEnd).split(',')[0].trim();
 
-      // Procesamos string de inicio (Toleramos arrays de caché limpiando por comas si existen)
-      var cleanStart = String(strStart).split(',')[0];
       if (cleanStart.includes('T')) {
         var partesS = cleanStart.split('T');
         sDate = partesS[0]; 
@@ -3406,8 +4064,6 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         sDate = cleanStart.slice(0, 10);
       }
 
-      // Procesamos string de fin
-      var cleanEnd = String(strEnd).split(',')[0];
       if (cleanEnd.includes('T')) {
         var partesE = cleanEnd.split('T');
         eDate = partesE[0]; 
@@ -3416,7 +4072,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         eDate = cleanEnd.slice(0, 10);
       }
 
-      // Cálculo predictivo de devolución de 24 horas si falta la fecha de fin
+      // Cálculo predictivo de devolución de 24 horas si el CDN móvil no trajo fecha de fin
       if (!eDate || eDate === "") {
         try {
           var fEntrega = new Date(sDate + "T" + sTime);
@@ -3425,41 +4081,40 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         } catch(err) { eDate = sDate; eTime = "18:00"; }
       }
 
-      // 6. EL PAYLOAD CON EL MOLDE EXACTO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
+      // 🚀 EL PAYLOAD CON EL MOLDE EXACTO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
       var payload = {
         plate:      patente,
         resid:      codigoViaje,
         renter:     cliente,
-        startDate:  sDate, // YYYY-MM-DD
-        startTime:  sTime, // HH:MM
-        endDate:    eDate, // YYYY-MM-DD
-        endTime:    eTime, // HH:MM
-        km:         odometro !== "—" && odometro !== "" ? odometro : "—", 
+        startDate:  sDate, // YYYY-MM-DD real de la reserva
+        startTime:  sTime, // HH:MM real
+        endDate:    eDate, // YYYY-MM-DD de devolución real o calculada
+        endTime:    eTime, // HH:MM real
+        km:         odometro !== "—" && odometro !== "" ? odometro : "—", // Odómetro plano para el value
         tankCap:    capacidadTanque,
-        bodyType:   siluetaAuto, // Activa el selector y la silueta en la PC y celular
+        bodyType:   siluetaAuto, // Llave técnica que mueve tu selector y activa el SVG
         tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
         tireNums:   ["", "", "", "", ""],
         accesorios: []
       };
 
-      // Guardado síncrono rígido en disco local
+      // Guardado rígido síncrono en la clave compartida de Kinto
       localStorage.removeItem('fleetcal_checklist_data');
       localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
       
-      // Variables secundarias de control reactivo
+      // Copias de variables directas para alimentar scripts reactivos secundarios de la plantilla
       localStorage.setItem('activePlate', patente);
       localStorage.setItem('currentPlate', patente);
       localStorage.setItem('currentKm', odometro);
 
-      console.log("-> [Interceptor Success] Payload consolidado en disco:", payload);
+      console.log("✓ Objeto espejo unificado consolidado de forma inmune en disco:", payload);
 
-      // Redirección directa fluida en la misma pestaña hacia el archivo común
+      // Redirección síncrona controlada
       window.location.href = "checklist_kinto.html";
     }
-  }, true); 
+  }, true); // Fase de captura activada para adelantarnos a limpiezas de la plantilla
 })();
 </script>
-
 
 
 </body>
