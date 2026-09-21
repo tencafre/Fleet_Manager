@@ -2353,7 +2353,7 @@ window.closeMapModal = function(e) {
 const TIRE_PREFIX = 'fleetcal_tires_';
 const ACC_PREFIX  = 'fleetcal_acc_';
 const DMG_PREFIX = 'fleetcal_dmg_';
-const STORE_PREFIX = 'fleetcal_maint_';
+
 
 const TIRE_POSITIONS = [
   'Delantera Izq','Delantera Der','Trasera Izq','Trasera Der',
@@ -2374,20 +2374,7 @@ const ACC_TYPES = [
   'Llave de rueda','Cable de arranque','Triángulo','Linterna','Otro'
 ];
 
-const MAINT_TYPES = [
-  { label: 'Cambio de aceite y filtro',              km: 10000  },
-  { label: 'Rotación de neumáticos',                 km: 10000  },
-  { label: 'Filtro de aire',                         km: 20000  },
-  { label: 'Filtro de combustible',                  km: 20000  },
-  { label: 'Bujías',                                 km: 20000  },
-  { label: 'Líquido de frenos',                      km: 30000  },
-  { label: 'Correa / cadena de distribución',        km: 40000  },
-  { label: 'Amortiguadores',                         km: 50000  },
-  { label: 'Revisión general (service mayor)',       km: 0      },
-  { label: 'Revisión de frenos',                     km: 0      },
-  { label: 'Alineación y balanceo',                  km: 0      },
-  { label: 'Otro (ver observaciones)',               km: 0      },
-];
+
 
 let tireModalPlate = null;
 let tireModalModel = null;
