@@ -3404,11 +3404,6 @@ window.abrirChecklistReserva = function(btnElement) {
     var veh = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
 
     // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA
-    var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
-    var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
-
-    var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-    //PARA BORRAR EN CASO DE ERROR - RAWSTARTING
     
     var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
     
@@ -3814,6 +3809,14 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
 
             // 🚀 EN EL INTERCEPTOR GENERAL (DENTRO DE FLEET_MOBILE.HTML)
       // Segmentación limpia de fechas (Asegura formato YYYY-MM-DD sin concatenar)
+      var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
+      var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
+
+      var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
+    //PARA BORRAR EN CASO DE ERROR - RAWSTARTING
+    
+      
+      
       var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
       
       // Limpiamos strings corruptos que vengan con comas de la caché del navegador
