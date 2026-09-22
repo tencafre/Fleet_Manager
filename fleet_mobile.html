@@ -2354,7 +2354,6 @@ const TIRE_PREFIX = 'fleetcal_tires_';
 const ACC_PREFIX  = 'fleetcal_acc_';
 const DMG_PREFIX = 'fleetcal_dmg_';
 
-
 const TIRE_POSITIONS = [
   'Delantera Izq','Delantera Der','Trasera Izq','Trasera Der',
   'Trasera Int Izq','Trasera Int Der','Auxilio/Repuesto',
@@ -2373,7 +2372,6 @@ const ACC_TYPES = [
   'Matafuego','Balizas','Botiquín','Chaleco','Crique',
   'Llave de rueda','Cable de arranque','Triángulo','Linterna','Otro'
 ];
-
 
 
 let tireModalPlate = null;
@@ -3404,7 +3402,6 @@ window.abrirChecklistReserva = function(btnElement) {
     var veh = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
 
     // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA
-    
     var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
     
     if (rawStart.includes('T')) {
@@ -3806,20 +3803,9 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
           capacidadTanque = vehiculoEncontrado.tankCap || 50;
         }
       }
-      
-      var resList = (window.ST && window.ST.res) ? window.ST.res : [];
 
-      var viaje = resList.find(function(r) { return r && (String(r.code) === String(resCode) || String(r.id) === String(resCode)); });
             // 🚀 EN EL INTERCEPTOR GENERAL (DENTRO DE FLEET_MOBILE.HTML)
       // Segmentación limpia de fechas (Asegura formato YYYY-MM-DD sin concatenar)
-      var rawStart = viaje ? (viaje.start || viaje.desde || "") : "";
-      var rawEnd = viaje ? (viaje.end || viaje.hasta || "") : "";
-
-      var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-    //PARA BORRAR EN CASO DE ERROR - RAWSTARTING
-    
-      
-      
       var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
       
       // Limpiamos strings corruptos que vengan con comas de la caché del navegador
