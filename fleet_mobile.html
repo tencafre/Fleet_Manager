@@ -3804,40 +3804,6 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
         }
       }
 
-            // 🚀 EN EL INTERCEPTOR GENERAL (DENTRO DE FLEET_MOBILE.HTML)
-      // Segmentación limpia de fechas (Asegura formato YYYY-MM-DD sin concatenar)
-      var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
-      
-      // Limpiamos strings corruptos que vengan con comas de la caché del navegador
-      var cleanStart = String(rawStart).split(',')[0].trim();
-      var cleanEnd = String(rawEnd).split(',')[0].trim();
-
-      if (cleanStart.includes('T')) {
-        var partesS = cleanStart.split('T');
-        sDate = partesS[0]; 
-        sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-      } else {
-        sDate = cleanStart.slice(0, 10);
-      }
-
-      if (cleanEnd.includes('T')) {
-        var partesE = cleanEnd.split('T');
-        eDate = partesE[0]; 
-        eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-      } else if (cleanEnd !== "") {
-        eDate = cleanEnd.slice(0, 10);
-      }
-
-      // Cálculo predictivo de devolución de 24 horas si el CDN móvil no trajo fecha de fin
-      if (!eDate || eDate === "") {
-        try {
-          var fEntrega = new Date(sDate + "T" + sTime);
-          var fDevolucion = new Date(fEntrega.getTime() + 86400000);
-          eDate = fDevolucion.toISOString().slice(0, 10); eTime = sTime;
-        } catch(err) { eDate = sDate; eTime = "18:00"; }
-      }
-
-      // 🚀 EL PAYLOAD CON EL MOLDE EXACTO EXIGIDO POR TU CHECKLIST_KINTO.HTML ORIGINAL
       var payload = {
         plate:      patente,
         resid:      codigoViaje,
