@@ -3397,24 +3397,36 @@ window.abrirChecklistReserva = function(btnElement) {
 
     console.log("-> [Mobile Link Absolute] Desplegando traspaso para: " + p);
 
-    // 2. RECUPERAR DATOS DEL PARQUE DESDE EL ARRAY GLOBAL ACTIVO
+    // 2. RECUPERAR DATOS DEL PARQUE DESDE EL ARRAY GLOBAL ACTIVO (con fallback y logging)
     var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
     var veh = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
+    
+    if (veh) {
+      console.log("✓ Vehículo encontrado en parque global:", veh);
+      console.log("  → Silueta (bodyType): " + (veh.bodyType || "N/A"));
+      console.log("  → Capacidad tanque: " + (veh.tankCap || "50L"));
+    } else {
+      console.warn("⚠️ Vehículo " + p + " no encontrado en parque global, usando defaults");
+    }
 
-    // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA
+    // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA (eliminar timezone GMT)
     var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
     
-    if (rawStart.includes('T')) {
-      var partesS = rawStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else if (rawStart.includes(' ')) {
-      var partesEspacio = rawStart.split(' '); sDate = partesEspacio[0]; sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "00:00";
-    } else { sDate = rawStart.slice(0, 10); }
+    // Limpiar string de timezone/GMT (ej: "2026-09-20T14:30:00.000Z" → "2026-09-20T14:30:00")
+    var cleanStart = String(rawStart).split(/[Z+\-]\d{2}:\d{2}$/)[0].split(/Z$/)[0].trim();
+    var cleanEnd = String(rawEnd).split(/[Z+\-]\d{2}:\d{2}$/)[0].split(/Z$/)[0].trim();
+    
+    if (cleanStart.includes('T')) {
+      var partesS = cleanStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
+    } else if (cleanStart.includes(' ')) {
+      var partesEspacio = cleanStart.split(' '); sDate = partesEspacio[0]; sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "00:00";
+    } else { sDate = cleanStart.slice(0, 10); }
 
-    if (rawEnd.includes('T')) {
-      var partesE = rawEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else if (rawEnd.includes(' ')) {
-      var partesEspacioE = rawEnd.split(' '); eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "00:00";
-    } else if (rawEnd !== "") { eDate = rawEnd.slice(0, 10); }
+    if (cleanEnd.includes('T')) {
+      var partesE = cleanEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
+    } else if (cleanEnd.includes(' ')) {
+      var partesEspacioE = cleanEnd.split(' '); eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "00:00";
+    } else if (cleanEnd !== "") { eDate = cleanEnd.slice(0, 10); }
 
     // Fallback predictivo automático de devolución (+24 horas)
     if (!eDate || eDate === "") {
@@ -3437,6 +3449,13 @@ window.abrirChecklistReserva = function(btnElement) {
 
     // 5. MOLDE NATIVO CORPORATIVO REDUNDANTE
     // Inyectamos las estructuras de sub-arrays completas requeridas de forma estricta por el checklist original
+    // PARTE B: Obtener datos reales de tires y accesorios desde localStorage
+    var tiresReales = getTireData(p) || [];
+    var tiresEstado = tiresReales.map(function(t) { return t.estado || "BUENO"; });
+    if (tiresEstado.length === 0) tiresEstado = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
+    
+    var accesoriosReales = getAccData(p) || [];
+    
     var payload = {
       plate:      p,
       resid:      resCode,
@@ -3448,9 +3467,9 @@ window.abrirChecklistReserva = function(btnElement) {
       km:         kmFormateado !== "" && kmFormateado !== "—" ? kmFormateado : "—",
       tankCap:    veh ? (veh.tankCap || 50) : 50,
       bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK', // Llave estructural de siluetas
-      tires:      ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"],
-      tireNums:   ["", "", "", "", ""],
-      accesorios: []
+      tires:      tiresEstado,
+      tireNums:   tiresReales.map(function(t) { return t.numero || ""; }),
+      accesorios: accesoriosReales
     };
 
     // Purgamos y pisamos el almacenamiento de Kinto
@@ -3746,7 +3765,4 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
     </div>
   </div>
 </div>
-
-
-</body>
-</html>
+<!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
