@@ -1347,6 +1347,7 @@ function renderCal() {
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
+              '<button onclick="window.openTireModal(\'' + plate + '\', \'' + modelName.replace(/'/g, "\\'") + '\')" style="background:#8b5cf6; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">⚡ Neumáticos</button>' +
               '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">📋 CHECKLIST</button>' +
               '<button onclick="generatePDFFromSheet(\'' + rCode + '\')" style="background:#0369a1; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;" title="Descargar checklist en PDF">📄 PDF</button>' +
             '</div>' +
@@ -3217,6 +3218,66 @@ window.saveTireData = function() {
   if (typeof renderCal === 'function') renderCal();
 };
 
+/* ── OPEN/CLOSE TIRE MODAL ── */
+window.openTireModal = function(plate, modelName){
+  tireModalPlate = plate;
+  tireModalModel = modelName;
+  
+  if(!plate){ buildVehiclePicker(); return; }
+
+  document.getElementById('tireModalOverlay').style.display = 'flex';
+  document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
+  document.getElementById('tireModalSub').textContent = modelName || '';
+  
+  switchTireTab('tires');
+  renderTireCards(plate);
+  renderAccRows(plate);
+};
+
+function buildVehiclePicker(){
+  if(!window.ST || !window.ST.pque || !window.ST.pque.length){ alert('Cargá primero el archivo Parque.txt'); return; }
+  
+  document.getElementById('tireModalOverlay').style.display = 'flex';
+  document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
+  document.getElementById('tireModalSub').textContent = 'Elegí un vehículo';
+  
+  const panel = document.getElementById('panelTires');
+  panel.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px">' +
+    window.ST.pque.map(v=>'<button onclick="selectVehicleForTires(\'' + v.plate + '\',\'' + v.model.replace(/'/g, "\\'") + '\')" style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:7px;padding:9px 13px;cursor:pointer;font-family:\'Inter\',sans-serif;font-size:12px;color:var(--text)" onmouseover="this.style.background=\'var(--surface3)\'" onmouseout="this.style.background=\'var(--surface2)\'"><span style="font-family:\'JetBrains Mono\',monospace;font-weight:600">' + v.plate + '</span><span style="color:var(--text2);margin-left:8px">' + v.model + '</span></button>').join('') +
+  '</div>';
+}
+
+window.selectVehicleForTires = function(plate, model){
+  tireModalPlate = plate;
+  tireModalModel = model;
+  
+  const panel = document.getElementById('panelTires');
+  panel.innerHTML = '<div id="tireCards"></div><button class="add-tire-btn" onclick="addTireCard()"><i class="ti ti-plus"></i> Agregar</button>';
+
+  document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
+  document.getElementById('tireModalSub').textContent = model;
+  
+  switchTireTab('tires');
+  renderTireCards(plate);
+  renderAccRows(plate);
+};
+
+window.closeTireModal = function(e){
+  if(e && e.target !== document.getElementById('tireModalOverlay')) return;
+  document.getElementById('tireModalOverlay').style.display = 'none';
+};
+
+window.switchTireTab = function(tab){
+  tireTab = tab;
+  document.getElementById('tabTires').classList.toggle('active', tab === 'tires');
+  document.getElementById('tabQuick').classList.toggle('active', tab === 'quick');
+  document.getElementById('tabAcc').classList.toggle('active', tab === 'acc');
+  document.getElementById('panelTires').style.display = tab === 'tires' ? 'block' : 'none';
+  document.getElementById('panelQuick').style.display = tab === 'quick' ? 'block' : 'none';
+  document.getElementById('panelAcc').style.display = tab === 'acc' ? 'block' : 'none';
+  if(tab === 'quick') renderQuickTireGrid(tireModalPlate);
+};
+
 /* ── ACCESSORIES ── */
 function renderAccRows(plate){
   accWorkingCopy = JSON.parse(JSON.stringify(getAccData(plate)));
@@ -3797,4 +3858,63 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
     </div>
   </div>
 </div>
+
+<!-- ── TIRE MODAL (NEUMÁTICOS + ACCESORIOS) ── -->
+<div class="tmodal-overlay" id="tireModalOverlay" style="display:none" onclick="closeTireModal(event)">
+  <div class="tmodal" onclick="event.stopPropagation()">
+    <div class="tmodal-head">
+      <div>
+        <div class="tmodal-title" id="tireModalTitle">Neumáticos y Accesorios</div>
+        <div class="tmodal-sub" id="tireModalSub"></div>
+      </div>
+      <button class="tmodal-close" onclick="closeTireModal()" aria-label="cerrar"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="tmodal-tabs">
+      <button class="tmodal-tab active" id="tabTires" onclick="switchTireTab('tires')">
+        <i class="ti ti-tire" style="font-size:12px"></i> Neumáticos
+      </button>
+      <button class="tmodal-tab" id="tabQuick" onclick="switchTireTab('quick')">
+        <i class="ti ti-bolt" style="font-size:12px"></i> Carga rápida
+      </button>
+      <button class="tmodal-tab" id="tabAcc" onclick="switchTireTab('acc')">
+        <i class="ti ti-tool" style="font-size:12px"></i> Accesorios
+      </button>
+    </div>
+    <div id="panelTires" class="tmodal-body">
+      <div id="tireCards"></div>
+      <button class="add-tire-btn" onclick="addTireCard()">
+        <i class="ti ti-plus" style="font-size:11px"></i> Agregar neumático
+      </button>
+    </div>
+    <!-- QUICK 5-TIRE PANEL -->
+    <div id="panelQuick" class="tmodal-body" style="display:none">
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+        Completá los datos de los <strong>5 neumáticos estándar</strong>. Campos en común (marca, rodado) se aplican a todos si los completás en el primero.
+      </div>
+      <div id="quickTireGrid"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="add-tire-btn" style="flex:1;justify-content:center" onclick="applyCommonFields()">
+          <i class="ti ti-copy" style="font-size:11px"></i> Replicar marca y rodado a todos
+        </button>
+      </div>
+    </div>
+
+    <div id="panelAcc" class="tmodal-body" style="display:none">
+      <table class="acc-table">
+        <thead><tr><th>Tipo</th><th>Número / Descripción</th><th></th></tr></thead>
+        <tbody id="accRows"></tbody>
+      </table>
+      <button class="add-acc-btn" onclick="addAccRow()">
+        <i class="ti ti-plus" style="font-size:10px"></i> Agregar accesorio
+      </button>
+    </div>
+    <div class="tmodal-foot">
+      <button class="btn-cancel" onclick="closeTireModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveTireData()">
+        <i class="ti ti-device-floppy" style="font-size:12px"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
