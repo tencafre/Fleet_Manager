@@ -3124,6 +3124,38 @@ window.applyCommonFields = function() {
   rebuildQuickGrid();
 };
 
+/* DEFINICIÓN ORIGINAL DE saveTireData - Guarda neumáticos en localStorage */
+window.saveTireData = function() {
+  if (!tireModalPlate) { 
+    alert('No hay vehículo seleccionado'); 
+    return; 
+  }
+  
+  try {
+    // Guardar neumáticos y accesorios en localStorage
+    saveTireDataStore(tireModalPlate, tireWorkingCopy);
+    saveAccDataStore(tireModalPlate, accWorkingCopy);
+    
+    // Cerrar modal
+    document.getElementById('tireModalOverlay').style.display = 'none';
+    
+    // Sincronizar con Supabase si está disponible
+    if (typeof pushTiresAccToRemote === 'function') {
+      pushTiresAccToRemote().then(ok => {
+        if(ok) showSyncToast('✅ Neumáticos sincronizados', false);
+      }).catch(e => console.error('Sync error:', e));
+    }
+    
+    // Redibujar si es necesario
+    if (typeof renderCal === 'function') renderCal();
+    
+    console.log("✓ Neumáticos guardados en localStorage para:", tireModalPlate);
+  } catch(err) {
+    console.error("Error al guardar neumáticos:", err);
+    alert("Error al guardar neumáticos");
+  }
+};
+
 /* Override saveTireData to also persist quickTireData when on quick tab */
 const _origSaveTireData = window.saveTireData;
 window.saveTireData = function() {
