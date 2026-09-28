@@ -4,7 +4,7 @@ y6mjje6	Nahuel Caracoche	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	9:00 
 l2x3351	Eliel Berg	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	10:30 AM  Sep 28, 2026	6:00 PM  Oct 1, 2026	Current
 l0rped2	Fabian Alberto Farias	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	1:00 PM  Sep 28, 2026	1:00 PM  Sep 30, 2026	Current
 yqvzp6x	Service	Toyota ETIOS HB A/T AG350QE	Retiro CERRITO CAR	--	3:20 PM  Sep 28, 2026	2:45 AM  Dec 31, 2026	Current
-yo6e51n	Jose Eduardo Baracco	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO CAR	--	4:30 PM  Sep 28, 2026	5:00 PM  Oct 31, 2026	Pending
+yo6e51n	Jose Eduardo Baracco	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO CAR	--	4:30 PM  Sep 28, 2026	5:00 PM  Oct 31, 2026	Current
 kggz9d1	Relaciones Públicas 7	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	9:00 AM  Sep 29, 2026	5:00 PM  Oct 3, 2026	New
 k3rvpgx	Miguel Angel Galgano	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	2:00 PM  Oct 1, 2026	2:00 PM  Oct 5, 2026	New
 k3rvp9m	Service	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	3:55 PM  Oct 5, 2026	7:55 PM  Dec 4, 2026	New
