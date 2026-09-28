@@ -1347,7 +1347,7 @@ function renderCal() {
             '</div>' +
             '<div style="text-align:right;">' +
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
-              '<button onclick="window.openTireModal(\'' + plate + '\', \'' + modelName.replace(/'/g, "\\'") + '\')" style="background:#8b5cf6; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">⚡ Neumáticos</button>' +
+              '<button onclick="window.openTireModal(\'' + plate + '\', \'' + (veh.model || '').replace(/'/g, "\\'") + '\')" style="background:#8b5cf6; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">⚡ Neumáticos</button>' +
               '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">📋 CHECKLIST</button>' +
               '<button onclick="generatePDFFromSheet(\'' + rCode + '\')" style="background:#0369a1; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;" title="Descargar checklist en PDF">📄 PDF</button>' +
             '</div>' +
@@ -3918,3 +3918,7 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
 </div>
 
 <!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
+
+</script>
+</body>
+</html>
