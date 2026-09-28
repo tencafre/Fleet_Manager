@@ -3502,24 +3502,54 @@ window.abrirChecklistReserva = function(btnElement) {
       console.warn("⚠️ Vehículo " + p + " no encontrado en parque global, usando defaults");
     }
 
-    // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA (eliminar timezone GMT)
+    // 3. EXTRACCIÓN Y LIMPIEZA DE FECHAS DE RESERVA (múltiples formatos)
     var sDate = "", sTime = "00:00", eDate = "", eTime = "00:00";
     
-    // Limpiar string de timezone/GMT (ej: "2026-09-20T14:30:00.000Z" → "2026-09-20T14:30:00")
-    var cleanStart = String(rawStart).split(/[Z+\-]\d{2}:\d{2}$/)[0].split(/Z$/)[0].trim();
-    var cleanEnd = String(rawEnd).split(/[Z+\-]\d{2}:\d{2}$/)[0].split(/Z$/)[0].trim();
+    function parseDateString(dateStr) {
+      var result = { date: "", time: "00:00" };
+      if (!dateStr) return result;
+      
+      dateStr = String(dateStr).trim();
+      
+      // Formato: "Tue Sep 29 2026 09:00:00 GMT-0300 (...)"
+      if (dateStr.includes('GMT') || dateStr.includes('Tue') || dateStr.includes('Mon')) {
+        try {
+          var d = new Date(dateStr);
+          if (!isNaN(d.getTime())) {
+            result.date = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            result.time = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+            return result;
+          }
+        } catch(e) {}
+      }
+      
+      // Formato ISO: "2026-09-20T14:30:00.000Z" o con timezone
+      if (dateStr.includes('T')) {
+        var parts = dateStr.split('T');
+        result.date = parts[0];
+        var timePart = parts[1] ? parts[1].replace(/[Z+\-].*/,'') : "00:00:00";
+        result.time = timePart.slice(0, 5);
+        return result;
+      }
+      
+      // Formato espacio: "2026-09-20 14:30:00"
+      if (dateStr.includes(' ')) {
+        var spaceParts = dateStr.split(' ');
+        result.date = spaceParts[0];
+        result.time = spaceParts[1] ? spaceParts[1].slice(0, 5) : "00:00";
+        return result;
+      }
+      
+      return result;
+    }
     
-    if (cleanStart.includes('T')) {
-      var partesS = cleanStart.split('T'); sDate = partesS[0]; sTime = partesS[1] ? partesS[1].slice(0, 5) : "00:00";
-    } else if (cleanStart.includes(' ')) {
-      var partesEspacio = cleanStart.split(' '); sDate = partesEspacio[0]; sTime = partesEspacio[1] ? partesEspacio[1].slice(0, 5) : "00:00";
-    } else { sDate = cleanStart.slice(0, 10); }
-
-    if (cleanEnd.includes('T')) {
-      var partesE = cleanEnd.split('T'); eDate = partesE[0]; eTime = partesE[1] ? partesE[1].slice(0, 5) : "00:00";
-    } else if (cleanEnd.includes(' ')) {
-      var partesEspacioE = cleanEnd.split(' '); eDate = partesEspacioE[0]; eTime = partesEspacioE[1] ? partesEspacioE[1].slice(0, 5) : "00:00";
-    } else if (cleanEnd !== "") { eDate = cleanEnd.slice(0, 10); }
+    var startParsed = parseDateString(rawStart);
+    sDate = startParsed.date;
+    sTime = startParsed.time;
+    
+    var endParsed = parseDateString(rawEnd);
+    eDate = endParsed.date;
+    eTime = endParsed.time;
 
     // Fallback predictivo automático de devolución (+24 horas)
     if (!eDate || eDate === "") {
@@ -3530,14 +3560,18 @@ window.abrirChecklistReserva = function(btnElement) {
       } catch(err) { eDate = sDate; eTime = "18:00"; }
     }
 
-    // 4. LIMPIEZA RIGIDA DE KILÓMETROS
+    // 4. LIMPIEZA DE KILÓMETROS - Leer desde telemetría PRIMERO
     var kmFormateado = "—";
-    if (kmTxt && kmTxt !== "—" && kmTxt !== "0" && kmTxt !== "") {
+    // Intentar telemetría primero (más confiable)
+    if (window.ST && window.ST.tel && window.ST.tel[p]) {
+      var kmTel = window.ST.tel[p].km || window.ST.tel[p].kilometers;
+      if (kmTel && kmTel !== "0" && kmTel !== "") {
+        kmFormateado = String(kmTel).replace(/[^\d]/g, '');
+      }
+    }
+    // Fallback a dataset si telemetría falló
+    if (kmFormateado === "—" && kmTxt && kmTxt !== "—" && kmTxt !== "0" && kmTxt !== "") {
       kmFormateado = String(kmTxt).replace(/[^\d]/g, '');
-    } else {
-      // Intento final por telemetría si el dataset falló
-      var telRescate = window.ST && window.ST.tel ? window.ST.tel[p] : null;
-      if (telRescate) kmFormateado = String(telRescate.km || telRescate.kilometers || "—").replace(/[^\d]/g, '');
     }
 
     // 5. MOLDE NATIVO CORPORATIVO REDUNDANTE
@@ -3859,54 +3893,6 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   </div>
 </div>
 
-<!-- ── TIRE MODAL (NEUMÁTICOS + ACCESORIOS) ── -->
-<div class="tmodal-overlay" id="tireModalOverlay" style="display:none" onclick="closeTireModal(event)">
-  <div class="tmodal" onclick="event.stopPropagation()">
-    <div class="tmodal-head">
-      <div>
-        <div class="tmodal-title" id="tireModalTitle">Neumáticos y Accesorios</div>
-        <div class="tmodal-sub" id="tireModalSub"></div>
-      </div>
-      <button class="tmodal-close" onclick="closeTireModal()" aria-label="cerrar"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="tmodal-tabs">
-      <button class="tmodal-tab active" id="tabTires" onclick="switchTireTab('tires')">
-        <i class="ti ti-tire" style="font-size:12px"></i> Neumáticos
-      </button>
-      <button class="tmodal-tab" id="tabQuick" onclick="switchTireTab('quick')">
-        <i class="ti ti-bolt" style="font-size:12px"></i> Carga rápida
-      </button>
-      <button class="tmodal-tab" id="tabAcc" onclick="switchTireTab('acc')">
-        <i class="ti ti-tool" style="font-size:12px"></i> Accesorios
-      </button>
-    </div>
-    <div id="panelTires" class="tmodal-body">
-      <div id="tireCards"></div>
-      <button class="add-tire-btn" onclick="addTireCard()">
-        <i class="ti ti-plus" style="font-size:11px"></i> Agregar neumático
-      </button>
-    </div>
-    <!-- QUICK 5-TIRE PANEL -->
-    <div id="panelQuick" class="tmodal-body" style="display:none">
-      <div style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5">
-        Completá los datos de los <strong>5 neumáticos estándar</strong>. Campos en común (marca, rodado) se aplican a todos si los completás en el primero.
-      </div>
-      <div id="quickTireGrid"></div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="add-tire-btn" style="flex:1;justify-content:center" onclick="applyCommonFields()">
-          <i class="ti ti-copy" style="font-size:11px"></i> Replicar marca y rodado a todos
-        </button>
-      </div>
-    </div>
-
-    <div id="panelAcc" class="tmodal-body" style="display:none">
-      <table class="acc-table">
-        <thead><tr><th>Tipo</th><th>Número / Descripción</th><th></th></tr></thead>
-        <tbody id="accRows"></tbody>
-      </table>
-      <button class="add-acc-btn" onclick="addAccRow()">
-        <i class="ti ti-plus" style="font-size:10px"></i> Agregar accesorio
-      </button>
     </div>
     <div class="tmodal-foot">
       <button class="btn-cancel" onclick="closeTireModal()">Cancelar</button>
