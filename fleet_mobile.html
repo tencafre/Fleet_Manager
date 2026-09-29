@@ -3599,27 +3599,22 @@ window.abrirChecklistReserva = function(btnElement) {
 
     // 5. MOLDE NATIVO CORPORATIVO REDUNDANTE
     // Inyectamos las estructuras de sub-arrays completas requeridas de forma estricta por el checklist original
-    // PARTE B: Obtener datos reales de tires y accesorios desde localStorage
-    var tiresReales = getTireData(p) || [];
-    var tiresEstado = tiresReales.map(function(t) { return t.estado || "BUENO"; });
-    if (tiresEstado.length === 0) tiresEstado = ["BUENO", "BUENO", "BUENO", "BUENO", "BUENO"];
-    
-    var accesoriosReales = getAccData(p) || [];
+    // PARTE B: Usar getTireData y getAccData EXACTAMENTE IGUAL QUE FLEET_CALENDAR
     
     var payload = {
       plate:      p,
       resid:      resCode,
       renter:     decodeURIComponent(renterName),
-      startDate:  sDate, // YYYY-MM-DD
-      startTime:  sTime, // HH:MM
-      endDate:    eDate, // YYYY-MM-DD
-      endTime:    eTime, // HH:MM
+      startDate:  sDate,
+      startTime:  sTime,
+      endDate:    eDate,
+      endTime:    eTime,
       km:         kmFormateado !== "" && kmFormateado !== "—" ? kmFormateado : "—",
       tankCap:    veh ? (veh.tankCap || 50) : 50,
-      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK', // Llave estructural de siluetas
-      tires:      tiresEstado,
-      tireNums:   tiresReales.map(function(t) { return t.numero || ""; }),
-      accesorios: accesoriosReales
+      bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
+      tires:      getTireData(p),          // ✅ Objetos completos desde localStorage
+      tireNums:   getTireNumbers(p),       // ✅ Array de números
+      accesorios: getAccData(p)            // ✅ Objetos completos desde localStorage
     };
 
     console.log("DEBUG PAYLOAD ANTES DE GUARDAR:");
