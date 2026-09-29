@@ -3569,18 +3569,35 @@ window.abrirChecklistReserva = function(btnElement) {
       } catch(err) { eDate = sDate; eTime = "18:00"; }
     }
 
-    // 4. LIMPIEZA DE KILÓMETROS - Leer desde telemetría PRIMERO
+    // 4. LIMPIEZA DE KILÓMETROS - Leer desde telemetría con fallback
     var kmFormateado = "—";
-    // Intentar telemetría primero (más confiable)
+    
+    // PRIMERO: Intentar telemetría global
     if (window.ST && window.ST.tel && window.ST.tel[p]) {
-      var kmTel = window.ST.tel[p].km || window.ST.tel[p].kilometers;
-      if (kmTel && kmTel !== "0" && kmTel !== "") {
+      var kmTel = window.ST.tel[p].km || window.ST.tel[p].kilometers || window.ST.tel[p].kms;
+      if (kmTel && kmTel !== "0" && kmTel !== "" && kmTel !== "—") {
         kmFormateado = String(kmTel).replace(/[^\d]/g, '');
+        console.log("✓ KM desde telemetría:", kmFormateado);
       }
     }
-    // Fallback a dataset si telemetría falló
+    
+    // SEGUNDO: Si telemetría falló, buscar en reservas (datos históricos)
+    if (kmFormateado === "—" && window.ST && window.ST.res && Array.isArray(window.ST.res)) {
+      var resMatch = window.ST.res.find(function(r) { return r && r.codigo === resCode; });
+      if (resMatch && resMatch.kmSalida) {
+        kmFormateado = String(resMatch.kmSalida).replace(/[^\d]/g, '');
+        console.log("✓ KM desde reservas:", kmFormateado);
+      }
+    }
+    
+    // TERCERO: Fallback dataset (último recurso)
     if (kmFormateado === "—" && kmTxt && kmTxt !== "—" && kmTxt !== "0" && kmTxt !== "") {
       kmFormateado = String(kmTxt).replace(/[^\d]/g, '');
+      console.log("✓ KM desde dataset:", kmFormateado);
+    }
+    
+    if (kmFormateado === "—") {
+      console.warn("⚠️ No se encontró km en ninguna fuente, usando —");
     }
 
     // 5. MOLDE NATIVO CORPORATIVO REDUNDANTE
