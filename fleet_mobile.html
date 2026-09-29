@@ -3220,12 +3220,21 @@ window.saveTireData = function() {
 
 /* ── OPEN/CLOSE TIRE MODAL ── */
 window.openTireModal = function(plate, modelName){
+  // Safeguard: verificar que el modal existe en el DOM
+  var overlay = document.getElementById('tireModalOverlay');
+  if (!overlay) {
+    console.warn("⚠️ tireModalOverlay no encontrado en DOM. Esperando...");
+    // Reintentar después de 500ms
+    setTimeout(function() { window.openTireModal(plate, modelName); }, 500);
+    return;
+  }
+  
   tireModalPlate = plate;
   tireModalModel = modelName;
   
   if(!plate){ buildVehiclePicker(); return; }
 
-  document.getElementById('tireModalOverlay').style.display = 'flex';
+  overlay.style.display = 'flex';
   document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
   document.getElementById('tireModalSub').textContent = modelName || '';
   
@@ -3598,6 +3607,16 @@ window.abrirChecklistReserva = function(btnElement) {
       tireNums:   tiresReales.map(function(t) { return t.numero || ""; }),
       accesorios: accesoriosReales
     };
+
+    console.log("DEBUG PAYLOAD ANTES DE GUARDAR:");
+    console.log("  plate:", payload.plate);
+    console.log("  km:", payload.km);
+    console.log("  bodyType:", payload.bodyType);
+    console.log("  startDate:", payload.startDate, "startTime:", payload.startTime);
+    console.log("  endDate:", payload.endDate, "endTime:", payload.endTime);
+    console.log("  tires:", payload.tires);
+    console.log("  accesorios:", payload.accesorios);
+    console.log("  PAYLOAD COMPLETO:", JSON.stringify(payload));
 
     // Purgamos y pisamos el almacenamiento de Kinto
     localStorage.removeItem('fleetcal_checklist_data');
