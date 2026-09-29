@@ -1246,21 +1246,71 @@ function renderCal() {
     
     '<div id="agenda-mobile-render-box" style="width:100%; padding:0 8px; box-sizing:border-box; font-family:sans-serif; display:block !important; clear:both !important;">';
 
-  // 4. GENERACIÓN DE TARJETAS VERTICALES SANEADAS
-  parqueVehiculos.forEach(function(veh) {
-    if (!veh || !veh.plate) return;
-    var plate = veh.plate.toUpperCase().trim();
+  // 4. GENERACIÓN DE TARJETAS VERTICALES SANEADAS - ORDENADAS POR FECHA MÁS CERCANA
+  // ✅ ORDENAR todas las reservas por fecha más cercana al día de hoy
+  var hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  
+  todasLasReservas.sort(function(a, b) {
+    var fechaA = new Date(a.start || a.desde);
+    var fechaB = new Date(b.start || b.desde);
+    var ahora = new Date();
     
-    // Extraer kilómetros de telemetría de forma segura
+    // Excluir reservas ya finalizadas
+    if (fechaA < ahora && (a.end || a.hasta)) {
+      var finA = new Date(a.end || a.hasta);
+      if (finA < ahora) return 1;
+    }
+    if (fechaB < ahora && (b.end || b.hasta)) {
+      var finB = new Date(b.end || b.hasta);
+      if (finB < ahora) return -1;
+    }
+    
+    // Ordenar por proximidad a hoy
+    var diasA = Math.abs(fechaA - hoy);
+    var diasB = Math.abs(fechaB - hoy);
+    return diasA - diasB;
+  });
+  
+  // Agrupar por vehículo pero mantener orden global de reservas
+  var vehiculosOrdenados = {};
+  todasLasReservas.forEach(function(r) {
+    if (!r || !r.plate) return;
+    var plate = r.plate.toUpperCase().trim();
+    if (!vehiculosOrdenados[plate]) vehiculosOrdenados[plate] = [];
+    vehiculosOrdenados[plate].push(r);
+  });
+  
+  // Crear lista de placas en orden de reservas más cercanas
+  var placasOrdenadas = [];
+  todasLasReservas.forEach(function(r) {
+    var plate = (r.plate || '').toUpperCase().trim();
+    if (plate && placasOrdenadas.indexOf(plate) === -1) placasOrdenadas.push(plate);
+  });
+  
+  // RENDERIZAR vehículos en orden de reservas más cercanas
+  placasOrdenadas.forEach(function(plate) {
+    var veh = parqueVehiculos.find(function(v) { return v.plate.toUpperCase().trim() === plate; });
+    if (!veh) return;
+    
+    // Extraer kilómetros de telemetría
     var kmActual = 0;
     var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
     if (telGlobal && telGlobal[plate]) {
       kmActual = parseInt(telGlobal[plate].km || telGlobal[plate].kilometers || 0, 10);
     }
-
-    var viajesDelVehiculo = todasLasReservas.filter(function(r) {
-      return r && r.plate && r.plate.toUpperCase().trim() === plate;
-    });
+    
+    // ✅ AGREGAR UBICACIÓN desde telemetría
+    var ubicacion = "Ubicación desconocida";
+    if (telGlobal && telGlobal[plate]) {
+      var lat = telGlobal[plate].lat || telGlobal[plate].latitude;
+      var lng = telGlobal[plate].lng || telGlobal[plate].longitude;
+      if (lat && lng) {
+        ubicacion = "📍 " + lat.toFixed(4) + ", " + lng.toFixed(4);
+      }
+    }
+    
+    var viajesDelVehiculo = vehiculosOrdenados[plate] || [];
 
     var tieneAlerta = false;
     if (typeof maintAlertInfo === "function" && kmActual > 0) {
@@ -1274,9 +1324,10 @@ function renderCal() {
           '<div>' +
             '<span style="font-family:monospace; font-size:12px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; margin-right:6px;">' + plate + '</span>' +
             '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota Flota') + '</strong>' +
+            '<div style="font-size:9px; color:#64748b; margin-top:3px;">' + ubicacion + '</div>' +
           '</div>' +
           '<div>' +
-            '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + (veh.model || '') + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">' +
+            '<button onclick="window.openMaintModal(\'' + plate + '\', \'' + (veh.model || '').replace(/'/g, "\\'") + '\')" style="background:' + (tieneAlerta ? '#ef4444' : '#1e293b') + '; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;">' +
               (tieneAlerta ? '⚠️ SERVICE' : '🔧 SERVICE') +
             '</button>' +
           '</div>' +
@@ -3220,27 +3271,40 @@ window.saveTireData = function() {
 
 /* ── OPEN/CLOSE TIRE MODAL ── */
 window.openTireModal = function(plate, modelName){
-  // Safeguard: verificar que el modal existe en el DOM
-  var overlay = document.getElementById('tireModalOverlay');
-  if (!overlay) {
-    console.warn("⚠️ tireModalOverlay no encontrado en DOM. Esperando...");
-    // Reintentar después de 500ms
-    setTimeout(function() { window.openTireModal(plate, modelName); }, 500);
-    return;
-  }
-  
-  tireModalPlate = plate;
-  tireModalModel = modelName;
-  
-  if(!plate){ buildVehiclePicker(); return; }
+  try {
+    // Safeguard: verificar que el modal existe en el DOM
+    var overlay = document.getElementById('tireModalOverlay');
+    if (!overlay) {
+      console.error("❌ tireModalOverlay NO encontrado. Intentando localizar...");
+      // Ultimo intento: buscar por class si el ID falló
+      overlay = document.querySelector('.tmodal-overlay');
+      if (!overlay) {
+        console.error("❌ CRÍTICO: No se encontró modal de neumáticos en el DOM");
+        alert("Error: Modal de neumáticos no disponible. Recarga la página.");
+        return;
+      }
+    }
+    
+    tireModalPlate = plate;
+    tireModalModel = modelName;
+    
+    if(!plate){ buildVehiclePicker(); return; }
 
-  overlay.style.display = 'flex';
-  document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
-  document.getElementById('tireModalSub').textContent = modelName || '';
-  
-  switchTireTab('tires');
-  renderTireCards(plate);
-  renderAccRows(plate);
+    overlay.style.display = 'flex';
+    var titleEl = document.getElementById('tireModalTitle');
+    var subEl = document.getElementById('tireModalSub');
+    if (titleEl) titleEl.textContent = 'Neumáticos · ' + plate;
+    if (subEl) subEl.textContent = modelName || '';
+    
+    switchTireTab('tires');
+    renderTireCards(plate);
+    renderAccRows(plate);
+    
+    console.log("✓ Modal de neumáticos abierto para:", plate);
+  } catch(err) {
+    console.error("❌ Error en openTireModal:", err);
+    alert("Error al abrir modal de neumáticos: " + err.message);
+  }
 };
 
 function buildVehiclePicker(){
@@ -3428,6 +3492,14 @@ function getAccDataMobile(plate) {
 window.addEventListener('DOMContentLoaded', function() {
   console.log("-> [Bypass Mobile] Evaluando parámetros de red en caliente...");
   
+  // ✅ INICIALIZAR MODAL DE NEUMÁTICOS - Garantizar que existe en el DOM
+  var tireOverlay = document.getElementById('tireModalOverlay');
+  if (tireOverlay) {
+    console.log("✓ Modal de neumáticos encontrado en DOM");
+  } else {
+    console.error("❌ CRÍTICO: tireModalOverlay NO encontrado en DOM. Esto causará errores al abrir neumáticos.");
+  }
+  
   var urlParams = new URLSearchParams(window.location.search);
   var plateParam = urlParams.get('plate') || urlParams.get('Plate');
   var renterParam = urlParams.get('renter');
@@ -3481,7 +3553,7 @@ window.addEventListener('DOMContentLoaded', function() {
 // ═══════════════════════════════════════════════════════════════════════════
 //   ── PARSER ABSOLUTO MÓVIL SÍNCRONO (SOLUCIÓN GRÁFICA DEFINITIVA) ──
 // ═══════════════════════════════════════════════════════════════════════════
-window.abrirChecklistReserva = function(btnElement) {
+window.abrirChecklistReserva = async function(btnElement) {
   try {
     // 1. RASPADO DIRECTO DE LA TARJETA HTML ACTIVA (Inmune a fallas de arrays)
     var row = btnElement.closest('.mobile-viaje-row') || btnElement.parentElement.parentElement;
@@ -3499,7 +3571,34 @@ window.abrirChecklistReserva = function(btnElement) {
 
     console.log("-> [Mobile Link Absolute] Desplegando traspaso para: " + p);
 
-    // 2. RECUPERAR DATOS DEL PARQUE DESDE EL ARRAY GLOBAL ACTIVO (con fallback y logging)
+    // CRÍTICO: Cargar neumáticos de Supabase ANTES de construir payload
+    console.log("⏳ Cargando neumáticos de Supabase para:", p);
+    try {
+      var tiresRes = await fetch(WORKER_URL + "/data/tires?plate=" + encodeURIComponent(p), {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      if (tiresRes.ok) {
+        var tiresData = await tiresRes.json();
+        console.log("✓ Neumáticos descargados de Supabase:", tiresData);
+        if (tiresData.tires) {
+          saveTireDataStore(p, tiresData.tires);
+          console.log("✓ Neumáticos guardados en localStorage");
+        }
+        if (tiresData.accessories) {
+          saveAccDataStore(p, tiresData.accessories);
+          console.log("✓ Accesorios guardados en localStorage");
+        }
+      } else {
+        console.warn("⚠️ No se encontraron neumáticos en Supabase para:", p);
+      }
+    } catch(err) {
+      console.error("❌ Error cargando neumáticos de Supabase:", err.message);
+    }
+
+    // AHORA construir payload (getTireData() ya tiene datos locales)
+    console.log("Construyendo payload con neumáticos...");
+    
     var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
     var veh = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
     
