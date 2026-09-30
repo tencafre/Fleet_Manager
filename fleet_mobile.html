@@ -1289,12 +1289,11 @@ async function renderCal() {
   });
   
   // RENDERIZAR vehículos en orden de reservas más cercanas
-  placasOrdenadas.forEach(async function(plate) {
-    // ✅ ESPERAR a que telemetría esté disponible ANTES de leer datos
-    await waitForTelemetry(plate, 3000);
+  for (var i = 0; i < placasOrdenadas.length; i++) {
+    var plate = placasOrdenadas[i];
     
     var veh = parqueVehiculos.find(function(v) { return v.plate.toUpperCase().trim() === plate; });
-    if (!veh) return;
+    if (!veh) continue;
     
     // Extraer kilómetros de telemetría
     var kmActual = 0;
@@ -1303,7 +1302,7 @@ async function renderCal() {
       kmActual = parseInt(telGlobal[plate].km || telGlobal[plate].kilometers || 0, 10);
     }
     
-    // ✅ AGREGAR UBICACIÓN desde telemetría
+    // ✅ AGREGAR UBICACIÓN desde telemetría (si disponible)
     var ubicacion = "Ubicación desconocida";
     if (telGlobal && telGlobal[plate]) {
       var lat = telGlobal[plate].lat || telGlobal[plate].latitude;
