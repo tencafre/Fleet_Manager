@@ -1185,7 +1185,7 @@ window.updateStats = function() {
 // Semáforo de control para evitar que las cargas paralelas dupliquen o borren la UI
 window._mobileRenderLayoutActivo = false;
 
-function renderCal() {
+async function renderCal() {
   console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
@@ -1289,7 +1289,10 @@ function renderCal() {
   });
   
   // RENDERIZAR vehículos en orden de reservas más cercanas
-  placasOrdenadas.forEach(function(plate) {
+  placasOrdenadas.forEach(async function(plate) {
+    // ✅ ESPERAR a que telemetría esté disponible ANTES de leer datos
+    await waitForTelemetry(plate, 3000);
+    
     var veh = parqueVehiculos.find(function(v) { return v.plate.toUpperCase().trim() === plate; });
     if (!veh) return;
     
@@ -3687,7 +3690,10 @@ window.abrirChecklistReserva = async function(btnElement) {
       } catch(err) { eDate = sDate; eTime = "18:00"; }
     }
 
-    // 4. LIMPIEZA DE KILÓMETROS - Lectura DIRECTA de telemetría
+    // 4. LIMPIEZA DE KILÓMETROS - ESPERAR A TELEMETRÍA PRIMERO
+    console.log("⏳ Esperando telemetría para leer kilómetros...");
+    await waitForTelemetry(p, 3000);
+    
     var kmFormateado = "—";
     
     // Verificar que window.ST.tel existe y tiene datos
@@ -3738,7 +3744,7 @@ window.abrirChecklistReserva = async function(btnElement) {
     console.log("DEBUG PAYLOAD ANTES DE GUARDAR:");
     console.log("  plate:", payload.plate);
     console.log("  km:", payload.km);
-    console.log("  bodyType:", payload.bodyType);
+    console.log("  bodyType:", payload.bodyType, "← CRÍTICO PARA SILUETA");
     console.log("  startDate:", payload.startDate, "startTime:", payload.startTime);
     console.log("  endDate:", payload.endDate, "endTime:", payload.endTime);
     console.log("  tires:", payload.tires);
@@ -3748,6 +3754,15 @@ window.abrirChecklistReserva = async function(btnElement) {
     // Purgamos y pisamos el almacenamiento de Kinto
     localStorage.removeItem('fleetcal_checklist_data');
     localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+    
+    // ✅ VERIFICAR que se guardó correctamente
+    var verificar = localStorage.getItem('fleetcal_checklist_data');
+    if (verificar) {
+      var payloadGuardado = JSON.parse(verificar);
+      console.log("✓ Payload guardado en localStorage con bodyType:", payloadGuardado.bodyType);
+    } else {
+      console.error("❌ ERROR: Payload NO se guardó en localStorage");
+    }
     
     // Inyectamos las variables sueltas requeridas por tus scripts reactivos secundarios
     localStorage.setItem('activePlate', p);
