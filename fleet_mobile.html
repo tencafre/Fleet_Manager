@@ -1187,9 +1187,9 @@ window.updateStats = function() {
 // Semáforo de control para evitar que las cargas paralelas dupliquen o borren la UI
 window._mobileRenderLayoutActivo = false;
 
+async function renderCal() {
   if (_renderCalLocked) { console.log("⏸️ renderCal bloqueado - ya en ejecución"); return; }
   _renderCalLocked = true;
-async function renderCal() {
   console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
