@@ -2432,6 +2432,25 @@ let tireTab = 'tires';
 let tireWorkingCopy = [];
 let accWorkingCopy  = [];
 
+// ✅ ESPERAR A QUE TELEMETRÍA ESTÉ DISPONIBLE
+function waitForTelemetry(plate, maxWait) {
+  if (!maxWait) maxWait = 5000;
+  return new Promise(function(resolve) {
+    var startTime = Date.now();
+    var checkInterval = setInterval(function() {
+      if (window.ST && window.ST.tel && window.ST.tel[plate]) {
+        clearInterval(checkInterval);
+        console.log("✓ Telemetría disponible para", plate);
+        resolve(true);
+      } else if (Date.now() - startTime > maxWait) {
+        clearInterval(checkInterval);
+        console.warn("⏱️ Timeout esperando telemetría para", plate);
+        resolve(false);
+      }
+    }, 100);
+  });
+}
+
 function getTireData(plate){
   try{ const r=localStorage.getItem(TIRE_PREFIX+plate); return r?JSON.parse(r):[]; }catch(e){ return []; }
 }
