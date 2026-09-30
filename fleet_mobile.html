@@ -1186,6 +1186,7 @@ window.updateStats = function() {
 window._mobileRenderLayoutActivo = false;
 
 async function renderCal() {
+  console.log("🔄 renderCal() INICIANDO - placasOrdenadas length:", placasOrdenadas ? placasOrdenadas.length : "N/A");
   console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
@@ -1421,6 +1422,9 @@ async function renderCal() {
     containerExistente.id = 'mobile-trips-container';
     document.body.insertBefore(containerExistente, document.body.firstChild);
   }
+  
+  // ✅ LIMPIAR antes de rellenar para evitar duplicados
+  containerExistente.innerHTML = '';
   containerExistente.innerHTML = htmlPanelSuperior;
   
   // Aplicar estilo al body
