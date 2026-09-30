@@ -1195,7 +1195,7 @@ async function renderCal() {
   
   if (!parqueVehiculos || parqueVehiculos.length === 0) {
     console.log("-> [Render Saneado] Esperando datos del parque automotor...");
-    return; // Este return SÍ es legal porque está adentro de la función principal renderCal
+    return;
   }
 
   // Filtro estricto anti-duplicados para las reservas en vivo
@@ -1211,6 +1211,14 @@ async function renderCal() {
       }
     });
   }
+  
+  // ✅ SI NO HAY RESERVAS, salir temprano
+  if (todasLasReservas.length === 0) {
+    console.warn("⚠️ Sin reservas para mostrar");
+    return;
+  }
+  
+  console.log("✓ Renderizando", todasLasReservas.length, "reservas");
 
 
   // 2. CALCULAR LOS ÍNDICES REALES EN CALIENTE PARA EL PANEL SUPERIOR (Garantiza Conteo Exacto)
