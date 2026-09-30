@@ -1049,6 +1049,8 @@ window.tryRender = function() {
 window.addEventListener('DOMContentLoaded', function() {
   console.log("-> [Init Mobile] DOM listo de forma aislada. Conectando hilos de telemetría...");
 
+var _renderCalLocked = false;  // Prevenir renderCal simultáneo
+
   // Forzamos el arranque limpio de tu función original que descarga los .txt del CDN
   if (typeof sincronizarFlotaCDN === "function") {
     sincronizarFlotaCDN();
@@ -1185,8 +1187,9 @@ window.updateStats = function() {
 // Semáforo de control para evitar que las cargas paralelas dupliquen o borren la UI
 window._mobileRenderLayoutActivo = false;
 
+  if (_renderCalLocked) { console.log("⏸️ renderCal bloqueado - ya en ejecución"); return; }
+  _renderCalLocked = true;
 async function renderCal() {
-  console.log("🔄 renderCal() INICIANDO - placasOrdenadas length:", placasOrdenadas ? placasOrdenadas.length : "N/A");
   console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
@@ -1436,6 +1439,7 @@ async function renderCal() {
   containerExistente.innerHTML = htmlPanelSuperior;
   
   // Aplicar estilo al body
+  _renderCalLocked = false;
   document.body.style.background = "#f8fafc";
   
   console.log("-> [Render Saneado] ¡Estructura de agenda inyectada de forma atómica y exitosa!");
@@ -3711,7 +3715,7 @@ window.abrirChecklistReserva = async function(btnElement) {
 
     // 4. LIMPIEZA DE KILÓMETROS - ESPERAR A TELEMETRÍA PRIMERO
     console.log("⏳ Esperando telemetría para leer kilómetros...");
-    await waitForTelemetry(p, 3000);
+    await waitForTelemetry(p, 5000);
     
     var kmFormateado = "—";
     
