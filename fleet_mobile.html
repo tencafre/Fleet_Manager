@@ -1410,12 +1410,20 @@ async function renderCal() {
 
     listaViajes += '</div></div>';
     htmlPanelSuperior += cabeceraCard + listaViajes;
-  };
+  });
 
   htmlPanelSuperior += '</div>';
 
-  // Volcado definitivo sobre el lienzo visible
-  document.body.innerHTML = htmlPanelSuperior;
+  // Voltear en un contenedor, NO reemplazar todo el body
+  var containerExistente = document.getElementById('mobile-trips-container');
+  if (!containerExistente) {
+    containerExistente = document.createElement('div');
+    containerExistente.id = 'mobile-trips-container';
+    document.body.insertBefore(containerExistente, document.body.firstChild);
+  }
+  containerExistente.innerHTML = htmlPanelSuperior;
+  
+  // Aplicar estilo al body
   document.body.style.background = "#f8fafc";
   
   console.log("-> [Render Saneado] ¡Estructura de agenda inyectada de forma atómica y exitosa!");
