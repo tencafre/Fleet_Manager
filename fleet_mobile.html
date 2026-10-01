@@ -857,16 +857,10 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
     <span class="datebadge" id="todayLbl"></span>
 
 
-    <button class="filebtn" id="btnTireOpen" onclick="openTireModal(null,null)" style="color:var(--accent)">
-      <i class="ti ti-tire" style="font-size:13px"></i> Neumáticos
     </button>
   </div>
 </div>
 
-  <div class="sc"><div class="sl">En curso hoy</div><div class="sv" id="stC">—</div><div class="ss">reservas activas</div></div>
-  <div class="sc"><div class="sl">Próximas</div><div class="sv" id="stN">—</div><div class="ss">reservas nuevas</div></div>
-  <div class="sc"><div class="sl">Disponibles</div><div class="sv" id="stA">—</div><div class="ss">sin reserva</div></div>
-  <div class="sc"><div class="sl">Alertas mant.</div><div class="sv" id="stM" style="color:#dc2626">—</div><div class="ss">próx. service</div></div>
 </div>
 
 
@@ -905,12 +899,13 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
-      <button class="btn-save" onclick="saveMaint()">Guardar</button>
     </div>
   </div>
 </div>
 
+<style>
+#modalOverlay { display: none !important; pointer-events: none; }
+</style>
 <script>
 //CARGA INIcIAL//
 // ═══════════════════════════════════════════════════════════════════════════
