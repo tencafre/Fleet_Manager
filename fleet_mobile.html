@@ -1049,6 +1049,19 @@ window.tryRender = function() {
 window.addEventListener('DOMContentLoaded', function() {
   console.log("-> [Init Mobile] DOM listo de forma aislada. Conectando hilos de telemetría...");
 
+var lastRenderTime = 0;
+var RENDER_DEBOUNCE_MS = 500;
+nvar _lastRenderTime = 0;
+var _renderDebounceMs = 500;  // No renderizar más de 1 vez cada 500ms
+
+// Mapeo de placas a ubicaciones
+var PLATE_LOCATION_MAP = {
+  'AI239SV': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 },
+  'AG269JN': { name: 'PERÚ', lat: -34.6044, lng: -58.3856 },
+  'AG350QF': { name: 'BOOKED', lat: -34.6150, lng: -58.3900 },
+  'AG838JY': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 }
+};
+
 
   // Forzamos el arranque limpio de tu función original que descarga los .txt del CDN
   if (typeof sincronizarFlotaCDN === "function") {
@@ -1187,6 +1200,15 @@ window.updateStats = function() {
 window._mobileRenderLayoutActivo = false;
 
 async function renderCal() {
+  var now = Date.now();
+  if (now - lastRenderTime < RENDER_DEBOUNCE_MS) {
+    console.log("⏸️ renderCal skipped (debounce)");
+    return;
+  }
+  lastRenderTime = now;
+  var now = Date.now();
+  if (now - _lastRenderTime < _renderDebounceMs) { return; }
+  _lastRenderTime = now;
   console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
@@ -1307,18 +1329,26 @@ async function renderCal() {
     // Extraer kilómetros de telemetría
     var kmActual = 0;
     var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
-    if (telGlobal && telGlobal[plate]) {
+    if (telGlobal && telGlobal[plate] && telGlobal[plate].km) {
       kmActual = parseInt(telGlobal[plate].km || telGlobal[plate].kilometers || 0, 10);
     }
     
-    // ✅ AGREGAR UBICACIÓN desde telemetría (si disponible)
+    // ✅ AGREGAR UBICACIÓN desde telemetría o mapeo local
     var ubicacion = "Ubicación desconocida";
-    if (telGlobal && telGlobal[plate]) {
+    
+    // 1. Intentar telemetría en vivo
+    if (telGlobal && telGlobal[plate] && telGlobal[plate].km) {
       var lat = telGlobal[plate].lat || telGlobal[plate].latitude;
       var lng = telGlobal[plate].lng || telGlobal[plate].longitude;
       if (lat && lng) {
         ubicacion = "📍 " + lat.toFixed(4) + ", " + lng.toFixed(4);
       }
+    }
+    
+    // 2. Fallback a mapeo local
+    if (ubicacion === "Ubicación desconocida" && PLATE_LOCATION_MAP[plate]) {
+      var locData = PLATE_LOCATION_MAP[plate];
+      ubicacion = "📍 " + locData.name + " (" + locData.lat.toFixed(4) + ", " + locData.lng.toFixed(4) + ")";
     }
     
     var viajesDelVehiculo = vehiculosOrdenados[plate] || [];
@@ -1440,6 +1470,43 @@ async function renderCal() {
   
   console.log("-> [Render Saneado] ¡Estructura de agenda inyectada de forma atómica y exitosa!");
 }
+
+// Abre modal de mantenimiento para agregar nuevo servicio
+window.openMaintModal = function(plate, model) {
+  console.log("🔧 Abriendo modal mantenimiento para:", plate);
+  
+  // Mostrar modal simple de mantenimiento
+  var mainType = prompt("Tipo de mantenimiento:\n1. Cambio aceite\n2. Filtro aire\n3. Neumáticos\n4. Frenos\n5. Otro", "1");
+  if (!mainType) return;
+  
+  var tiposMap = {
+    '1': 'Cambio aceite',
+    '2': 'Filtro aire',
+    '3': 'Neumáticos',
+    '4': 'Frenos',
+    '5': 'Otro'
+  };
+  
+  var tipo = tiposMap[mainType] || 'Otro';
+  var fecha = new Date().toISOString().split('T')[0];
+  var intervalo = prompt("Próximo servicio en (km):", "10000");
+  var notas = prompt("Notas adicionales:", "");
+  
+  // Guardar en localStorage
+  var maintKey = 'fleet_maintenance_' + plate;
+  var existing = JSON.parse(localStorage.getItem(maintKey) || '[]');
+  existing.push({
+    date: fecha,
+    type: tipo,
+    interval: intervalo,
+    notes: notas,
+    km: 0
+  });
+  localStorage.setItem(maintKey, JSON.stringify(existing));
+  
+  alert("✅ Mantenimiento registrado para " + plate);
+  console.log("✓ Mantenimiento guardado:", { plate, tipo, fecha });
+};
 
 // Envía el nuevo service directo a Supabase (POST)
 async function pushNewMaintToRemote(plate, date, tipo, intervalo, cleared_km, notes = "") {
@@ -3711,7 +3778,7 @@ window.abrirChecklistReserva = async function(btnElement) {
 
     // 4. LIMPIEZA DE KILÓMETROS - ESPERAR A TELEMETRÍA PRIMERO
     console.log("⏳ Esperando telemetría para leer kilómetros...");
-    await waitForTelemetry(p, 5000);
+    await waitForTelemetry(p, 8000);
     
     var kmFormateado = "—";
     
