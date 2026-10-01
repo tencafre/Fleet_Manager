@@ -1342,10 +1342,9 @@ async function renderCal() {
       }
     }
     
-    // 2. Fallback a mapeo local
-    if (ubicacion === "Ubicación desconocida" && PLATE_LOCATION_MAP[plate]) {
-      var locData = PLATE_LOCATION_MAP[plate];
-      ubicacion = "📍 " + locData.name + " (" + locData.lat.toFixed(4) + ", " + locData.lng.toFixed(4) + ")";
+    // Fallback a "Ubicación desconocida" si no hay telemetría
+    if (ubicacion === "Ubicación desconocida") {
+      ubicacion = "📍 Sin datos de ubicación";
     }
     
     var viajesDelVehiculo = vehiculosOrdenados[plate] || [];
