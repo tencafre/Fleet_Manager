@@ -1049,6 +1049,16 @@ window.tryRender = function() {
 window.addEventListener('DOMContentLoaded', function() {
   console.log("-> [Init Mobile] DOM listo de forma aislada. Conectando hilos de telemetría...");
 
+// ✅ Mapeo GLOBAL de placas a ubicaciones
+var PLATE_LOCATION_MAP = {
+  'AI239SV': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 },
+  'AG269JN': { name: 'PERÚ', lat: -34.6044, lng: -58.3856 },
+  'AG350QF': { name: 'BOOKED', lat: -34.6150, lng: -58.3900 },
+  'AG838JY': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 },
+  'AB123CD': { name: 'PALERMO', lat: -34.5973, lng: -58.3852 },
+  'XY456AB': { name: 'SAN ISIDRO', lat: -34.4769, lng: -58.5316 }
+};
+
 
 // Mapeo de placas a ubicaciones
 var PLATE_LOCATION_MAP = {
