@@ -1049,8 +1049,6 @@ window.tryRender = function() {
 window.addEventListener('DOMContentLoaded', function() {
   console.log("-> [Init Mobile] DOM listo de forma aislada. Conectando hilos de telemetría...");
 
-var lastRenderTime = 0;
-var RENDER_DEBOUNCE_MS = 500;
 
 // Mapeo de placas a ubicaciones
 var PLATE_LOCATION_MAP = {
@@ -1198,15 +1196,6 @@ window.updateStats = function() {
 window._mobileRenderLayoutActivo = false;
 
 async function renderCal() {
-  var now = Date.now();
-  if (now - lastRenderTime < RENDER_DEBOUNCE_MS) {
-    console.log("⏸️ renderCal skipped (debounce)");
-    return;
-  }
-  lastRenderTime = now;
-  var now = Date.now();
-  if (now - _lastRenderTime < _renderDebounceMs) { return; }
-  _lastRenderTime = now;
   console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
