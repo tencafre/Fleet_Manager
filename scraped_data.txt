@@ -6,7 +6,7 @@ kggz9d1	Relaciones Públicas 7	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	-
 yej3rr3	Nicolás Mercorillo	Toyota Etios SD AT AG350QD	Retiro CERRITO CAR	--	11:00 AM  Oct 1, 2026	9:30 AM  Oct 9, 2026	Current
 ldpmojz	Christopher Reekie	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	9:00 AM  Oct 2, 2026	12:00 PM  Oct 13, 2026	Current
 kvronn1	Dardo Jose Palomo	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	1:00 PM  Oct 2, 2026	1:00 PM  Oct 5, 2026	Current
-l8n26z7	Maria Victoria Mollerach	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	6:00 PM  Oct 2, 2026	9:00 AM  Oct 6, 2026	Pending
+l8n26z7	Maria Victoria Mollerach	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	6:00 PM  Oct 2, 2026	9:00 AM  Oct 6, 2026	Current
 ljmvr86	Eliahu Katche	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	9:00 AM  Oct 5, 2026	9:30 AM  Oct 9, 2026	New
 k3rvp9m	Service	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	3:55 PM  Oct 5, 2026	7:55 PM  Dec 4, 2026	New
 k90wo9v	Sofia Speluzzi	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	10:00 AM  Dec 14, 2026	10:00 AM  Jan 15, 2027	New
