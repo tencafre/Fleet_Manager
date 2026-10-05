@@ -899,13 +899,12 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
       </div>
     </div>
     <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveMaint()">Guardar</button>
     </div>
   </div>
 </div>
 
-<style>
-#modalOverlay { display: none !important; pointer-events: none; }
-</style>
 <script>
 //CARGA INIcIAL//
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1032,24 +1031,6 @@ window.tryRender = function() {
 window.addEventListener('DOMContentLoaded', function() {
   console.log("-> [Init Mobile] DOM listo de forma aislada. Conectando hilos de telemetría...");
 
-// ✅ Mapeo GLOBAL de placas a ubicaciones
-var PLATE_LOCATION_MAP = {
-  'AI239SV': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 },
-  'AG269JN': { name: 'PERÚ', lat: -34.6044, lng: -58.3856 },
-  'AG350QF': { name: 'BOOKED', lat: -34.6150, lng: -58.3900 },
-  'AG838JY': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 },
-  'AB123CD': { name: 'PALERMO', lat: -34.5973, lng: -58.3852 },
-  'XY456AB': { name: 'SAN ISIDRO', lat: -34.4769, lng: -58.5316 }
-};
-
-
-// Mapeo de placas a ubicaciones
-var PLATE_LOCATION_MAP = {
-  'AI239SV': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 },
-  'AG269JN': { name: 'PERÚ', lat: -34.6044, lng: -58.3856 },
-  'AG350QF': { name: 'BOOKED', lat: -34.6150, lng: -58.3900 },
-  'AG838JY': { name: 'CERRITO', lat: -34.6127, lng: -58.3817 }
-};
 
 
   // Forzamos el arranque limpio de tu función original que descarga los .txt del CDN
@@ -1306,43 +1287,27 @@ async function renderCal() {
     var veh = parqueVehiculos.find(function(v) { return v.plate.toUpperCase().trim() === plate; });
     if (!veh) continue;
     
-    // Extraer kilómetros de telemetría
-    var kmActual = 0;
+    // Extraer datos reales de telemetría (TelemGts_data.txt vía parseTel)
     var telGlobal = window.ST && window.ST.tel ? window.ST.tel : null;
-    if (telGlobal && telGlobal[plate] && telGlobal[plate].km) {
-      kmActual = parseInt(telGlobal[plate].km || telGlobal[plate].kilometers || 0, 10);
+    var telVeh = telGlobal ? telGlobal[plate] : null;
+
+    var kmActual = 0;
+    if (telVeh && telVeh.km) {
+      kmActual = parseInt(String(telVeh.km).replace(/[.,]/g, ''), 10) || 0;
     }
-    
-    // ✅ AGREGAR UBICACIÓN desde telemetría o mapeo local
-    var ubicacion = "Ubicación desconocida";
-    
-    // 1. Intentar telemetría en vivo
-    if (telGlobal && telGlobal[plate] && telGlobal[plate].km) {
-      var lat = telGlobal[plate].lat || telGlobal[plate].latitude;
-      var lng = telGlobal[plate].lng || telGlobal[plate].longitude;
-      if (lat && lng) {
-        ubicacion = "📍 " + lat.toFixed(4) + ", " + lng.toFixed(4);
+
+    // Coordenadas reales (formato "lat, lng" en una sola columna)
+    var coordsLat = null, coordsLng = null;
+    if (telVeh && telVeh.coords) {
+      var coordParts = telVeh.coords.split(',').map(function(s){ return parseFloat(s.trim()); });
+      if (coordParts.length === 2 && !isNaN(coordParts[0]) && !isNaN(coordParts[1])) {
+        coordsLat = coordParts[0];
+        coordsLng = coordParts[1];
       }
     }
-    
-    // 2. Fallback a mapeo HARDCODED por placa
-    if (ubicacion === "Ubicación desconocida") {
-      var UBICACIONES_PLACAS = {
-        'AI239SV': '📍 CERRITO',
-        'AG269JN': '📍 PERÚ',
-        'AG350QF': '📍 BOOKED',
-        'AG838JY': '📍 CERRITO',
-        'AG350QD': '📍 RETIRO',
-        'AB123CD': '📍 PALERMO',
-        'XY456AB': '📍 SAN ISIDRO'
-      };
-      
-      if (UBICACIONES_PLACAS[plate]) {
-        ubicacion = UBICACIONES_PLACAS[plate];
-      } else {
-        ubicacion = "📍 Sin datos de ubicación";
-      }
-    }
+
+    // ✅ UBICACIÓN: columna "loc" real de TelemGts_data.txt (PERÚ / CERRITO / BOOKED, etc.)
+    var ubicacion = (telVeh && telVeh.loc) ? ("📍 " + telVeh.loc) : "📍 Sin datos de ubicación";
     
     var viajesDelVehiculo = vehiculosOrdenados[plate] || [];
 
@@ -1434,7 +1399,7 @@ async function renderCal() {
               '<span style="font-size:9px; font-weight:700; background:' + bgBadge + '; color:' + colorBadge + '; padding:2px 4px; border-radius:4px; text-transform:uppercase; display:inline-block !important; margin-bottom:4px;">' + estadoReserva + '</span>' +
               '<button onclick="window.openTireModal(\'' + plate + '\', \'' + (veh.model || '').replace(/'/g, "\\'") + '\')" style="background:#8b5cf6; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">⚡ Neumáticos</button>' +
               '<button onclick="window.openChecklistFromMobile(this)" style="background:#16a34a; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer; margin-right:4px;">📋 CHECKLIST</button>' +
-              '<button onclick="generatePDFFromSheet(\'' + rCode + '\')" style="background:#0369a1; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;" title="Descargar checklist en PDF">📄 PDF</button>' +
+              '<button onclick="window.openMapSheet(\'' + plate + '\', \'' + (veh.model || '').replace(/'/g, "\\'") + '\')" style="background:#0369a1; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:10px; font-weight:600; cursor:pointer;" title="Ver ubicacion en OpenStreetMap">🗺️ MAPA</button>' +
             '</div>' +
           '</div>';
       });
@@ -1471,41 +1436,44 @@ async function renderCal() {
   console.log("-> [Render Saneado] ¡Estructura de agenda inyectada de forma atómica y exitosa!");
 }
 
-// Abre modal de mantenimiento para agregar nuevo servicio
+// Abre el modal real de mantenimiento (#modalOverlay) para registrar un nuevo service
 window.openMaintModal = function(plate, model) {
   console.log("🔧 Abriendo modal mantenimiento para:", plate);
-  
-  // Mostrar modal simple de mantenimiento
-  var mainType = prompt("Tipo de mantenimiento:\n1. Cambio aceite\n2. Filtro aire\n3. Neumáticos\n4. Frenos\n5. Otro", "1");
-  if (!mainType) return;
-  
-  var tiposMap = {
-    '1': 'Cambio aceite',
-    '2': 'Filtro aire',
-    '3': 'Neumáticos',
-    '4': 'Frenos',
-    '5': 'Otro'
-  };
-  
-  var tipo = tiposMap[mainType] || 'Otro';
-  var fecha = new Date().toISOString().split('T')[0];
-  var intervalo = prompt("Próximo servicio en (km):", "10000");
-  var notas = prompt("Notas adicionales:", "");
-  
-  // Guardar en localStorage
-  var maintKey = 'fleet_maintenance_' + plate;
-  var existing = JSON.parse(localStorage.getItem(maintKey) || '[]');
-  existing.push({
-    date: fecha,
-    type: tipo,
-    interval: intervalo,
-    notes: notas,
-    km: 0
-  });
-  localStorage.setItem(maintKey, JSON.stringify(existing));
-  
-  alert("✅ Mantenimiento registrado para " + plate);
-  console.log("✓ Mantenimiento guardado:", { plate, tipo, fecha });
+  window.modalPlate = plate; // Variable global que usa saveMaint()
+
+  var overlay = document.getElementById('modalOverlay');
+  var elTitle = document.getElementById('modalTitle');
+  var elSub = document.getElementById('modalSub');
+  var elType = document.getElementById('maintType');
+  var elDate = document.getElementById('maintDate');
+  var elNote = document.getElementById('maintNote');
+
+  if (!overlay) {
+    console.error("❌ No se encontró #modalOverlay en el DOM");
+    return;
+  }
+
+  if (elTitle) elTitle.textContent = "Registrar mantenimiento";
+  if (elSub) elSub.textContent = plate + (model ? " · " + model : "");
+
+  // Poblar el select de tipo de servicio si está vacío (solo el placeholder)
+  if (elType && elType.options.length <= 1 && typeof MAINT_TYPES !== "undefined") {
+    MAINT_TYPES.forEach(function(t, idx) {
+      var opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = t.label;
+      elType.appendChild(opt);
+    });
+  }
+  if (elType) elType.value = "";
+  if (elDate) elDate.value = new Date().toISOString().split('T')[0];
+  if (elNote) elNote.value = "";
+
+  overlay.style.display = 'flex';
+
+  if (typeof renderHistList === "function") {
+    renderHistList(plate);
+  }
 };
 
 // Envía el nuevo service directo a Supabase (POST)
@@ -1574,31 +1542,6 @@ function maintAlertInfo(kmStr, plate){
   }
   return null;
 }
-
-// ── MODAL ──
-window.openMaintModal = function(plate, model) {
-  console.log("-> [Mobile UI] Interceptando modal de mantenimiento para: " + plate);
-  window.modalPlate = plate; // Seteamos la variable global requerida por saveMaint
-  
-  // Capturamos las etiquetas de forma segura protegiendo contra nulos
-  var elPlate = document.getElementById('maintModalPlate') || document.getElementById('modal-plate-title');
-  var elModel = document.getElementById('maintModalModel') || document.getElementById('modal-model-title');
-  var modalEl = document.getElementById('maintModal');
-
-  if (elPlate) elPlate.textContent = plate;
-  if (elModel) elModel.textContent = model || "";
-  
-  // Si el modal original de tu HTML usa clases para abrirse, las activamos de forma segura
-  if (modalEl) {
-    modalEl.style.setProperty('display', 'block', 'important');
-    modalEl.style.setProperty('visibility', 'visible', 'important');
-  }
-
-  // Ejecutamos tu renderizador nativo de historial que ya dejamos blindado e inmune arriba
-  if (typeof renderHistList === "function") {
-    renderHistList(plate);
-  }
-};
 
 function updateIntervalSelect(alertInf) {
   const typeIdx  = document.getElementById('maintType').value;
@@ -1985,7 +1928,11 @@ function parseTel(txt){
     const p=line.split('\t');
     if(p.length<6) return;
     const plate=p[4].trim().split(' ').pop();
-    m[plate]={id:p[0].trim(),coords:p[1].trim(),km:p[2].trim(),fuel:p[3].trim(),loc:p[5].trim()};
+    const coordsStr = p[1].trim();
+    const coordParts = coordsStr.split(',').map(s => parseFloat(s.trim()));
+    const lat = (coordParts.length === 2 && !isNaN(coordParts[0])) ? coordParts[0] : null;
+    const lng = (coordParts.length === 2 && !isNaN(coordParts[1])) ? coordParts[1] : null;
+    m[plate]={id:p[0].trim(),coords:coordsStr,lat:lat,lng:lng,km:p[2].trim(),fuel:p[3].trim(),loc:p[5].trim()};
   });
   return m;
 }
@@ -3995,72 +3942,6 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   </div>
 </div>
 
-<!-- ── MAINTENANCE MODAL (MÓDULO B) ── -->
-<div class="tmodal-overlay" id="maintModalOverlay" style="display:none" onclick="closeMaintModal(event)">
-  <div class="tmodal" onclick="event.stopPropagation()">
-    <div class="tmodal-head">
-      <div>
-        <div class="tmodal-title" id="maintModalTitle">Mantenimiento</div>
-        <div class="tmodal-sub" id="maintModalSub"></div>
-      </div>
-      <button class="tmodal-close" onclick="closeMaintModal()" aria-label="cerrar"><i class="ti ti-x"></i></button>
-    </div>
-    <div class="tmodal-body">
-      <div class="maint-form">
-        <div class="maint-field">
-          <label for="maintType">Tipo de servicio</label>
-          <select id="maintType" onchange="updateIntervalSelect()">
-            <option value="">— Selecciona —</option>
-            <option value="0">Cambio de aceite y filtro</option>
-            <option value="1">Rotación de neumáticos</option>
-            <option value="2">Filtro de aire</option>
-            <option value="3">Filtro de combustible</option>
-            <option value="4">Bujías</option>
-            <option value="5">Líquido de frenos</option>
-            <option value="6">Correa / cadena de distribución</option>
-            <option value="7">Amortiguadores</option>
-            <option value="8">Revisión general (service mayor)</option>
-            <option value="9">Revisión de frenos</option>
-            <option value="10">Alineación y balanceo</option>
-            <option value="11">Otro (ver observaciones)</option>
-          </select>
-        </div>
-        <div class="maint-field">
-          <label for="maintInterval">Intervalo (km)</label>
-          <select id="maintInterval">
-            <option value="">— Auto-calculado —</option>
-            <option value="10000">10.000 km</option>
-            <option value="20000">20.000 km</option>
-            <option value="30000">30.000 km</option>
-            <option value="40000">40.000 km</option>
-            <option value="50000">50.000 km</option>
-          </select>
-        </div>
-        <div class="maint-field">
-          <label for="maintDate">Fecha</label>
-          <input type="date" id="maintDate">
-        </div>
-        <div class="maint-field">
-          <label for="maintNote">Observaciones</label>
-          <input type="text" id="maintNote" placeholder="Detalles adicionales...">
-        </div>
-      </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-        <div class="maint-header" style="margin-bottom:8px">
-          <i class="ti ti-history" style="font-size:12px"></i> Historial
-        </div>
-        <div id="maintHistList" style="max-height:200px;overflow-y:auto"></div>
-      </div>
-    </div>
-    <div class="tmodal-foot">
-      <button class="btn-cancel" onclick="closeMaintModal()">Cancelar</button>
-      <button class="btn-save" onclick="saveMaintEntry()">
-        <i class="ti ti-device-floppy" style="font-size:12px"></i> Guardar
-      </button>
-    </div>
-  </div>
-</div>
-
 <!-- ── TIRES / ACCESSORIES MODAL ── -->
 <div class="tmodal-overlay" id="tireModalOverlay" style="display:none" onclick="closeTireModal(event)">
   <div class="tmodal" onclick="event.stopPropagation()">
@@ -4140,15 +4021,6 @@ window.openChecklistFromMobile = window.abrirChecklistReserva;
   </div>
 </div>
 
-    </div>
-    <div class="tmodal-foot">
-      <button class="btn-cancel" onclick="closeTireModal()">Cancelar</button>
-      <button class="btn-save" onclick="saveTireData()">
-        <i class="ti ti-device-floppy" style="font-size:12px"></i> Guardar
-      </button>
-    </div>
-  </div>
-</div>
 
 <!-- INTERCEPTOR GLOBAL DE TRASPASO AL CHECKLIST — EDICIÓN INDESTRUCTIBLE MÓVIL -->
 
