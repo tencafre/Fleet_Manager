@@ -1102,6 +1102,7 @@ document.getElementById('todayLbl').textContent =
 
 let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth();
 let ST = {pque:null, res:null, tel:null};
+window.ST = ST; // ✅ Exponer globalmente (let no se adjunta a window automáticamente)
 let modalPlate = null;
 
 // ── MAINTENANCE STORAGE (localStorage per plate) ──
@@ -2194,7 +2195,7 @@ window.saveCfgAndReload=function(){
   };
   setCfg(cfg);
   document.getElementById('cfgOverlay').style.display='none';
-  ST={pque:null,res:null,tel:null};
+  ST.pque=null;ST.res=null;ST.tel=null;
   
 cargarDatosFlota();
 };
@@ -2719,39 +2720,50 @@ window.closeMapSheet = function() {
 };
 
 function renderMapSheet(plate, lat, lng, model) {
-  const container = document.getElementById('mapSheetContainer');
-  if (!container) return;
-  
-  // Inicializar o actualizar mapa Leaflet
-  if (!window._mapSheetInstance) {
-    window._mapSheetInstance = L.map(container, { zoomControl: true }).setView([lat, lng], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(window._mapSheetInstance);
-  } else {
-    window._mapSheetInstance.setView([lat, lng], 15);
-    // Remover markers antiguos
-    window._mapSheetInstance.eachLayer(function(layer) {
-      if (layer instanceof L.Marker) window._mapSheetInstance.removeLayer(layer);
-    });
-  }
-  
-  // Agregar marker
-  L.marker([lat, lng], {
-    title: plate + ' · ' + (model || 'Vehículo')
-  }).addTo(window._mapSheetInstance)
-    .bindPopup('<strong>' + plate + '</strong><br>' + (model || 'Vehículo'));
-  
-  // Invalidar size después de animación
-  setTimeout(() => {
-    window._mapSheetInstance.invalidateSize(false);
-  }, 350);
-  
-  // Set OSM link
+  // ✅ Setear el link de OpenStreetMap PRIMERO — funciona siempre, aunque Leaflet falle
   const osmLink = document.getElementById('mapSheetOsm');
   if (osmLink) {
     osmLink.href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=15`;
+  }
+
+  const container = document.getElementById('mapSheetContainer');
+  if (!container) return;
+
+  // Si Leaflet no está disponible (sin conexión al CDN), mostrar fallback sin romper
+  if (typeof L === 'undefined') {
+    console.warn('⚠️ Leaflet (L) no está disponible — mostrando solo el link a OpenStreetMap');
+    container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:13px;text-align:center;padding:20px;">Mapa no disponible sin conexión.<br>Usá el botón de abajo para ver en OpenStreetMap.</div>';
+    return;
+  }
+
+  try {
+    // Inicializar o actualizar mapa Leaflet
+    if (!window._mapSheetInstance) {
+      window._mapSheetInstance = L.map(container, { zoomControl: true }).setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(window._mapSheetInstance);
+    } else {
+      window._mapSheetInstance.setView([lat, lng], 15);
+      // Remover markers antiguos
+      window._mapSheetInstance.eachLayer(function(layer) {
+        if (layer instanceof L.Marker) window._mapSheetInstance.removeLayer(layer);
+      });
+    }
+
+    // Agregar marker
+    L.marker([lat, lng], {
+      title: plate + ' · ' + (model || 'Vehículo')
+    }).addTo(window._mapSheetInstance)
+      .bindPopup('<strong>' + plate + '</strong><br>' + (model || 'Vehículo'));
+
+    // Invalidar size después de animación
+    setTimeout(() => {
+      window._mapSheetInstance.invalidateSize(false);
+    }, 350);
+  } catch (err) {
+    console.error('Error inicializando mapa Leaflet:', err);
   }
 }
 
