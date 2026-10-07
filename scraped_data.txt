@@ -1,6 +1,7 @@
 yo6e51n	Jose Eduardo Baracco	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO CAR	--	4:30 PM  Sep 28, 2026	5:00 PM  Oct 31, 2026	Current
 ldpmojz	Christopher Reekie	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	9:00 AM  Oct 2, 2026	12:00 PM  Oct 13, 2026	Current
 ljmvr86	Eliahu Katche	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	9:00 AM  Oct 5, 2026	9:30 AM  Oct 9, 2026	Current
+l2x7prd	Carlos Gabriel Tenaglia	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	4:00 PM  Oct 8, 2026	4:00 PM  Oct 9, 2026	New
 kzp9zez	Axel Carvallo	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	9:00 AM  Oct 9, 2026	6:00 PM  Oct 13, 2026	New
 ynmvn62	Maria Cecilia Puig	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	5:00 PM  Oct 9, 2026	11:00 AM  Oct 13, 2026	New
 ldpm1en	Viviana Duffau	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	6:00 PM  Oct 13, 2026	1:00 PM  Oct 16, 2026	New
