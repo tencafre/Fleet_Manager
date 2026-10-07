@@ -1,5 +1,3 @@
-yevw52d	Service	Toyota Corolla HV AT AG192XC	Retiro CERRITO CAR	--	4:55 PM  May 22, 2026	6:55 PM  Jan 1, 2027	Current
-yqvzp6x	Service	Toyota ETIOS HB A/T AG350QE	Retiro CERRITO CAR	--	3:20 PM  Sep 28, 2026	2:45 AM  Dec 31, 2026	Current
 yo6e51n	Jose Eduardo Baracco	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO CAR	--	4:30 PM  Sep 28, 2026	5:00 PM  Oct 31, 2026	Current
 yej3rr3	Nicolás Mercorillo	Toyota Etios SD AT AG350QD	Retiro CERRITO CAR	--	11:00 AM  Oct 1, 2026	9:30 AM  Oct 9, 2026	Current
 ldpmojz	Christopher Reekie	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	9:00 AM  Oct 2, 2026	12:00 PM  Oct 13, 2026	Current
