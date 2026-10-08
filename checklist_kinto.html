@@ -344,6 +344,32 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 </div><!-- /page -->
 
 <script>
+// ✅ SISTEMA DE ESTADOS: Mostrar advertencia si el vehículo está archivado
+(function() {
+  try {
+    const payload = JSON.parse(localStorage.getItem('fleetcal_checklist_data') || '{}');
+    if (payload.archivoWarning && payload.archivoWarning.visible) {
+      const warning = payload.archivoWarning;
+      const banner = document.createElement('div');
+      banner.style.cssText = `
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: #78350f;
+        font-family: sans-serif;
+        border-radius: 4px;
+      `;
+      banner.innerHTML = `<strong>⚠️ Advertencia:</strong> ${warning.texto}`;
+      document.body.insertBefore(banner, document.body.firstChild);
+      console.log("ℹ️ [Checklist] Vehículo archivado - usuario advertido:", warning.status);
+    }
+  } catch(err) {
+    console.error("Error procesando archivoWarning:", err);
+  }
+})();
+</script>
 const VEHICLES = {
   "HATCHBACK": {
     label: "Hatchback",

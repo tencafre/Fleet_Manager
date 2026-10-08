@@ -1103,6 +1103,11 @@ document.getElementById('todayLbl').textContent =
 let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth();
 let ST = {pque:null, res:null, tel:null};
 window.ST = ST; // ✅ Exponer globalmente (let no se adjunta a window automáticamente)
+
+// ── SISTEMA DE ESTADOS DE VEHÍCULOS ──
+window.mostrarRetirados = false; // Toggle global: mostrar vehículos archivados
+const PARQUE_SNAPSHOT_KEY = 'fleetcal_parque_snapshot';
+const FUERA_OPERACION_URL = 'https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/FUERA_DE_OPERACION.txt';
 let modalPlate = null;
 
 // ── MAINTENANCE STORAGE (localStorage per plate) ──
@@ -1174,10 +1179,17 @@ async function renderCal() {
   console.log("-> [Render Saneado] Compilando interfaz móvil sobre lienzo limpio...");
 
   // 1. EXTRAER VARIABLES DE MEMORIA GLOBAL DE FORMA SEGURA
-  var parqueVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
+  var todosVehiculos = (window.ST && window.ST.pque) ? window.ST.pque : ((typeof ST !== "undefined" && ST.pque) ? ST.pque : []);
   var todasLasReservasRaw = (window.ST && window.ST.res) ? window.ST.res : ((typeof ST !== "undefined" && ST.res) ? ST.res : []);
-  
-  if (!parqueVehiculos || parqueVehiculos.length === 0) {
+
+  // FASE 2: Filtrar por status — mostrar activos o todos si toggle activado (NUEVO SISTEMA DE ESTADOS)
+  var vehiculosActivos    = todosVehiculos.filter(function(v){ return v.status === 'activo' || !v.status; });
+  var vehiculosRetirados  = todosVehiculos.filter(function(v){ return v.status === 'retirado_de_flota'; });
+  var vehiculosOtraOp     = todosVehiculos.filter(function(v){ return v.status === 'asignado_otra_op'; });
+  var totalArchivados     = vehiculosRetirados.length + vehiculosOtraOp.length;
+  var parqueVehiculos     = window.mostrarRetirados ? todosVehiculos : vehiculosActivos;
+
+  if (!vehiculosActivos || vehiculosActivos.length === 0) {
     console.log("-> [Render Saneado] Esperando datos del parque automotor...");
     return;
   }
@@ -1206,7 +1218,7 @@ async function renderCal() {
 
 
   // 2. CALCULAR LOS ÍNDICES REALES EN CALIENTE PARA EL PANEL SUPERIOR (Garantiza Conteo Exacto)
-  var totalFlota = parqueVehiculos.length;
+  var totalFlota = vehiculosActivos.length;
   var totalReservas = todasLasReservas.length; // Reflejará de forma exacta las 6 reservas reales
   var totalAlertas = 0;
 
@@ -1236,6 +1248,16 @@ async function renderCal() {
         '<div style="font-size:18px; font-weight:700; margin-top:2px; color:#f87171;">' + totalAlertas + '</div>' +
       '</div>' +
     '</div>' +
+    // ✅ NUEVO: Botón toggle archivados con contador
+    (totalArchivados > 0
+      ? '<div style="text-align:right;padding:0 10px 8px 10px;">' +
+          '<button onclick="window.mostrarRetirados=!window.mostrarRetirados;renderCal();" ' +
+            'style="background:transparent;border:1px solid #475569;padding:3px 10px;border-radius:4px;' +
+                   'cursor:pointer;font-size:10px;color:#94a3b8;font-family:sans-serif;">' +
+            (window.mostrarRetirados ? '✖ Ocultar archivados (' + totalArchivados + ')' : '📦 Ver archivados (' + totalArchivados + ')') +
+          '</button>' +
+        '</div>'
+      : '') +
     
     '<div id="agenda-mobile-render-box" style="width:100%; padding:0 8px; box-sizing:border-box; font-family:sans-serif; display:block !important; clear:both !important;">';
 
@@ -1324,6 +1346,11 @@ async function renderCal() {
           '<div>' +
             '<span style="font-family:monospace; font-size:12px; font-weight:700; background:#e0f2fe; color:#0369a1; padding:2px 5px; border-radius:4px; margin-right:6px;">' + plate + '</span>' +
             '<strong style="color:#1e293b; font-size:12px;">' + (veh.model || 'Toyota Flota') + '</strong>' +
+            (veh.status === 'retirado_de_flota'
+              ? ' <span style="font-size:9px;background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;padding:1px 5px;border-radius:3px;font-weight:600;">RETIRADO</span>'
+              : veh.status === 'asignado_otra_op'
+                ? ' <span style="font-size:9px;background:#fff7ed;color:#ea580c;border:1px solid #fdba74;padding:1px 5px;border-radius:3px;font-weight:600;">OTRA OP</span>'
+                : '') +
             '<div style="font-size:9px; color:#64748b; margin-top:3px;">' + ubicacion + '</div>' +
           '</div>' +
           '<div>' +
@@ -1901,27 +1928,44 @@ function renderHistList(plate) {
 
 // ── PARSERS ──
 function parsePque(txt){
-  return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
-    // split on tab first (new format has tabs separating extra cols)
-    const cols = line.split('\t');
-    const main = cols[0].trim().split(/\s+/);
-    const id = main[0];
-    const plate = main[main.length-1];
-    const model = main.slice(1,-1).join(' ');
-    const bodyType = cols[1] ? cols[1].trim() : '';
-    const tankCap = cols[2] ? parseInt(cols[2].trim()) || 0 : 0;
-    return {id, plate, model, bodyType, tankCap};
-  });
+  // Leer patentes marcadas como fuera de operación vía comentario en Pque.txt
+  // Formato: # FUERA_DE_OPERACION: AG269JN AG350QD
+  var fueraMatch = txt.match(/^#\s*FUERA_DE_OPERACION:\s*(.+)$/m);
+  var fueraSet = fueraMatch
+    ? new Set(fueraMatch[1].trim().split(/[\s,]+/).map(function(p){ return p.trim().toUpperCase(); }))
+    : new Set();
+
+  return txt.trim().split('\n')
+    .filter(function(l){ return l.trim() && !l.trim().startsWith('#'); })
+    .map(function(line){
+      var cols = line.split('\t');
+      var main = cols[0].trim().split(/\s+/);
+      var id       = main[0];
+      var plate    = main[main.length - 1];
+      var model    = main.slice(1, -1).join(' ');
+      var bodyType = cols[1] ? cols[1].trim() : '';
+      var tankCap  = cols[2] ? parseInt(cols[2].trim()) || 0 : 0;
+      var status   = fueraSet.has(plate.toUpperCase()) ? 'asignado_otra_op' : 'activo';
+      return {id, plate, model, bodyType, tankCap, status};
+    });
 }
 function parseRes(txt){
-  return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
-    const p=line.split('\t');
-    if(p.length<7) return null;
-    const [code,renter,vehicle,,,startS,endS,status]=p;
-    const plate=vehicle.trim().split(' ').pop();
-    return {code:code.trim(),renter:renter.trim(),vehicle:vehicle.trim(),plate,
-      start:parseD(startS.trim()),end:parseD(endS.trim()),status:(status||'').trim()};
-  }).filter(x=>x&&x.start&&x.end);
+  var seen = new Set();
+  return txt.trim().split('\n').filter(function(l){ return l.trim(); }).map(function(line){
+    var p = line.split('\t');
+    if(p.length < 7) return null;
+    var code    = p[0].trim();
+    var renter  = p[1].trim();
+    var vehicle = p[2].trim();
+    var startS  = p[5].trim();
+    var endS    = p[6].trim();
+    var status  = (p[7] || '').trim();
+    var plate   = vehicle.split(' ').pop();
+    if(seen.has(code)) return null; // ✅ DEDUP por código de reserva
+    seen.add(code);
+    return {code, renter, vehicle, plate,
+      start: parseD(startS), end: parseD(endS), status};
+  }).filter(function(x){ return x && x.start && x.end; });
 }
 function parseTel(txt){
   const m={};
@@ -2064,57 +2108,115 @@ async function pushTiresAccToRemote() {
 <!-- REEMPLAZO ABSOLUTO, LIMPIO Y DEFINITIVO DE CARGA AUTOMÁTICA -->
 
 // ── REEMPLAZO ABSOLUTO, SEGURO Y COMPILADO PARA TU DASHBOARD ──
+// ── DESCARGAR LISTA DE VEHÍCULOS "FUERA DE OPERACIÓN" ──
+function fetchFueraDeOperacion() {
+  return fetch(FUERA_OPERACION_URL + '?v=' + Date.now())
+    .then(r => {
+      if (!r.ok) throw new Error('No encontrado');
+      return r.text();
+    })
+    .then(txt => {
+      return txt.trim().split('\n')
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'))
+        .map(line => line.toUpperCase());
+    })
+    .catch(err => {
+      console.warn('⚠️ No se pudo descargar FUERA_DE_OPERACION.txt:', err.message);
+      return [];
+    });
+}
+
 function sincronizarFlotaCDN() {
   console.log("Iniciando carga automática de datos desde CDN...");
 
   var tokenBuster = Date.now();
-  // El dominio oficial, completo e infalible de jsDelivr con todas sus barras exactas
   var cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
-
   var urlPque = cdnRaiz + "Pque.txt?v=" + tokenBuster;
-  //var urlTel  = cdnRaiz + "TelemGts_data.txt?v=" + tokenBuster;
-  //var urlRes  = cdnRaiz + "scraped_data.txt?v=" + tokenBuster;
   var urlRes = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/scraped_data.txt?v=" + tokenBuster;
-  // 2. ── CURA DEFINITIVA PARA LA CACHÉ DE TELEMETRÍA CADA 1 HORA ──
-  // Cambiamos '@main/' por el token dinámico directamente en la estructura de jsDelivr.
-  // Esto obliga al CDN a ir a buscar físicamente el archivo recién subido a GitHub.
-  //var urlTel = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager@" + tokenBuster + "/TelemGts_data.txt";
-   var urlTel = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/TelemGts_data.txt?=" + tokenBuster;
+  var urlTel = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/TelemGts_data.txt?=" + tokenBuster;
   console.log("-> [Ruta Telemetría Purgada] URL: " + urlTel);
   console.log("-> [Rutas Generadas] URL Parque: " + urlPque);
 
-   // 1. CARGAR RESERVAS (scraped_data.txt)
+  // 1. CARGAR RESERVAS
   fetch(urlRes)
-    .then(function(res) {
-      if (!res.ok) throw new Error("Error al descargar reservas");
-      return res.text(); // Obtenemos el texto plano tabulado (\t)
-    })
-    .then(function(data) {
-      // Usamos tu función parseRes para procesar el archivo del servidor
-      ST.res = parseRes(data); 
-      console.log("¡Éxito! Reservas actualizadas desde el CDN:", ST.res.length);
-      
-      // Forzamos el redibujado inmediato del calendario con los datos nuevos
-      if (typeof tryRender === "function") tryRender(); 
+    .then(function(r){ if(!r.ok) throw new Error('Error reservas'); return r.text(); })
+    .then(function(data){
+      var nuevasRes = parseRes(data);
+      var existentes = ST.res || [];
+      var codigosExistentes = {};
+      existentes.forEach(function(r){ codigosExistentes[r.code] = true; });
+      var soloNuevas = nuevasRes.filter(function(r){ return !codigosExistentes[r.code]; });
+      nuevasRes.forEach(function(nueva){
+        var idx = existentes.findIndex(function(r){ return r.code === nueva.code; });
+        if(idx >= 0 && existentes[idx].status !== nueva.status){
+          existentes[idx].status = nueva.status;
+        }
+      });
+      ST.res = existentes.concat(soloNuevas);
+      console.log("¡Éxito! Reservas actualizadas desde el CDN: " + nuevasRes.length);
+      if (typeof tryRender === "function") tryRender();
     })
     .catch(function(err) { console.error("Fallo al cargar Reservas:", err); });
 
-  // 2. CARGAR PARQUE AUTOMOTOR (Pque.txt)
-  fetch(urlPque)
-    .then(function(res) {
-      if (!res.ok) throw new Error("Error al descargar Parque");
-      return res.text();
-    })
-    .then(function(data) {
+  // 2. CARGAR PARQUE + SISTEMAS DE ESTADOS
+  Promise.all([
+    fetch(urlPque).then(r => r.ok ? r.text() : Promise.reject('Error parque')),
+    fetchFueraDeOperacion()
+  ])
+    .then(function([dataPque, fueraDeOp]){
       if (typeof parsePque === "function") {
-        ST.pque = parsePque(data);
-        console.log("¡Éxito! Parque actualizado desde el CDN:", ST.pque.length);
+        var nuevoParque = parsePque(dataPque);
+        var snapshotGuardado = localStorage.getItem(PARQUE_SNAPSHOT_KEY);
+        var snapshotAnterior = snapshotGuardado ? JSON.parse(snapshotGuardado) : {plates: {}};
+        var placasNuevas = new Set(nuevoParque.map(v => v.plate.toUpperCase()));
+        var placasAnteriores = new Set(Object.keys(snapshotAnterior.plates));
+        var agregadas = Array.from(placasNuevas).filter(p => !placasAnteriores.has(p));
+        var quitadas = Array.from(placasAnteriores).filter(p => !placasNuevas.has(p));
+        var nuevoSnapshot = {plates: {}, syncDate: new Date().toISOString()};
+        nuevoParque.forEach(function(v){
+          var estado = 'activo';
+          if (fueraDeOp.includes(v.plate.toUpperCase())) {
+            estado = 'asignado_otra_op';
+          }
+          nuevoSnapshot.plates[v.plate.toUpperCase()] = {
+            id: v.id, plate: v.plate, model: v.model, bodyType: v.bodyType, tankCap: v.tankCap,
+            status: estado,
+            lastSyncDate: new Date().toISOString()
+          };
+        });
+        quitadas.forEach(function(plate){
+          var vehAnterior = snapshotAnterior.plates[plate];
+          if (vehAnterior) {
+            nuevoSnapshot.plates[plate] = Object.assign({}, vehAnterior, {
+              status: 'retirado_de_flota',
+              lastSyncDate: new Date().toISOString(),
+              fechaRetiro: new Date().toISOString()
+            });
+          }
+        });
+        localStorage.setItem(PARQUE_SNAPSHOT_KEY, JSON.stringify(nuevoSnapshot));
+        if (agregadas.length > 0 || quitadas.length > 0) {
+          console.log("[PARQUE SYNC] " + new Date().toISOString());
+          if (agregadas.length > 0) console.log("  + " + agregadas.length + " vehículos agregados: " + agregadas.join(", "));
+          if (quitadas.length > 0) console.log("  - " + quitadas.length + " vehículos retirados: " + quitadas.join(", "));
+        }
+        ST.pque = Object.values(nuevoSnapshot.plates);
+        console.log("¡Éxito! Parque actualizado desde el CDN: " + ST.pque.length);
         if (typeof tryRender === "function") tryRender();
       }
     })
-    .catch(function(err) { console.error("Fallo al cargar Parque:", err); });
+    .catch(function(err) {
+      console.error('Fallo sincronización parque:', err);
+      var snapshotGuardado = localStorage.getItem(PARQUE_SNAPSHOT_KEY);
+      if (snapshotGuardado) {
+        ST.pque = Object.values(JSON.parse(snapshotGuardado).plates);
+        console.warn('⚠️ Usando snapshot anterior de parque (sincronización falló)');
+        if (typeof tryRender === "function") tryRender();
+      }
+    });
 
-  // 3. CARGAR TELEMETRÍA (TelemGts_data.txt)
+  // 3. CARGAR TELEMETRÍA
   fetch(urlTel)
     .then(function(res) {
       if (!res.ok) throw new Error("Error al descargar Telemetría");
@@ -3668,11 +3770,23 @@ window.abrirChecklistReserva = async function(btnElement) {
     
     var pqueList = (window.ST && window.ST.pque) ? window.ST.pque : [];
     var veh = pqueList.find(function(v) { return v && v.plate && v.plate.toUpperCase().trim() === p; });
-    
+
+    // FASE 2: Detectar vehículos archivados — dejar pasar con warning visible
+    var archivoWarning = null;
     if (veh) {
       console.log("✓ Vehículo encontrado en parque global:", veh);
       console.log("  → Silueta (bodyType): " + (veh.bodyType || "N/A"));
       console.log("  → Capacidad tanque: " + (veh.tankCap || "50L"));
+      if (veh.status && veh.status !== 'activo') {
+        var etiq = veh.status === 'retirado_de_flota' ? 'retirado de la flota' : 'asignado a otra operación';
+        console.warn("⚠️ [Checklist] " + p + " está " + etiq + " desde " + (veh.fechaRetiro || veh.lastSyncDate));
+        archivoWarning = {
+          visible: true,
+          texto: "⚠️ Vehículo " + etiq + " (última actividad: " + (veh.lastSyncDate ? veh.lastSyncDate.slice(0,10) : 'desconocida') + "). Verificar manualmente silueta y capacidad de tanque.",
+          status: veh.status,
+          lastDate: veh.lastSyncDate || null
+        };
+      }
     } else {
       console.warn("⚠️ Vehículo " + p + " no encontrado en parque global, usando defaults");
     }
@@ -3781,9 +3895,10 @@ window.abrirChecklistReserva = async function(btnElement) {
       km:         kmFormateado !== "" && kmFormateado !== "—" ? kmFormateado : "—",
       tankCap:    veh ? (veh.tankCap || 50) : 50,
       bodyType:   veh ? (veh.bodyType || 'HATCHBACK') : 'HATCHBACK',
-      tires:      getTireData(p),          // ✅ Objetos completos desde localStorage
-      tireNums:   getTireNumbers(p),       // ✅ Array de números
-      accesorios: getAccData(p)            // ✅ Objetos completos desde localStorage
+      tires:         getTireData(p),          // ✅ Objetos completos desde localStorage
+      tireNums:      getTireNumbers(p),       // ✅ Array de números
+      accesorios:    getAccData(p),           // ✅ Objetos completos desde localStorage
+      archivoWarning: archivoWarning          // ✅ FASE 2: null si activo, objeto si archivado
     };
 
     console.log("DEBUG PAYLOAD ANTES DE GUARDAR:");
