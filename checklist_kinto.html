@@ -344,6 +344,27 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 </div><!-- /page -->
 
 <script>
+// Aviso si el vehículo está archivado (retirado de flota / otra operación)
+(function() {
+  function mostrarAviso() {
+    try {
+      var payload = JSON.parse(localStorage.getItem('fleetcal_checklist_data') || '{}');
+      var w = payload.archivoWarning;
+      if (!w || !w.visible) return;
+      var b = document.createElement('div');
+      b.style.cssText = 'background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;margin:0 0 12px 0;font-size:13px;color:#78350f;font-family:sans-serif;border-radius:4px;';
+      var strong = document.createElement('strong');
+      strong.textContent = '\u26a0\ufe0f Advertencia: ';
+      b.appendChild(strong);
+      b.appendChild(document.createTextNode(w.texto || ''));
+      document.body.insertBefore(b, document.body.firstChild);
+    } catch (e) { console.error('archivoWarning:', e); }
+  }
+  if (document.body) mostrarAviso();
+  else document.addEventListener('DOMContentLoaded', mostrarAviso);
+})();
+</script>
+<script>
 const VEHICLES = {
   "HATCHBACK": {
     label: "Hatchback",
