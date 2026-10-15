@@ -4,6 +4,7 @@ ldpm1en	Viviana Duffau	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	6:00 P
 k906qnp	Diego Hernan Polo	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	9:00 AM  Oct 14, 2026	9:00 AM  Oct 19, 2026	Current
 lrjzd4d	Lucas Nahuel Franco	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	12:00 PM  Oct 16, 2026	11:00 AM  Oct 19, 2026	New
 kvrxoqo	Service	Toyota Yaris HB AT AI545FP	Retiro CERRITO CAR	--	3:40 PM  Oct 16, 2026	7:40 PM  Oct 25, 2026	New
+y44540z	Erik Samuel Urbano	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	4:00 PM  Oct 16, 2026	4:00 PM  Oct 20, 2026	New
 yo6rr9m	Solange Estefania de los angeles Molina	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	5:30 PM  Oct 16, 2026	1:40 PM  Oct 19, 2026	New
 kggdg77	Service	Toyota Corolla Cross HV AT AG765WS	Retiro CERRITO CAR	--	2:35 PM  Oct 17, 2026	8:35 AM  Oct 19, 2026	New
 yqvzqvd	Lieven Van Nevel	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	11:05 AM  Oct 28, 2026	11:05 AM  Nov 4, 2026	New
