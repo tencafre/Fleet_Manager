@@ -3,7 +3,7 @@ yej3w8o	Service	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	2:55 PM  Oct 12
 ymdzdn9	Juan Vazquez	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	11:00 AM  Oct 16, 2026	11:00 AM  Oct 21, 2026	Current
 k5d3d56	David Kacheroff	Toyota Yaris HB AT AI545FP	Retiro CERRITO CAR	--	6:00 PM  Oct 16, 2026	6:00 PM  Oct 24, 2026	Current
 yejv1g3	Marco Pavlovsky	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	10:00 AM  Oct 20, 2026	10:00 AM  Oct 22, 2026	Current
-kvrx1p2	Yumberty Martínez	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	1:55 PM  Oct 20, 2026	1:55 PM  Oct 21, 2026	Pending
+kvrx1p2	Yumberty Martínez	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	1:55 PM  Oct 20, 2026	1:55 PM  Oct 21, 2026	Current
 kzpq66e	Nicolas Ezequiel Mammone	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	3:30 PM  Oct 20, 2026	2:00 PM  Oct 24, 2026	Pending
 y6m2d86	Roberto Silvio Giuliani	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	3:30 PM  Oct 23, 2026	3:30 PM  Oct 26, 2026	New
 yqvzqvd	Lieven Van Nevel	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	11:05 AM  Oct 28, 2026	11:05 AM  Nov 4, 2026	New
