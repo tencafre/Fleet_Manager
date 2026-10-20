@@ -6,6 +6,7 @@ yejv1g3	Marco Pavlovsky	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	10:00 A
 kvrx1p2	Yumberty Martínez	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	1:55 PM  Oct 20, 2026	1:55 PM  Oct 21, 2026	Current
 kzpq66e	Nicolas Ezequiel Mammone	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	3:30 PM  Oct 20, 2026	2:00 PM  Oct 24, 2026	Current
 y6m2d86	Roberto Silvio Giuliani	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	3:30 PM  Oct 23, 2026	3:30 PM  Oct 26, 2026	New
+kvrx771	TLAC - ESG & Communication 4	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	9:00 AM  Oct 26, 2026	6:00 PM  Nov 2, 2026	New
 yqvzqvd	Lieven Van Nevel	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	11:05 AM  Oct 28, 2026	11:05 AM  Nov 4, 2026	New
 ypnjrw1	Mercedes Alvarez	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	10:30 AM  Nov 6, 2026	10:30 AM  Nov 11, 2026	New
 ynmv0x3	Viviana Duffau	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	12:00 PM  Nov 6, 2026	4:00 PM  Nov 13, 2026	New
