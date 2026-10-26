@@ -69,10 +69,6 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .vname{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .vplate{font-size:10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
 .plate-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(30,64,175,.2);border-radius:4px;padding:1px 7px}
-.vtelrow{display:flex;align-items:center;gap:8px;margin-top:4px}
-.vti{font-size:9px;color:var(--text3);display:inline-flex;align-items:center;gap:2px}
-.fbar-track{display:inline-block;width:32px;height:3px;background:var(--border-s);border-radius:2px;overflow:hidden;vertical-align:middle}
-.fbar-fill{display:block;height:100%;border-radius:2px}
 .dcell{width:var(--day-w);height:var(--cell-h);border-right:1px solid var(--border);position:relative;vertical-align:middle;padding:0}
 .dcell.wk{background:var(--surface2)}
 .dcell.tcol{background:var(--accent-mid)}
@@ -90,18 +86,6 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .lsw{width:18px;height:4px;border-radius:2px}
 .tip{position:fixed;background:var(--surface);color:var(--text);font-size:11px;padding:10px 13px;border-radius:var(--radius-sm);pointer-events:none;z-index:9999;display:none;border:1px solid var(--border-s);box-shadow:var(--shadow-lg)}
 .empty{padding:56px;text-align:center;color:var(--text3)}
-.map-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2500;display:none;align-items:center;justify-content:center;padding:16px}
-.map-overlay.open{display:flex}
-.map-modal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:640px;overflow:hidden;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:90vh}
-.map-head{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.map-title{font-size:14px;font-weight:700}
-.map-sub{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
-.map-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px}
-#fleetMapContainer{height:400px;width:100%;flex:1}
-.map-foot{padding:8px 18px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.map-coords{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
-.map-btn-osm{font-size:11px;color:var(--accent);background:var(--accent-l);border:1px solid var(--accent);border-radius:5px;padding:5px 10px;text-decoration:none}
-.map-pin-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(96,165,250,.2);border-radius:4px;padding:1px 6px;cursor:pointer;margin-left:2px}
 </style>
 </head>
 <body>
@@ -140,7 +124,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
     </div>
   </div>
 
-  <!-- NUEVA VISTA DE SECTORES POR UBICACIÓN (PERU, CERRITO, BOOKED) -->
+  <!-- VISTA DE SECTORES POR MODELO Y MARCA TOYOTA EXACTOS -->
   <div id="sectorsViewContainer" style="display:none;">
     <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:16px;">
       <!-- Estacionamiento PERU -->
@@ -185,20 +169,38 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 <div class="tip" id="tip"></div>
 
 <script>
-// Mapeo exacto de imágenes de estudio / renders oficiales por Dominio (Patente)
-const MODEL_IMAGES = {
-  'AG838JY': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=400&q=80', // Hilux DC
-  'AG269JN': 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=400&q=80', // SW4 4x4
-  'AG765WS': 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=400&q=80', // Corolla Cross
-  'AI239SV': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=400&q=80', // Corolla HV
-  'AG192XC': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=400&q=80', // Corolla HV
-  'AG350QD': 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=400&q=80', // Etios SD
-  'AG350QF': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80', // Etios HB
-  'AG350QE': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80', // Etios HB
-  'AG500BY': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80', // Yaris HB
-  'AG708YK': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80', // Yaris HB
-  'AG708YJ': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80'  // Yaris HB
+// RENDERS VECTORIALES DE ESTUDIO TÉCNICOS POR MODELO Y VERSIÓN TOYOTA EXACTA
+const TOYOTA_EXACT_RENDERS = {
+  // Toyota Hilux 4x4 Doble Cabina (Pick-Up)
+  HILUX: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-8 l-5 -7 h-20 v-6 h-22 l-8 13 h-15 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M48 9 v11 h18 l4 -11 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/><path d="M70 20 h25 v8 h-25 z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  
+  // Toyota SW4 4x4 7A (SUV Grande de Caja Cerrada)
+  SW4: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-12 l-8 -8 h-35 l-12 8 h-13 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M28 16 h18 v8 h-22 z M50 16 h22 l5 8 h-27 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  
+  // Toyota Corolla Cross HV (Crossover SUV Mediano)
+  CROSS: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M6 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h11 v-10 l-7 -7 h-28 l-10 6 h-17 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M30 18 h16 v7 h-19 z M50 18 h20 l5 7 h-25 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  
+  // Toyota Corolla HV (Sedán Ejecutivo Tricuerpo 4 Puertas)
+  COROLLA_SEDAN: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M4 28 h12 a6 6 0 0 1 12 0 h34 a6 6 0 0 1 12 0 h12 v-7 h-8 l-12 -9 h-26 l-12 8 h-12 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="22" cy="28" r="4" fill="currentColor"/><circle cx="74" cy="28" r="4" fill="currentColor"/><path d="M28 19 h18 v6 h-22 z M50 19 h20 l7 6 h-27 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  
+  // Toyota Etios SD (Sedán Compacto Tricuerpo)
+  ETIOS_SEDAN: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h11 v-6 h-6 l-10 -8 h-24 l-10 7 h-11 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M28 20 h16 v5 h-20 z M48 20 h18 l6 5 h-24 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  
+  // Toyota Yaris HB / Etios HB (Hatchback 5 Puertas Corto)
+  HATCHBACK: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M8 28 h12 a6 6 0 0 1 12 0 h30 a6 6 0 0 1 12 0 h10 v-9 l-8 -7 h-22 l-12 8 h-16 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="26" cy="28" r="4" fill="currentColor"/><circle cx="72" cy="28" r="4" fill="currentColor"/><path d="M30 19 h16 v6 h-20 z M50 19 h16 l6 6 h-22 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`
 };
+
+function getExactToyotaRender(modelName, plate) {
+  const m = (modelName || '').toUpperCase();
+  const p = (plate || '').toUpperCase();
+  
+  if (m.includes('HILUX') || p === 'AG838JY') return { render: TOYOTA_EXACT_RENDERS.HILUX, label: 'Pick-Up Doble Cabina 4x4' };
+  if (m.includes('SW4') || p === 'AG269JN') return { render: TOYOTA_EXACT_RENDERS.SW4, label: 'SUV 7 Plazas 4x4' };
+  if (m.includes('CROSS') || p === 'AG765WS') return { render: TOYOTA_EXACT_RENDERS.CROSS, label: 'Crossover Hybrid' };
+  if (p === 'AG350QD' || (m.includes('ETIOS') && m.includes('SD'))) return { render: TOYOTA_EXACT_RENDERS.ETIOS_SEDAN, label: 'Sedán Compacto' };
+  if (m.includes('COROLLA') || p === 'AI239SV' || p === 'AG192XC') return { render: TOYOTA_EXACT_RENDERS.COROLLA_SEDAN, label: 'Sedán Híbrido' };
+  return { render: TOYOTA_EXACT_RENDERS.HATCHBACK, label: 'Hatchback 5P' };
+}
 
 let currentView = 'calendar';
 function toggleViewMode() {
@@ -231,18 +233,20 @@ function renderSectorsView() {
   ST.pque.forEach(veh => {
     const tel = ST.tel[veh.plate] || {};
     const loc = tel.loc || 'CERRITO';
-    const img = MODEL_IMAGES[veh.plate] || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80';
+    const spec = getExactToyotaRender(veh.model, veh.plate);
 
     const card = `
-      <div style="background:var(--surface2); border:1px solid var(--border-s); border-radius:8px; overflow:hidden; display:flex; gap:10px; align-items:center; padding:8px;">
-        <img src="${img}" style="width:75px; height:50px; object-fit:cover; border-radius:4px;">
+      <div style="background:var(--surface2); border:1px solid var(--border-s); border-radius:8px; display:flex; gap:12px; align-items:center; padding:10px;">
+        <div style="width:65px; height:42px; color:var(--accent); flex-shrink:0;">
+          ${spec.render}
+        </div>
         <div style="flex:1; overflow:hidden;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <span class="plate-tag">${veh.plate}</span>
-            <span style="font-size:9px; color:var(--text3);">${tel.km || '0'} km</span>
+            <span style="font-size:9px; color:var(--text3); font-family:'JetBrains Mono';">${tel.km || '0'} km</span>
           </div>
           <div style="font-weight:600; font-size:11px; color:var(--text); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${veh.model}</div>
-          <div style="font-size:9px; color:var(--text2); margin-top:1px;">⛽ Combustible: ${tel.fuel || '-'}L</div>
+          <div style="font-size:9px; color:var(--text2); margin-top:1px;">⛽ ${tel.fuel || '-'}L · <span style="color:var(--accent);">${spec.label}</span></div>
         </div>
       </div>
     `;
@@ -255,12 +259,14 @@ function renderSectorsView() {
       const topPos = 20 + ((cBooked * 65) % 240);
       const speed = 14 + (cBooked * 2);
       const sprite = document.createElement('div');
-      sprite.style.cssText = `position:absolute; top:${topPos}px; left:-140px; width:130px; background:var(--surface); border:1px solid var(--border-s); border-radius:6px; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.3); animation: driveRight ${speed}s linear infinite; animation-delay: ${cBooked * 1.2}s;`;
+      sprite.style.cssText = `position:absolute; top:${topPos}px; left:-160px; width:150px; background:var(--surface); border:1px solid var(--border-s); border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.3); animation: driveRight ${speed}s linear infinite; animation-delay: ${cBooked * 1.2}s;`;
       sprite.innerHTML = `
-        <img src="${img}" style="width:100%; height:40px; object-fit:cover; border-radius:4px;">
-        <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:2px; font-family:'JetBrains Mono'; font-weight:600;">
-          <span style="color:var(--c-booked);">${veh.plate}</span>
-          <span style="color:var(--text3);">${tel.fuel || '-'}L</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="width:45px; height:30px; color:var(--c-booked); flex-shrink:0;">${spec.render}</div>
+          <div style="overflow:hidden;">
+            <div style="font-size:9px; font-family:'JetBrains Mono'; font-weight:700; color:var(--c-booked);">${veh.plate}</div>
+            <div style="font-size:8px; color:var(--text3);">⛽ ${tel.fuel || '-'}L</div>
+          </div>
         </div>
       `;
       pStreet.appendChild(sprite);
@@ -275,12 +281,12 @@ function renderSectorsView() {
   document.getElementById('countBooked').textContent = `${cBooked} en calle`;
 }
 
-// Inyección de animación CSS para el tránsito
+// Animación CSS para el tránsito
 const animStyle = document.createElement('style');
-animStyle.innerText = `@keyframes driveRight { 0% { left: -150px; } 100% { left: 105%; } }`;
+animStyle.innerText = `@keyframes driveRight { 0% { left: -170px; } 100% { left: 105%; } }`;
 document.head.appendChild(animStyle);
 
-// Datos y funciones base del calendario original
+// Datos y funciones base originales del calendario
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 document.getElementById('todayLbl').textContent = TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
 let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth();
@@ -325,7 +331,6 @@ function parseD(str){
   return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
 }
 
-// Datos embebidos iniciales y carga sincronizada
 (function(){
   ST.pque=parsePque(`18723 Toyota Corolla HV AT AI239SV	SEDAN	43
 10914 Toyota SW4 4x4 7A AT AG269JN	SUV	80
@@ -401,7 +406,6 @@ function renderCal(){
 
   ST.pque.forEach(veh=>{
     const vRes=ST.res.filter(r=>r.plate===veh.plate);
-    const tel=ST.tel[veh.plate];
     html+=`<tr class="vrow">`;
     html+=`<td class="cltd"><span class="vname">${veh.model}</span><span class="vplate"><span class="plate-tag">${veh.plate}</span></span></td>`;
     html+=`<td class="cmtd"><span style="font-size:9px;color:var(--text3)">Al día</span></td>`;
