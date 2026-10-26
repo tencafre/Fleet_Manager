@@ -1,275 +1,436 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fleet Calendar & Sector Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .sector-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sector-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .car-image-container {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-        }
-        .car-image {
-            object-fit: contain;
-            transition: transform 0.3s ease;
-        }
-        .sector-card:hover .car-image {
-            transform: scale(1.05);
-        }
-        .pulse-indicator {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Calendar — Retiro CERRITO CAR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f5;--surface:#ffffff;--surface2:#f5f6f8;--surface3:#eceef2;--glass:rgba(255,255,255,0.72);
+  --border:rgba(0,0,0,0.07);--border-s:rgba(0,0,0,0.13);--border-m:rgba(0,0,0,0.20);
+  --text:#0f1117;--text2:#4a5568;--text3:#8a95a3;--text-inv:#ffffff;
+  --accent:#0d9488;--accent-2:#0f766e;--accent-l:#ccfbf1;--accent-mid:rgba(13,148,136,0.12);
+  --c-current:#166534;--cl-current:#dcfce7;--c-new:#9a3412;--cl-new:#ffedd5;
+  --c-future:#3730a3;--cl-future:#e0e7ff;--c-service:#92400e;--cl-service:#fef3c7;
+  --c-error:#b91c1c;--cl-error:#fee2e2;--c-booked:#1e40af;--cl-booked:#dbeafe;
+  --col-label:216px;--col-maint:152px;--day-w:28px;--cell-h:58px;--header-h:46px;
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);--shadow-lg:0 12px 40px rgba(0,0,0,.14);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#0d0f14;--surface:#161920;--surface2:#1e2230;--surface3:#252a38;--glass:rgba(22,25,32,0.80);
+  --border:rgba(255,255,255,0.06);--border-s:rgba(255,255,255,0.11);--border-m:rgba(255,255,255,0.18);
+  --text:#e8eaf0;--text2:#8892a4;--text3:#4e5a6e;--text-inv:#0d0f14;
+  --accent:#14b8a6;--accent-2:#0d9488;--accent-l:rgba(20,184,166,0.15);--accent-mid:rgba(20,184,166,0.10);
+}}
+body{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);min-height:100vh}
+code,kbd,.mono{font-family:'JetBrains Mono',monospace}
+.topbar{background:var(--glass);backdrop-filter:blur(16px);border-bottom:1px solid var(--border-s);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-logo{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center}
+.brand-logo i{color:#fff;font-size:14px}
+.brand-name{font-size:13px;font-weight:600;color:var(--text)}
+.brand-sep{width:1px;height:16px;background:var(--border-s)}
+.brand-sub{font-size:11px;color:var(--text3)}
+.tr{display:flex;align-items:center;gap:8px}
+.datebadge{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.filebtn{font-size:11px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Inter',sans-serif}
+.filebtn:hover{background:var(--surface3);color:var(--text)}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border-s)}
+.sc{background:var(--surface);padding:14px 20px;position:relative}
+.sl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:5px}
+.sv{font-size:24px;font-weight:700;line-height:1;color:var(--text)}
+.ss{font-size:10px;color:var(--text3);margin-top:4px}
+.main{padding:22px 24px 56px}
+.mnav{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.mtitle{font-size:16px;font-weight:600;min-width:138px;color:var(--text)}
+.nbtn{width:28px;height:28px;border:1px solid var(--border-s);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.nbtn:hover{background:var(--surface2);color:var(--text)}
+.tbtn{width:auto;padding:0 10px;color:var(--accent);border-color:var(--accent-l);background:var(--accent-mid)}
+.calwrap{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-md)}
+.calscroll{overflow-x:auto}
+.caltable{border-collapse:collapse}
+.clth{width:var(--col-label);background:var(--surface);border-right:1px solid var(--border-s);position:sticky;left:0;z-index:11;padding:0 14px;height:var(--header-h);vertical-align:middle}
+.cmth{width:var(--col-maint);background:var(--surface);border-right:1px solid var(--border-s);position:sticky;left:var(--col-label);z-index:11;padding:0 10px;height:var(--header-h);vertical-align:middle}
+.cltd{background:var(--surface);border-right:1px solid var(--border-s);padding:7px 14px;position:sticky;left:0;z-index:9;border-bottom:1px solid var(--border);vertical-align:top}
+.cmtd{background:var(--surface);border-right:1px solid var(--border-s);padding:7px 10px;position:sticky;left:var(--col-label);z-index:9;border-bottom:1px solid var(--border);vertical-align:top}
+.dayth{width:var(--day-w);height:var(--header-h);text-align:center;padding-bottom:7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border-s);font-size:9px;color:var(--text3);background:var(--surface)}
+.dayth .dn{display:block;font-size:12px;font-weight:600;color:var(--text2);font-family:'JetBrains Mono',monospace}
+.dayth.tcol{background:var(--accent-mid)!important}
+.dayth.wk{background:var(--surface2)}
+.vrow{border-bottom:1px solid var(--border)}
+.vname{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.vplate{font-size:10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
+.plate-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(30,64,175,.2);border-radius:4px;padding:1px 7px}
+.vtelrow{display:flex;align-items:center;gap:8px;margin-top:4px}
+.vti{font-size:9px;color:var(--text3);display:inline-flex;align-items:center;gap:2px}
+.fbar-track{display:inline-block;width:32px;height:3px;background:var(--border-s);border-radius:2px;overflow:hidden;vertical-align:middle}
+.fbar-fill{display:block;height:100%;border-radius:2px}
+.dcell{width:var(--day-w);height:var(--cell-h);border-right:1px solid var(--border);position:relative;vertical-align:middle;padding:0}
+.dcell.wk{background:var(--surface2)}
+.dcell.tcol{background:var(--accent-mid)}
+.bar{position:absolute;top:50%;transform:translateY(-50%);height:17px;display:flex;align-items:center;overflow:hidden;z-index:2;font-size:8px;font-weight:600;white-space:nowrap;padding:0 5px;cursor:pointer}
+.bar.bs{border-radius:5px 0 0 5px;left:3px;right:0}
+.bar.be{border-radius:0 5px 5px 0;left:0;right:3px}
+.bar.bso{border-radius:5px;left:3px;right:3px}
+.bar.bm{left:0;right:0;border-radius:0}
+.bc{background:var(--cl-current);color:var(--c-current);border-left:2.5px solid var(--c-current)}
+.bn{background:var(--cl-new);color:var(--c-new);border-left:2.5px solid var(--c-new)}
+.bf{background:var(--cl-future);color:var(--c-future);border-left:2.5px solid var(--c-future)}
+.bs2{background:var(--cl-service);color:var(--c-service);border-left:2.5px solid var(--c-service)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);align-items:center}
+.li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
+.lsw{width:18px;height:4px;border-radius:2px}
+.tip{position:fixed;background:var(--surface);color:var(--text);font-size:11px;padding:10px 13px;border-radius:var(--radius-sm);pointer-events:none;z-index:9999;display:none;border:1px solid var(--border-s);box-shadow:var(--shadow-lg)}
+.empty{padding:56px;text-align:center;color:var(--text3)}
+.map-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2500;display:none;align-items:center;justify-content:center;padding:16px}
+.map-overlay.open{display:flex}
+.map-modal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:640px;overflow:hidden;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:90vh}
+.map-head{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.map-title{font-size:14px;font-weight:700}
+.map-sub{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
+.map-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px}
+#fleetMapContainer{height:400px;width:100%;flex:1}
+.map-foot{padding:8px 18px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.map-coords{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.map-btn-osm{font-size:11px;color:var(--accent);background:var(--accent-l);border:1px solid var(--accent);border-radius:5px;padding:5px 10px;text-decoration:none}
+.map-pin-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(96,165,250,.2);border-radius:4px;padding:1px 6px;cursor:pointer;margin-left:2px}
+</style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans antialiased">
+<body>
 
-    <!-- BARRA SUPERIOR / TOPBAR -->
-    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-car-side text-red-500 text-2xl"></i>
-                <h1 class="font-bold text-xl tracking-wide">Fleet Manager</h1>
-            </div>
-            
-            <!-- Selector de Vistas -->
-            <div class="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-                <button id="btnCalendarView" onclick="switchView('calendar')" class="px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-red-600 text-white shadow">
-                    <i class="fa-regular fa-calendar-days mr-2"></i>Calendario
-                </button>
-                <button id="btnSectorsView" onclick="switchView('sectors')" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-all">
-                    <i class="fa-solid fa-layer-group mr-2"></i>Vista de Sectores
-                </button>
-            </div>
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-logo"><i class="ti ti-car"></i></div>
+    <span class="brand-name">Fleet Calendar</span>
+    <div class="brand-sep"></div>
+    <span class="brand-sub">Retiro CERRITO CAR</span>
+  </div>
+  <div class="tr">
+    <span class="datebadge" id="todayLbl"></span>
+    <button class="filebtn" onclick="toggleViewMode()" id="viewToggleBtn" style="color:var(--accent)">
+      <i class="ti ti-layout-grid" style="font-size:13px"></i> Ver Sectores
+    </button>
+    <button class="filebtn" onclick="openTireModal(null,null)" style="color:var(--accent)">
+      <i class="ti ti-tire" style="font-size:13px"></i> Neumáticos
+    </button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="sc"><div class="sl">Flota total</div><div class="sv" id="stT">—</div><div class="ss">vehículos</div></div>
+  <div class="sc"><div class="sl">En curso hoy</div><div class="sv" id="stC">—</div><div class="ss">reservas activas</div></div>
+  <div class="sc"><div class="sl">Próximas</div><div class="sv" id="stN">—</div><div class="ss">reservas nuevas</div></div>
+  <div class="sc"><div class="sl">Disponibles</div><div class="sv" id="stA">—</div><div class="ss">sin reserva</div></div>
+  <div class="sc"><div class="sl">Alertas mant.</div><div class="sv" id="stM" style="color:#dc2626">—</div><div class="ss">próx. service</div></div>
+</div>
+
+<div class="main">
+  <!-- VISTA CALENDARIO TRADICIONAL -->
+  <div id="calendarViewContainer">
+    <div id="app">
+      <div class="empty"><i class="ti ti-files"></i><p>Cargando datos desde el servidor…</p></div>
+    </div>
+  </div>
+
+  <!-- NUEVA VISTA DE SECTORES POR UBICACIÓN (PERU, CERRITO, BOOKED) -->
+  <div id="sectorsViewContainer" style="display:none;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:16px;">
+      <!-- Estacionamiento PERU -->
+      <div class="calwrap" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-parking" style="color:var(--accent)"></i> Estacionamiento PERÚ
+          </h3>
+          <span id="countPeru" class="plate-tag" style="background:var(--accent-l); color:var(--accent-2);">0 veh</span>
         </div>
-    </header>
+        <div id="gridPeru" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
+      </div>
 
-    <!-- MAIN CONTAINER -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <!-- Estacionamiento CERRITO -->
+      <div class="calwrap" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-parking" style="color:var(--c-current)"></i> Estacionamiento CERRITO
+          </h3>
+          <span id="countCerrito" class="plate-tag" style="background:var(--cl-current); color:var(--c-current);">0 veh</span>
+        </div>
+        <div id="gridCerrito" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
+      </div>
 
-        <!-- 1. VISTA DE CALENDARIO (ESTRUCTURA ORIGINAL) -->
-        <section id="calendarView" class="block">
-            <div class="bg-white rounded-xl shadow p-6 border border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-gray-700">Calendario de Reserva y Flota</h2>
-                    <span class="text-xs bg-green-100 text-green-800 font-semibold px-2.5 py-0.5 rounded-full">Sincronizado</span>
-                </div>
-                <!-- El calendario original y sus componentes permanecen aquí -->
-                <div class="p-12 text-center text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
-                    <i class="fa-solid fa-calendar-check text-4xl mb-2 text-gray-300"></i>
-                    <p>Calendario cargado correctamente con datos sincronizados de Supabase / GitHub.</p>
-                </div>
-            </div>
-        </section>
+      <!-- Tránsito / BOOKED con animación -->
+      <div class="calwrap" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-road" style="color:var(--c-booked)"></i> En Tránsito (BOOKED)
+          </h3>
+          <span id="countBooked" class="plate-tag" style="background:var(--cl-booked); color:var(--c-booked);">0 en calle</span>
+        </div>
+        <div style="position:relative; background:var(--surface2); border-radius:8px; height:340px; overflow:hidden; border:1px solid var(--border-s);">
+          <div style="position:absolute; top:50%; left:0; right:0; border-top:2px dashed var(--border-m); transform:translateY(-50%);"></div>
+          <div id="streetTrafficArea" style="position:relative; width:100%; height:100%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        <!-- 2. NUEVA VISTA DE SECTORES POR UBICACIÓN (PLATE-LOC) -->
-        <section id="sectorsView" class="hidden">
-            <!-- Header Resumen Sectores -->
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h2 class="text-xl font-bold text-gray-900">Ubicación de Vehículos en Tiempo Real</h2>
-                    <p class="text-sm text-gray-500">Distribución por sector según propiedad <code class="bg-gray-200 px-1 py-0.5 rounded text-xs font-mono">plate-loc</code></p>
-                </div>
-                <div class="flex space-x-3 text-sm">
-                    <div class="bg-white px-3 py-1.5 rounded-lg border shadow-sm flex items-center space-x-2">
-                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                        <span class="font-medium text-gray-600">Perú:</span>
-                        <span id="countPeru" class="font-bold text-gray-900">0</span>
-                    </div>
-                    <div class="bg-white px-3 py-1.5 rounded-lg border shadow-sm flex items-center space-x-2">
-                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                        <span class="font-medium text-gray-600">Cerrito:</span>
-                        <span id="countCerrito" class="font-bold text-gray-900">0</span>
-                    </div>
-                    <div class="bg-white px-3 py-1.5 rounded-lg border shadow-sm flex items-center space-x-2">
-                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-                        <span class="font-medium text-gray-600">En Tránsito (Booked):</span>
-                        <span id="countBooked" class="font-bold text-gray-900">0</span>
-                    </div>
-                </div>
-            </div>
+<div class="tip" id="tip"></div>
 
-            <!-- Grilla de los 3 Sectores -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<script>
+// Mapeo exacto de imágenes de estudio / renders oficiales por Dominio (Patente)
+const MODEL_IMAGES = {
+  'AG838JY': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=400&q=80', // Hilux DC
+  'AG269JN': 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=400&q=80', // SW4 4x4
+  'AG765WS': 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=400&q=80', // Corolla Cross
+  'AI239SV': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=400&q=80', // Corolla HV
+  'AG192XC': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=400&q=80', // Corolla HV
+  'AG350QD': 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=400&q=80', // Etios SD
+  'AG350QF': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80', // Etios HB
+  'AG350QE': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=400&q=80', // Etios HB
+  'AG500BY': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80', // Yaris HB
+  'AG708YK': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80', // Yaris HB
+  'AG708YJ': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80'  // Yaris HB
+};
 
-                <!-- Sector Perú -->
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col">
-                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
-                        <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-square-parking text-blue-600 text-xl"></i>
-                            <h3 class="font-bold text-slate-800">Estacionamiento Perú</h3>
-                        </div>
-                        <span class="text-xs bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded">Fijo</span>
-                    </div>
-                    <div id="sectorPeru" class="space-y-4 flex-1">
-                        <!-- Vehículos renderizados por JS -->
-                    </div>
-                </div>
+let currentView = 'calendar';
+function toggleViewMode() {
+  currentView = (currentView === 'calendar') ? 'sectors' : 'calendar';
+  const calCont = document.getElementById('calendarViewContainer');
+  const secCont = document.getElementById('sectorsViewContainer');
+  const btn = document.getElementById('viewToggleBtn');
 
-                <!-- Sector Cerrito -->
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col">
-                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
-                        <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-square-parking text-emerald-600 text-xl"></i>
-                            <h3 class="font-bold text-slate-800">Estacionamiento Cerrito</h3>
-                        </div>
-                        <span class="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded">Fijo</span>
-                    </div>
-                    <div id="sectorCerrito" class="space-y-4 flex-1">
-                        <!-- Vehículos renderizados por JS -->
-                    </div>
-                </div>
+  if (currentView === 'sectors') {
+    calCont.style.display = 'none';
+    secCont.style.display = 'block';
+    btn.innerHTML = '<i class="ti ti-calendar" style="font-size:13px"></i> Ver Calendario';
+    renderSectorsView();
+  } else {
+    calCont.style.display = 'block';
+    secCont.style.display = 'none';
+    btn.innerHTML = '<i class="ti ti-layout-grid" style="font-size:13px"></i> Ver Sectores';
+  }
+}
 
-                <!-- Sector Booked / Tránsito -->
-                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col">
-                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200">
-                        <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-route text-amber-500 text-xl"></i>
-                            <h3 class="font-bold text-slate-800">En Tránsito / Booked</h3>
-                        </div>
-                        <span class="flex items-center text-xs bg-amber-100 text-amber-700 font-bold px-2 py-1 rounded">
-                            <span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5 pulse-indicator"></span> Dinámico
-                        </span>
-                    </div>
-                    <div id="sectorBooked" class="space-y-4 flex-1">
-                        <!-- Vehículos renderizados por JS -->
-                    </div>
-                </div>
+function renderSectorsView() {
+  if (!ST || !ST.pque || !ST.tel) return;
+  const pPeru = document.getElementById('gridPeru');
+  const pCerrito = document.getElementById('gridCerrito');
+  const pStreet = document.getElementById('streetTrafficArea');
+  pPeru.innerHTML = ''; pCerrito.innerHTML = ''; pStreet.innerHTML = '';
 
-            </div>
-        </section>
+  let cPeru = 0, cCerrito = 0, cBooked = 0;
 
-    </main>
+  ST.pque.forEach(veh => {
+    const tel = ST.tel[veh.plate] || {};
+    const loc = tel.loc || 'CERRITO';
+    const img = MODEL_IMAGES[veh.plate] || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=400&q=80';
 
-    <!-- SCRIPTS DE COMPATIBILIDAD Y RENDERING -->
-    <script>
-        // Objeto de imágenes modernas por modelo exacto (Renders HQ)
-        const MODEL_IMAGES = {
-            'HILUX': 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=600&q=80',
-            'SW4': 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=600&q=80',
-            'COROLLA': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=600&q=80',
-            'YARIS': 'https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=600&q=80',
-            'ETIOS': 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=600&q=80',
-            'DEFAULT': 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'
-        };
+    const card = `
+      <div style="background:var(--surface2); border:1px solid var(--border-s); border-radius:8px; overflow:hidden; display:flex; gap:10px; align-items:center; padding:8px;">
+        <img src="${img}" style="width:75px; height:50px; object-fit:cover; border-radius:4px;">
+        <div style="flex:1; overflow:hidden;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="plate-tag">${veh.plate}</span>
+            <span style="font-size:9px; color:var(--text3);">${tel.km || '0'} km</span>
+          </div>
+          <div style="font-weight:600; font-size:11px; color:var(--text); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${veh.model}</div>
+          <div style="font-size:9px; color:var(--text2); margin-top:1px;">⛽ Combustible: ${tel.fuel || '-'}L</div>
+        </div>
+      </div>
+    `;
 
-        // Estructura Global ST para compatibilidad con el archivo original
-        window.ST = window.ST || {
-            pque: [
-                { domain: 'AA123BC', model: 'Toyota Hilux 4x4 SRX', loc: 'Peru', status: 'Disponible' },
-                { domain: 'AB456CD', model: 'Toyota SW4 Diamond', loc: 'Cerrito', status: 'Disponible' },
-                { domain: 'AC789EF', model: 'Toyota Corolla Cross', loc: 'Booked', status: 'Ocupado' },
-                { domain: 'AD012GH', model: 'Toyota Yaris Hatchback', loc: 'Peru', status: 'Disponible' },
-                { domain: 'AE345IJ', model: 'Toyota Etios XLS', loc: 'Booked', status: 'En Ruta' },
-                { domain: 'AF678KL', model: 'Toyota Hilux GR-Sport', loc: 'Cerrito', status: 'Mantenimiento' }
-            ]
-        };
+    if (loc === 'PERU') {
+      pPeru.innerHTML += card;
+      cPeru++;
+    } else if (loc === 'BOOKED') {
+      cBooked++;
+      const topPos = 20 + ((cBooked * 65) % 240);
+      const speed = 14 + (cBooked * 2);
+      const sprite = document.createElement('div');
+      sprite.style.cssText = `position:absolute; top:${topPos}px; left:-140px; width:130px; background:var(--surface); border:1px solid var(--border-s); border-radius:6px; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.3); animation: driveRight ${speed}s linear infinite; animation-delay: ${cBooked * 1.2}s;`;
+      sprite.innerHTML = `
+        <img src="${img}" style="width:100%; height:40px; object-fit:cover; border-radius:4px;">
+        <div style="display:flex; justify-content:space-between; font-size:9px; margin-top:2px; font-family:'JetBrains Mono'; font-weight:600;">
+          <span style="color:var(--c-booked);">${veh.plate}</span>
+          <span style="color:var(--text3);">${tel.fuel || '-'}L</span>
+        </div>
+      `;
+      pStreet.appendChild(sprite);
+    } else {
+      pCerrito.innerHTML += card;
+      cCerrito++;
+    }
+  });
 
-        // Cambio de vistas (Tabs)
-        function switchView(view) {
-            const calendarView = document.getElementById('calendarView');
-            const sectorsView = document.getElementById('sectorsView');
-            const btnCalendar = document.getElementById('btnCalendarView');
-            const btnSectors = document.getElementById('btnSectorsView');
+  document.getElementById('countPeru').textContent = `${cPeru} veh`;
+  document.getElementById('countCerrito').textContent = `${cCerrito} veh`;
+  document.getElementById('countBooked').textContent = `${cBooked} en calle`;
+}
 
-            if (view === 'calendar') {
-                calendarView.classList.remove('hidden');
-                sectorsView.classList.add('hidden');
-                btnCalendar.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-red-600 text-white shadow";
-                btnSectors.className = "px-4 py-1.5 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-all";
-            } else {
-                calendarView.classList.add('hidden');
-                sectorsView.classList.remove('hidden');
-                btnSectors.className = "px-4 py-1.5 rounded-md text-sm font-medium transition-all bg-red-600 text-white shadow";
-                btnCalendar.className = "px-4 py-1.5 rounded-md text-sm font-medium text-gray-300 hover:text-white transition-all";
-                renderSectorsView();
-            }
+// Inyección de animación CSS para el tránsito
+const animStyle = document.createElement('style');
+animStyle.innerText = `@keyframes driveRight { 0% { left: -150px; } 100% { left: 105%; } }`;
+document.head.appendChild(animStyle);
+
+// Datos y funciones base del calendario original
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+document.getElementById('todayLbl').textContent = TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth();
+let ST = {pque:null, res:null, tel:null};
+
+function parsePque(txt){
+  return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
+    const cols = line.split('\t');
+    const main = cols[0].trim().split(/\s+/);
+    const plate = main[main.length-1];
+    const model = main.slice(1,-1).join(' ');
+    const bodyType = cols[1] ? cols[1].trim() : '';
+    const tankCap = cols[2] ? parseInt(cols[2].trim()) || 0 : 0;
+    return {id: main[0], plate, model, bodyType, tankCap};
+  });
+}
+function parseRes(txt){
+  return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
+    const p=line.split('\t');
+    if(p.length<7) return null;
+    const [code,renter,vehicle,,,startS,endS,status]=p;
+    const plate=vehicle.trim().split(' ').pop();
+    return {code:code.trim(),renter:renter.trim(),vehicle:vehicle.trim(),plate,start:parseD(startS.trim()),end:parseD(endS.trim()),status:(status||'').trim()};
+  }).filter(x=>x&&x.start&&x.end);
+}
+function parseTel(txt){
+  const m={};
+  txt.trim().split('\n').filter(l=>l.trim()).forEach(line=>{
+    const p=line.split('\t');
+    if(p.length<6) return;
+    const plate=p[4].trim().split(' ').pop();
+    m[plate]={id:p[0].trim(),coords:p[1].trim(),km:p[2].trim(),fuel:p[3].trim(),loc:p[5].trim()};
+  });
+  return m;
+}
+function parseD(str){
+  const mo={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+  const m=str.match(/(\d+):(\d+)\s+(AM|PM)\s+(\w+)\s+(\d+),\s+(\d+)/);
+  if(!m) return null;
+  let [,h,min,ap,mon,day,yr]=m;
+  h=parseInt(h); if(ap==='PM'&&h!==12) h+=12; if(ap==='AM'&&h===12) h=0;
+  return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
+}
+
+// Datos embebidos iniciales y carga sincronizada
+(function(){
+  ST.pque=parsePque(`18723 Toyota Corolla HV AT AI239SV	SEDAN	43
+10914 Toyota SW4 4x4 7A AT AG269JN	SUV	80
+11131 Toyota Etios SD AT AG350QD	HATCHBACK	45
+11182 Toyota ETIOS HB A/T AG350QF	HATCHBACK	45
+11181 Toyota ETIOS HB A/T AG350QE	HATCHBACK	45
+12469 Toyota Yaris HB AT AG500BY	HATCHBACK	42
+12684 Toyota Yaris HB AT AG708YK	HATCHBACK	42
+12685 Toyota Yaris HB AT AG708YJ	HATCHBACK	42
+12877 Toyota Corolla Cross HV AT AG765WS	SUV2	36
+13131 Toyota Hilux 4x4 DC AT AG838JY	PICKUP	80`);
+  ST.res=parseRes([
+    'yevw52d\tService\tToyota Corolla HV AT AG192XC\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent',
+    'l8mz66g\tNicolas Dominguez\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t12:00 PM  May 27, 2026\t11:00 AM  Jun 30, 2026\tCurrent',
+    'ymzn137\tTeresa Perkins\tToyota Yaris HB AT AG708YK\tRetiro\t--\t4:00 PM  May 29, 2026\t10:00 AM  Jun 16, 2026\tCurrent',
+    'lr181ez\tCUSTOMER SERVICE 21\tToyota Yaris HB AT AG500BY\tRetiro\t--\t4:45 PM  Jun 1, 2026\t6:00 PM  Jun 12, 2026\tCurrent',
+    'kvx36xo\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t9:00 AM  Jun 8, 2026\t9:00 AM  Jun 16, 2026\tCurrent',
+    'k33zx7m\tNicolas Ezequiel Mammone\tToyota Yaris HB AT AG708YJ\tRetiro\t--\t3:00 PM  Jun 8, 2026\t4:00 PM  Jun 13, 2026\tCurrent'
+  ].join('\n'));
+  ST.tel=parseTel([
+    '10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED',
+    '11131\t-34.61351, -58.373844\t73,106\t40\tToyota Etios SD AT AG350QD\tPERU',
+    '11182\t-34.613323, -58.374226\t57,335\t38\tToyota ETIOS HB A/T AG350QF\tPERU',
+    '11181\t-34.613499, -58.373867\t75,900\t40\tToyota ETIOS HB A/T AG350QE\tPERU',
+    '12469\t-34.9007, -57.955624\t60,642\t24\tToyota Yaris HB AT AG500BY\tBOOKED',
+    '12684\t-34.593182, -58.43074\t62,840\t19\tToyota Yaris HB AT AG708YK\tBOOKED',
+    '12685\t-32.695877, -63.442169\t57,514\t38\tToyota Yaris HB AT AG708YJ\tBOOKED',
+    '12877\t-34.597813, -58.380341\t32,284\t-\tToyota Corolla Cross HV AT AG765WS\tBOOKED',
+    '13131\t-34.593182, -58.43074\t59,250\t71\tToyota Hilux 4x4 DC AT AG838JY\tPERU'
+  ].join('\n'));
+  tryRender();
+})();
+
+function tryRender(){
+  if(!ST.pque || !ST.res || !ST.tel) return;
+  updateStats();
+  renderCal();
+  if(currentView === 'sectors') renderSectorsView();
+}
+
+function updateStats(){
+  document.getElementById('stT').textContent = ST.pque.length;
+  document.getElementById('stC').textContent = ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY).length;
+  document.getElementById('stN').textContent = ST.res.filter(r=>r.status==='New').length;
+  const activePlates = new Set(ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY).map(r=>r.plate));
+  document.getElementById('stA').textContent = ST.pque.filter(v=>!activePlates.has(v.plate)).length;
+  document.getElementById('stM').textContent = '0';
+}
+
+function renderCal(){
+  const y=vYear, mo=vMonth;
+  const days=new Date(y,mo+1,0).getDate();
+  const MONTHS=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DOW=['D','L','M','X','J','V','S'];
+  const toD=d=>new Date(y,mo,d);
+
+  let html=`<div class="mnav">
+    <button class="nbtn" onclick="shiftMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+    <span class="mtitle">${MONTHS[mo]} ${y}</span>
+    <button class="nbtn" onclick="shiftMonth(1)"><i class="ti ti-chevron-right"></i></button>
+    <button class="nbtn tbtn" onclick="goToday()">hoy</button>
+  </div>`;
+
+  html+=`<div class="calwrap"><div class="calscroll"><table class="caltable"><thead><tr>`;
+  html+=`<th class="clth" style="font-size:10px;color:var(--text2)">VEHÍCULO</th>`;
+  html+=`<th class="cmth" style="font-size:10px;color:var(--text2)">MANTENIMIENTO</th>`;
+  for(let d=1;d<=days;d++){
+    const dt=toD(d); const dow=dt.getDay();
+    const isToday=dt.toDateString()===TODAY.toDateString();
+    html+=`<th class="dayth${dow===0||dow===6?' wk':''}${isToday?' tcol':''}"><span class="dn">${d}</span>${DOW[dow]}</th>`;
+  }
+  html+=`</tr></thead><tbody>`;
+
+  ST.pque.forEach(veh=>{
+    const vRes=ST.res.filter(r=>r.plate===veh.plate);
+    const tel=ST.tel[veh.plate];
+    html+=`<tr class="vrow">`;
+    html+=`<td class="cltd"><span class="vname">${veh.model}</span><span class="vplate"><span class="plate-tag">${veh.plate}</span></span></td>`;
+    html+=`<td class="cmtd"><span style="font-size:9px;color:var(--text3)">Al día</span></td>`;
+
+    for(let d=1;d<=days;d++){
+      const dt=toD(d); const dow=dt.getDay();
+      const isToday=dt.toDateString()===TODAY.toDateString();
+      html+=`<td class="dcell${dow===0||dow===6?' wk':''}${isToday?' tcol':''}">`;
+      vRes.forEach(res=>{
+        const dd=new Date(y,mo,d); dd.setHours(0,0,0,0);
+        const s=new Date(res.start); s.setHours(0,0,0,0);
+        const e=new Date(res.end); e.setHours(0,0,0,0);
+        if(dd>=s && dd<=e){
+          const iS=dd.getTime()===s.getTime(), iE=dd.getTime()===e.getTime();
+          const btype = (iS&&iE)?'bso':iS?'bs':iE?'be':'bm';
+          const bc = res.status==='Current'?'bc':'bn';
+          html+=`<div class="bar ${btype} ${bc}">${iS?res.renter:''}</div>`;
         }
+      });
+      html+=`</td>`;
+    }
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div></div>`;
+  document.getElementById('app').innerHTML=html;
+}
 
-        // Obtener imagen correspondiente al modelo
-        function getCarImage(modelName) {
-            const upper = (modelName || '').toUpperCase();
-            for (const [key, url] of Object.entries(MODEL_IMAGES)) {
-                if (upper.includes(key)) return url;
-            }
-            return MODEL_IMAGES.DEFAULT;
-        }
-
-        // Renderizado Dinámico de la Vista de Sectores
-        function renderSectorsView() {
-            const sectorPeru = document.getElementById('sectorPeru');
-            const sectorCerrito = document.getElementById('sectorCerrito');
-            const sectorBooked = document.getElementById('sectorBooked');
-
-            sectorPeru.innerHTML = '';
-            sectorCerrito.innerHTML = '';
-            sectorBooked.innerHTML = '';
-
-            let countP = 0, countC = 0, countB = 0;
-
-            const vehicles = window.ST.pque || [];
-
-            vehicles.forEach(vehicle => {
-                const loc = (vehicle.loc || vehicle['plate-loc'] || '').toLowerCase();
-                const image = getCarImage(vehicle.model);
-
-                const cardHTML = `
-                    <div class="sector-card bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm flex flex-col">
-                        <div class="car-image-container h-32 w-full">
-                            <img src="${image}" alt="${vehicle.model}" class="car-image w-full h-full object-cover">
-                            <span class="absolute top-2 right-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">
-                                ${vehicle.domain}
-                            </span>
-                        </div>
-                        <div class="p-3 flex-1 flex flex-col justify-between">
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm leading-tight">${vehicle.model}</h4>
-                                <p class="text-xs text-gray-500 mt-0.5">Estado: <span class="font-medium text-gray-700">${vehicle.status || 'Activo'}</span></p>
-                            </div>
-                            <div class="mt-3 pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-                                <span><i class="fa-solid fa-gas-pump mr-1"></i>OK</span>
-                                <span><i class="fa-solid fa-gauge mr-1"></i>100%</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                if (loc.includes('peru') || loc.includes('perú')) {
-                    sectorPeru.innerHTML += cardHTML;
-                    countP++;
-                } else if (loc.includes('cerrito')) {
-                    sectorCerrito.innerHTML += cardHTML;
-                    countC++;
-                } else {
-                    // Por defecto o asignación 'Booked' / Tránsito
-                    sectorBooked.innerHTML += cardHTML;
-                    countB++;
-                }
-            });
-
-            // Actualización de contadores
-            document.getElementById('countPeru').innerText = countP;
-            document.getElementById('countCerrito').innerText = countC;
-            document.getElementById('countBooked').innerText = countB;
-        }
-
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            renderSectorsView();
-        });
-    </script>
+window.shiftMonth=function(d){ vMonth+=d; if(vMonth>11){vMonth=0;vYear++;} if(vMonth<0){vMonth=11;vYear--;} renderCal(); };
+window.goToday=function(){ vYear=TODAY.getFullYear(); vMonth=TODAY.getMonth(); renderCal(); };
+</script>
 </body>
 </html>
