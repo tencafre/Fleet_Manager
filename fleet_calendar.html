@@ -88,12 +88,10 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .maint-register-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-mid);border:1px solid rgba(13,148,136,.25);border-radius:4px;padding:2px 7px;cursor:pointer;margin-top:4px}
 .maint-hist-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);background:none;border:none;cursor:pointer;margin-top:2px}
 
-/* Mini barra de combustible en la celda del calendario */
 .cal-fuel-pill{display:inline-flex;align-items:center;gap:3px;background:var(--surface2);border:1px solid var(--border-s);padding:1px 5px;border-radius:3px;font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--text2)}
 .cal-fuel-bar{width:22px;height:4px;background:var(--border-m);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle}
 .cal-fuel-fill{height:100%;background:var(--accent)}
 
-/* LEYENDA / REFERENCIAS DE COLORES AL PIE */
 .legend-bar{display:flex;align-items:center;gap:18px;margin-top:14px;padding:10px 16px;background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius);font-size:11px;color:var(--text2);box-shadow:var(--shadow-sm);flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:6px}
 .legend-dot{width:12px;height:12px;border-radius:3px}
@@ -460,7 +458,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
   </div>
 </div>
 
-<!-- Modal Neumáticos y Accesorios -->
+<!-- Modal Neumáticos y Accesorios (Con selector de vehículos operativo) -->
 <div class="tmodal-overlay" id="tireModalOverlay" onclick="closeTireModal(event)">
   <div class="tmodal" onclick="event.stopPropagation()">
     <div class="tmodal-head">
@@ -470,13 +468,13 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
       </div>
       <button onclick="closeTireModal()" style="background:none;border:none;cursor:pointer;color:var(--text3)"><i class="ti ti-x"></i></button>
     </div>
-    <div class="tmodal-tabs">
+    <div class="tmodal-tabs" id="tireModalTabs" style="display:none">
       <button class="tmodal-tab active" id="tabBtnTires" onclick="switchTireTab('tires')">Neumáticos</button>
       <button class="tmodal-tab" id="tabBtnAcc" onclick="switchTireTab('acc')">Accesorios</button>
     </div>
     <div class="tmodal-body" id="panelTires">
       <div id="tireCards"></div>
-      <button class="add-tire-btn" onclick="addTireCard()"><i class="ti ti-plus"></i> Agregar neumático</button>
+      <button class="add-tire-btn" id="addTireBtn" onclick="addTireCard()" style="display:none"><i class="ti ti-plus"></i> Agregar neumático</button>
     </div>
     <div class="tmodal-body" id="panelAcc" style="display:none">
       <table class="acc-table">
@@ -486,7 +484,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
     </div>
     <div class="tmodal-foot">
       <button class="btn-cancel" onclick="closeTireModal()">Cancelar</button>
-      <button class="btn-save" onclick="saveTireData()">Guardar cambios</button>
+      <button class="btn-save" id="saveTiresBtn" onclick="saveTireData()" style="display:none">Guardar cambios</button>
     </div>
   </div>
 </div>
@@ -723,16 +721,30 @@ function renderHistList(plate){
     </div>`).join('');
 }
 
-// Neumáticos y Accesorios
+// Modal Neumáticos y Accesorios (Con selector operativo si se llama sin placa)
 window.openTireModal = function(plate, model){
   if(!plate){
-    if(ST.pque && ST.pque.length){ plate = ST.pque[0].plate; model = ST.pque[0].model; }
-    else { alert('Cargá primero la flota'); return; }
+    if(!ST.pque || !ST.pque.length){ alert('Flota no cargada'); return; }
+    document.getElementById('tireModalOverlay').style.display = 'flex';
+    document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
+    document.getElementById('tireModalSub').textContent = 'Elegí un vehículo para gestionar neumáticos';
+    document.getElementById('tireModalTabs').style.display = 'none';
+    document.getElementById('panelAcc').style.display = 'none';
+    document.getElementById('panelTires').style.display = 'block';
+    document.getElementById('addTireBtn').style.display = 'none';
+    document.getElementById('saveTiresBtn').style.display = 'none';
+    document.getElementById('tireCards').innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">' +
+      ST.pque.map(v=>`<button onclick="openTireModal('${v.plate}','${v.model.replace(/'/g,"\\'")}')" style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:6px;padding:9px 12px;cursor:pointer;font-size:12px;color:var(--text)"><span style="font-family:'JetBrains Mono';font-weight:600">${v.plate}</span> — ${v.model}</button>`).join('') +
+    '</div>';
+    return;
   }
   tireModalPlate = plate;
   document.getElementById('tireModalOverlay').style.display = 'flex';
   document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
   document.getElementById('tireModalSub').textContent = model || '';
+  document.getElementById('tireModalTabs').style.display = 'flex';
+  document.getElementById('addTireBtn').style.display = 'flex';
+  document.getElementById('saveTiresBtn').style.display = 'flex';
   
   try{ tireWorkingCopy = JSON.parse(localStorage.getItem(TIRE_PREFIX + plate) || '[]'); }catch(e){ tireWorkingCopy = []; }
   try{ accWorkingCopy = JSON.parse(localStorage.getItem(ACC_PREFIX + plate) || '[]'); }catch(e){ accWorkingCopy = []; }
@@ -752,6 +764,7 @@ window.switchTireTab = function(tab){
   document.getElementById('tabBtnAcc').className = 'tmodal-tab' + (tab==='acc'?' active':'');
   document.getElementById('panelTires').style.display = tab==='tires'?'block':'none';
   document.getElementById('panelAcc').style.display = tab==='acc'?'block':'none';
+  document.getElementById('addTireBtn').style.display = tab==='tires'?'flex':'none';
 };
 
 function rebuildTireCards(){
@@ -798,7 +811,7 @@ window.saveTireData = function(){
   alert('Datos de neumáticos y accesorios guardados.');
 };
 
-// Checklist
+// Checklist con lectura garantizada de neumáticos para el tire-row
 window.openChecklist = function(el) {
   try {
     var raw = el.dataset.checklist;
@@ -993,7 +1006,6 @@ function renderCal(){
     const lastMaint=getLastMaint(veh.plate);
     const histCount=getMaintHistory(veh.plate).length;
 
-    // Cálculo del nivel de combustible respecto a la capacidad del tanque del vehículo
     const fuelL = tel && tel.fuel && tel.fuel !== '-' ? parseFloat(tel.fuel.toString().replace(',','.')) : 0;
     const tankMax = veh.tankCap || 50;
     const fuelPct = Math.min(100, Math.max(0, Math.round((fuelL / tankMax) * 100)));
@@ -1045,7 +1057,6 @@ function renderCal(){
   });
   html+=`</tbody></table></div>`;
 
-  // Barra de referencias de colores al pie
   html+=`<div class="legend-bar">
     <div class="legend-item"><div class="legend-dot" style="background:var(--c-current)"></div><span>En curso (Current)</span></div>
     <div class="legend-item"><div class="legend-dot" style="background:var(--c-new)"></div><span>Nuevas / Pendientes</span></div>
