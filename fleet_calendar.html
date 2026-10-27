@@ -244,21 +244,32 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
   </div>
 </div>
 
-<!-- Modal Neumáticos -->
+<!-- Modal Neumáticos (Original e Intacto) -->
 <div class="tmodal-overlay" id="tireModalOverlay" onclick="closeTireModal(event)">
   <div class="tmodal" onclick="event.stopPropagation()">
     <div class="tmodal-head">
       <div>
-        <div class="tmodal-title" id="tireModalTitle">Neumáticos</div>
+        <div class="tmodal-title" id="tireModalTitle">Neumáticos y Accesorios</div>
         <div class="tmodal-sub" id="tireModalSub"></div>
       </div>
       <button onclick="closeTireModal()" style="background:none;border:none;cursor:pointer;color:var(--text3)"><i class="ti ti-x"></i></button>
     </div>
+    <div class="tmodal-tabs">
+      <button class="tmodal-tab active" id="tabBtnTires" onclick="switchTireTab('tires')">Neumáticos</button>
+      <button class="tmodal-tab" id="tabBtnAcc" onclick="switchTireTab('acc')">Accesorios</button>
+    </div>
     <div class="tmodal-body" id="panelTires">
       <div id="tireCards"></div>
+      <button class="add-tire-btn" onclick="addTireCard()"><i class="ti ti-plus"></i> Agregar neumático</button>
+    </div>
+    <div class="tmodal-body" id="panelAcc" style="display:none">
+      <table class="acc-table">
+        <thead><tr><th>Ítem</th><th>Estado / Detalle</th></tr></thead>
+        <tbody id="accTableBody"></tbody>
+      </table>
     </div>
     <div class="tmodal-foot">
-      <button class="btn-cancel" onclick="closeTireModal()">Cerrar</button>
+      <button class="btn-cancel" onclick="closeTireModal()">Cancelar</button>
       <button class="btn-save" onclick="saveTireData()">Guardar cambios</button>
     </div>
   </div>
@@ -291,6 +302,8 @@ const MAINT_TYPES = [
 ];
 const STORE_PREFIX = 'fleetcal_maint_';
 const TIRE_PREFIX = 'fleetcal_tires_';
+const ACC_PREFIX  = 'fleetcal_acc_';
+const TIRE_POSITIONS = ['Delantera Izq','Delantera Der','Trasera Izq','Trasera Der','Auxilio'];
 
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 document.getElementById('todayLbl').textContent = TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
@@ -299,8 +312,11 @@ let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth();
 let ST = {pque:null, res:null, tel:null};
 let currentView = 'calendar';
 let modalPlate = null;
+
 let tireModalPlate = null;
 let tireWorkingCopy = [];
+let accWorkingCopy = [];
+let tireTab = 'tires';
 
 // Alternar vistas
 function toggleViewMode() {
@@ -387,16 +403,24 @@ const animStyle = document.createElement('style');
 animStyle.innerText = `@keyframes driveRight { 0% { left: -160px; } 100% { left: 105%; } }`;
 document.head.appendChild(animStyle);
 
-// Mantenimientos
+// Mantenimientos y Alertas (Respetando desactivación por service realizado)
 function getMaintHistory(plate){ try{ return JSON.parse(localStorage.getItem(STORE_PREFIX + plate.toUpperCase())||'[]'); }catch(e){return [];} }
 function getLastMaint(plate){ const h=getMaintHistory(plate); return h.length ? h.sort((a,b)=>b.date.localeCompare(a.date))[0] : null; }
 
-function maintAlertInfo(kmStr){
+function maintAlertInfo(kmStr, plate){
   if(!kmStr || kmStr==='-') return null;
   const km = parseInt(kmStr.replace(/[.,]/g,''));
   if(isNaN(km)) return null;
   const nextMultiple = Math.ceil((km+1)/10000)*10000;
-  if((nextMultiple - km) <= 2000) return { nextMultiple };
+  const remaining = nextMultiple - km;
+  if(remaining <= 2000){
+    if(plate){
+      const history = getMaintHistory(plate);
+      const alreadyCleared = history.some(h => h.clearedMultiple === nextMultiple || h.intervalo === nextMultiple);
+      if(alreadyCleared) return null;
+    }
+    return { nextMultiple, remaining };
+  }
   return null;
 }
 
@@ -406,14 +430,15 @@ window.openMaintModal = function(plate, model){
   document.getElementById('modalTitle').textContent = 'Mantenimiento · ' + plate;
   document.getElementById('modalSub').textContent = model + ' (' + (tel.km||'0') + ' km)';
   document.getElementById('maintDate').value = TODAY.toISOString().slice(0,10);
+  document.getElementById('maintNote').value = '';
   
   const typeEl = document.getElementById('maintType');
-  typeEl.innerHTML = '<option value="">— Seleccioná —</option>';
+  typeEl.innerHTML = '<option value="">— Seleccioná el tipo —</option>';
   MAINT_TYPES.forEach((t,i)=> typeEl.innerHTML += `<option value="${i}">${t.label}</option>` );
   
   const intEl = document.getElementById('maintInterval');
   intEl.innerHTML = '';
-  for(let k=10000; k<=150000; k+=10000) intEl.innerHTML += `<option value="${k}">${k.toLocaleString()} km</option>`;
+  for(let k=10000; k<=200000; k+=10000) intEl.innerHTML += `<option value="${k}">${k.toLocaleString()} km</option>`;
   intEl.value = 10000;
 
   renderHistList(plate);
@@ -429,37 +454,44 @@ window.saveMaint = function(){
   if(!modalPlate) return;
   const date = document.getElementById('maintDate').value;
   const typeIdx = document.getElementById('maintType').value;
-  const typeLabel = typeIdx !== '' ? MAINT_TYPES[typeIdx].label : 'Servicio';
+  const typeLabel = typeIdx !== '' ? MAINT_TYPES[typeIdx].label : 'Servicio general';
   const intervalVal = parseInt(document.getElementById('maintInterval').value) || 10000;
+  const note = document.getElementById('maintNote').value.trim();
   
   const history = getMaintHistory(modalPlate);
-  history.push({ date, tipo: typeLabel, intervalo: intervalVal, ts: Date.now() });
+  history.push({ date, tipo: typeLabel, intervalo: intervalVal, clearedMultiple: intervalVal, note, ts: Date.now() });
   localStorage.setItem(STORE_PREFIX + modalPlate.toUpperCase(), JSON.stringify(history));
   
   closeModal();
   tryRender();
-  alert('Mantenimiento guardado con éxito.');
+  alert('Mantenimiento guardado y alerta desactivada para el intervalo.');
+};
+
+window.deleteMaintEntry = function(plate, ts){
+  let history = getMaintHistory(plate);
+  history = history.filter(h => h.ts !== ts);
+  localStorage.setItem(STORE_PREFIX + plate.toUpperCase(), JSON.stringify(history));
+  renderHistList(plate);
+  tryRender();
 };
 
 function renderHistList(plate){
   const h = getMaintHistory(plate);
   const container = document.getElementById('histList');
   if(!container) return;
-  if(!h.length){ container.innerHTML = '<div style="font-size:10px;color:var(--text3)">Sin registros.</div>'; return; }
-  container.innerHTML = h.map(item=>`<div style="font-size:10px;padding:3px 0;border-bottom:1px solid var(--border)"><b>${item.date}</b>: ${item.tipo}</div>`).join('');
+  if(!h.length){ container.innerHTML = '<div style="font-size:10px;color:var(--text3)">Sin registros previos.</div>'; return; }
+  container.innerHTML = h.map(item=>`
+    <div style="font-size:10px;padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <div><b>${item.date}</b>: ${item.tipo} (${item.intervalo?.toLocaleString()} km) ${item.note ? '· ' + item.note : ''}</div>
+      <button onclick="deleteMaintEntry('${plate}', ${item.ts})" style="color:var(--c-error);background:none;border:none;cursor:pointer;">Eliminar</button>
+    </div>`).join('');
 }
 
-// Neumáticos
+// Neumáticos y Accesorios (Original e Intacto)
 window.openTireModal = function(plate, model){
   if(!plate){
-    if(!ST.pque || !ST.pque.length){ alert('Flota no cargada'); return; }
-    document.getElementById('tireModalOverlay').style.display = 'flex';
-    document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
-    document.getElementById('tireModalSub').textContent = 'Elegí un vehículo';
-    document.getElementById('panelTires').innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">' +
-      ST.pque.map(v=>`<button onclick="openTireModal('${v.plate}','${v.model.replace(/'/g,"\\'")}')" style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px;color:var(--text)"><span style="font-family:'JetBrains Mono';font-weight:600">${v.plate}</span> — ${v.model}</button>`).join('') +
-    '</div>';
-    return;
+    if(ST.pque && ST.pque.length){ plate = ST.pque[0].plate; model = ST.pque[0].model; }
+    else { alert('Cargá primero la flota'); return; }
   }
   tireModalPlate = plate;
   document.getElementById('tireModalOverlay').style.display = 'flex';
@@ -467,7 +499,10 @@ window.openTireModal = function(plate, model){
   document.getElementById('tireModalSub').textContent = model || '';
   
   try{ tireWorkingCopy = JSON.parse(localStorage.getItem(TIRE_PREFIX + plate) || '[]'); }catch(e){ tireWorkingCopy = []; }
+  try{ accWorkingCopy = JSON.parse(localStorage.getItem(ACC_PREFIX + plate) || '[]'); }catch(e){ accWorkingCopy = []; }
   rebuildTireCards();
+  rebuildAccTable();
+  switchTireTab('tires');
 };
 
 window.closeTireModal = function(e){
@@ -475,30 +510,59 @@ window.closeTireModal = function(e){
   document.getElementById('tireModalOverlay').style.display = 'none';
 };
 
+window.switchTireTab = function(tab){
+  tireTab = tab;
+  document.getElementById('tabBtnTires').className = 'tmodal-tab' + (tab==='tires'?' active':'');
+  document.getElementById('tabBtnAcc').className = 'tmodal-tab' + (tab==='acc'?' active':'');
+  document.getElementById('panelTires').style.display = tab==='tires'?'block':'none';
+  document.getElementById('panelAcc').style.display = tab==='acc'?'block':'none';
+};
+
 function rebuildTireCards(){
   const container = document.getElementById('tireCards');
   if(!container) return;
+  if(!tireWorkingCopy.length){
+    container.innerHTML = '<p style="font-size:11px;color:var(--text3);margin-bottom:8px;">Sin neumáticos registrados.</p>';
+    return;
+  }
   container.innerHTML = `
     <div class="tire-grid">
       ${tireWorkingCopy.map((t,i)=>`
         <div class="tire-card">
           <div class="tire-card-head"><span class="tire-pos-badge">${t.posicion}</span><button onclick="removeTire(${i})" style="margin-left:auto;background:none;border:none;color:var(--c-error);cursor:pointer">✕</button></div>
-          <div class="tire-row"><div class="tire-field"><label>ID / Nº</label><input type="text" value="${t.numero||''}" onchange="tireWorkingCopy[${i}].numero=this.value"></div></div>
+          <div class="tire-row"><div class="tire-field"><label>ID / Nº</label><input type="text" value="${t.numero||''}" onchange="tireWorkingCopy[${i}].numero=this.value"></div>
+          <div class="tire-field"><label>Marca</label><input type="text" value="${t.marca||''}" onchange="tireWorkingCopy[${i}].marca=this.value"></div></div>
         </div>`).join('')}
-    </div>
-    <button class="add-tire-btn" onclick="addTire()"><i class="ti ti-plus"></i> Añadir neumático</button>`;
+    </div>`;
 }
 
-window.addTire = function(){ tireWorkingCopy.push({posicion:'Delantera Izq',numero:''}); rebuildTireCards(); };
+window.addTireCard = function(){ tireWorkingCopy.push({posicion:'Delantera Izq',numero:'',marca:''}); rebuildTireCards(); };
 window.removeTire = function(i){ tireWorkingCopy.splice(i,1); rebuildTireCards(); };
+
+function rebuildAccTable(){
+  const tbody = document.getElementById('accTableBody');
+  if(!tbody) return;
+  const items = ['Matafuegos','Balizas','Gato hidráulico','Llave de rueda','Auxilio','Tuercas de seguridad'];
+  tbody.innerHTML = items.map(item=>{
+    const found = accWorkingCopy.find(a=>a.item===item) || {item, estado:'OK'};
+    return `<tr><td>${item}</td><td><select onchange="updateAcc('${item}',this.value)"><option value="OK" ${found.estado==='OK'?'selected':''}>OK</option><option value="Faltante" ${found.estado==='Faltante'?'selected':''}>Faltante</option></select></td></tr>`;
+  }).join('');
+}
+
+window.updateAcc = function(item, estado){
+  const idx = accWorkingCopy.findIndex(a=>a.item===item);
+  if(idx>=0) accWorkingCopy[idx].estado = estado; else accWorkingCopy.push({item,estado});
+};
+
 window.saveTireData = function(){
   if(!tireModalPlate) return;
   localStorage.setItem(TIRE_PREFIX + tireModalPlate, JSON.stringify(tireWorkingCopy));
+  localStorage.setItem(ACC_PREFIX + tireModalPlate, JSON.stringify(accWorkingCopy));
   closeTireModal();
-  alert('Neumáticos guardados.');
+  alert('Datos de neumáticos y accesorios guardados correctamente.');
 };
 
-// Checklist restaurado correctamente
+// Checklist
 window.openChecklist = function(el) {
   try {
     var raw = el.dataset.checklist;
@@ -584,7 +648,7 @@ function parseD(str){
   return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
 }
 
-// Carga principal sincronizada con respaldo CDN y datos locales robustos
+// Sincronización CDN oficial
 function sincronizarFlotaCDN() {
   const tokenBuster = Date.now();
   const cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
@@ -652,7 +716,7 @@ function updateStats(){
   let maintAlerts = 0;
   ST.pque.forEach(v=>{
     const tel = ST.tel[v.plate];
-    if(tel && maintAlertInfo(tel.km)) maintAlerts++;
+    if(tel && maintAlertInfo(tel.km, v.plate)) maintAlerts++;
   });
   document.getElementById('stM').textContent = maintAlerts;
 }
@@ -684,7 +748,7 @@ function renderCal(){
   ST.pque.forEach(veh=>{
     const vRes=ST.res.filter(r=>r.plate===veh.plate);
     const tel=ST.tel[veh.plate];
-    const alert=tel?maintAlertInfo(tel.km):null;
+    const alert=tel?maintAlertInfo(tel.km, veh.plate):null;
     const lastMaint=getLastMaint(veh.plate);
     const histCount=getMaintHistory(veh.plate).length;
 
@@ -692,7 +756,7 @@ function renderCal(){
     html+=`<td class="cltd">
       <span class="vname" title="${veh.model}">${veh.model}</span>
       <span class="vplate">
-        <span class="plate-tag">${veh.plate}</span>
+        <span class="plate-tag" onclick="openTireModal('${veh.plate}','${veh.model.replace(/'/g,"\\'")}')" style="cursor:pointer;" title="Gestionar neumáticos">${veh.plate}</span>
         ${tel?`<span style="color:var(--accent)">${tel.loc}</span>`:''}
         ${tel&&tel.coords&&tel.coords!=='-'?`<button class="map-pin-btn" onclick="openVehMap('${veh.plate}')">mapa</button>`:''}
       </span>
