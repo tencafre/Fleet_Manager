@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
-
-
-
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="
   default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;
@@ -14,173 +10,102 @@
   font-src * data:;
   img-src * data: blob:;
 ">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fleet Calendar — Retiro CERRITO CAR</title>
-<!-- UI/UX Pro Max: Inter + JetBrains Mono — dashboard operations pairing -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
-/* Design System — Fleet Operations Dashboard */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-  --bg:         #f0f2f5;
-  --surface:    #ffffff;
-  --surface2:   #f5f6f8;
-  --surface3:   #eceef2;
-  --glass:      rgba(255,255,255,0.72);
-  --border:     rgba(0,0,0,0.07);
-  --border-s:   rgba(0,0,0,0.13);
-  --border-m:   rgba(0,0,0,0.20);
-  --text:       #0f1117;
-  --text2:      #4a5568;
-  --text3:      #8a95a3;
-  --text-inv:   #ffffff;
-  --accent:     #0d9488;
-  --accent-2:   #0f766e;
-  --accent-l:   #ccfbf1;
-  --accent-mid: rgba(13,148,136,0.12);
-  --c-current:  #166534;
-  --cl-current: #dcfce7;
-  --c-new:      #9a3412;
-  --cl-new:     #ffedd5;
-  --c-future:   #3730a3;
-  --cl-future:  #e0e7ff;
-  --c-service:  #92400e;
-  --cl-service: #fef3c7;
-  --c-error:    #b91c1c;
-  --cl-error:   #fee2e2;
-  --c-booked:   #1e40af;
-  --cl-booked:  #dbeafe;
-  --col-label:  216px;
-  --col-maint:  152px;
-  --day-w:      28px;
-  --cell-h:     58px;
-  --header-h:   46px;
-  --radius:     10px;
-  --radius-sm:  6px;
-  --radius-lg:  14px;
-  --shadow-sm:  0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-  --shadow-md:  0 4px 16px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
-  --shadow-lg:  0 12px 40px rgba(0,0,0,.14), 0 4px 12px rgba(0,0,0,.08);
+  --bg:#f0f2f5;--surface:#ffffff;--surface2:#f5f6f8;--surface3:#eceef2;--glass:rgba(255,255,255,0.72);
+  --border:rgba(0,0,0,0.07);--border-s:rgba(0,0,0,0.13);--border-m:rgba(0,0,0,0.20);
+  --text:#0f1117;--text2:#4a5568;--text3:#8a95a3;--text-inv:#ffffff;
+  --accent:#0d9488;--accent-2:#0f766e;--accent-l:#ccfbf1;--accent-mid:rgba(13,148,136,0.12);
+  --c-current:#166534;--cl-current:#dcfce7;--c-new:#9a3412;--cl-new:#ffedd5;
+  --c-future:#3730a3;--cl-future:#e0e7ff;--c-service:#92400e;--cl-service:#fef3c7;
+  --c-error:#b91c1c;--cl-error:#fee2e2;--c-booked:#1e40af;--cl-booked:#dbeafe;
+  --col-label:216px;--col-maint:152px;--day-w:28px;--cell-h:58px;--header-h:46px;
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);--shadow-lg:0 12px 40px rgba(0,0,0,.14);
 }
-
 @media(prefers-color-scheme:dark){:root{
-  --bg:         #0d0f14;
-  --surface:    #161920;
-  --surface2:   #1e2230;
-  --surface3:   #252a38;
-  --glass:      rgba(22,25,32,0.80);
-  --border:     rgba(255,255,255,0.06);
-  --border-s:   rgba(255,255,255,0.11);
-  --border-m:   rgba(255,255,255,0.18);
-  --text:       #e8eaf0;
-  --text2:      #8892a4;
-  --text3:      #4e5a6e;
-  --text-inv:   #0d0f14;
-  --accent:     #14b8a6;
-  --accent-2:   #0d9488;
-  --accent-l:   rgba(20,184,166,0.15);
-  --accent-mid: rgba(20,184,166,0.10);
-  --c-current:  #4ade80;  --cl-current: rgba(74,222,128,0.12);
-  --c-new:      #fb923c;  --cl-new:     rgba(251,146,60,0.12);
-  --c-future:   #818cf8;  --cl-future:  rgba(129,140,248,0.12);
-  --c-service:  #fbbf24;  --cl-service: rgba(251,191,36,0.12);
-  --c-error:    #f87171;  --cl-error:   rgba(248,113,113,0.12);
-  --c-booked:   #60a5fa;  --cl-booked:  rgba(96,165,250,0.12);
-  --shadow-sm:  0 1px 3px rgba(0,0,0,.30);
-  --shadow-md:  0 4px 16px rgba(0,0,0,.40);
-  --shadow-lg:  0 12px 40px rgba(0,0,0,.55);
+  --bg:#0d0f14;--surface:#161920;--surface2:#1e2230;--surface3:#252a38;--glass:rgba(22,25,32,0.80);
+  --border:rgba(255,255,255,0.06);--border-s:rgba(255,255,255,0.11);--border-m:rgba(255,255,255,0.18);
+  --text:#e8eaf0;--text2:#8892a4;--text3:#4e5a6e;--text-inv:#0d0f14;
+  --accent:#14b8a6;--accent-2:#0d9488;--accent-l:rgba(20,184,166,0.15);--accent-mid:rgba(20,184,166,0.10);
+  --c-current:#4ade80;--cl-current:rgba(74,222,128,0.12);--c-new:#fb923c;--cl-new:rgba(251,146,60,0.12);
+  --c-future:#818cf8;--cl-future:rgba(129,140,248,0.12);--c-service:#fbbf24;--cl-service:rgba(251,191,36,0.12);
+  --c-error:#f87171;--cl-error:rgba(248,113,113,0.12);--c-booked:#60a5fa;--cl-booked:rgba(96,165,250,0.12);
 }}
-
-body{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;}
-code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
-
-.topbar{background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border-s);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm);}
+body{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.5;background:var(--bg);color:var(--text);min-height:100vh}
+code,kbd,.mono{font-family:'JetBrains Mono',monospace}
+.topbar{background:var(--glass);backdrop-filter:blur(16px);border-bottom:1px solid var(--border-s);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm)}
 .brand{display:flex;align-items:center;gap:10px}
-.brand-logo{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(13,148,136,.35);}
+.brand-logo{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center}
 .brand-logo i{color:#fff;font-size:14px}
-.brand-name{font-size:13px;font-weight:600;letter-spacing:-.02em;color:var(--text)}
+.brand-name{font-size:13px;font-weight:600;color:var(--text)}
 .brand-sep{width:1px;height:16px;background:var(--border-s)}
-.brand-sub{font-size:11px;color:var(--text3);font-weight:400}
+.brand-sub{font-size:11px;color:var(--text3)}
 .tr{display:flex;align-items:center;gap:8px}
-.datebadge{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;letter-spacing:-.01em}
-
-.filebtn{font-size:11px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s;font-family:'Inter',sans-serif;}
-.filebtn:hover{background:var(--surface3);border-color:var(--border-m);color:var(--text)}
-
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border-s);}
-.sc{background:var(--surface);padding:14px 20px;position:relative;overflow:hidden;transition:background .15s;}
-.sl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;}
-.sv{font-size:24px;font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--text);font-family:'Inter',sans-serif;}
-.ss{font-size:10px;color:var(--text3);margin-top:4px;font-weight:400}
-
+.datebadge{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.filebtn{font-size:11px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:'Inter',sans-serif}
+.filebtn:hover{background:var(--surface3);color:var(--text)}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border-s)}
+.sc{background:var(--surface);padding:14px 20px;position:relative}
+.sl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;margin-bottom:5px}
+.sv{font-size:24px;font-weight:700;line-height:1;color:var(--text)}
+.ss{font-size:10px;color:var(--text3);margin-top:4px}
 .main{padding:22px 24px 56px}
 .mnav{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.mtitle{font-size:16px;font-weight:600;min-width:138px;letter-spacing:-.02em;color:var(--text);}
-.nbtn{width:28px;height:28px;border:1px solid var(--border-s);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .15s;box-shadow:var(--shadow-sm);}
-.nbtn:hover{background:var(--surface2);border-color:var(--border-m);color:var(--text)}
-.tbtn{font-size:10px;font-weight:600;width:auto;padding:0 10px;height:28px;color:var(--accent);border-color:var(--accent-l);background:var(--accent-mid)}
-.tbtn:hover{background:var(--accent-l);color:var(--accent-2)}
-
-.calwrap{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-md);}
+.mtitle{font-size:16px;font-weight:600;min-width:138px;color:var(--text)}
+.nbtn{width:28px;height:28px;border:1px solid var(--border-s);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.nbtn:hover{background:var(--surface2);color:var(--text)}
+.tbtn{width:auto;padding:0 10px;color:var(--accent);border-color:var(--accent-l);background:var(--accent-mid)}
+.calwrap{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-md)}
 .calscroll{overflow-x:auto}
 .caltable{border-collapse:collapse}
-
-.clth{width:var(--col-label);min-width:var(--col-label);background:var(--surface);border-right:1px solid var(--border-s);position:sticky;left:0;z-index:11;padding:0 14px;height:var(--header-h);vertical-align:middle;}
-.cmth{width:var(--col-maint);min-width:var(--col-maint);background:var(--surface);border-right:1px solid var(--border-s);position:sticky;left:var(--col-label);z-index:11;padding:0 10px;height:var(--header-h);vertical-align:middle;text-align:left;}
-.cltd{background:var(--surface);border-right:1px solid var(--border-s);padding:7px 14px;position:sticky;left:0;z-index:9;border-bottom:1px solid var(--border);vertical-align:top;}
-.cmtd{background:var(--surface);border-right:1px solid var(--border-s);padding:7px 10px;position:sticky;left:var(--col-label);z-index:9;border-bottom:1px solid var(--border);vertical-align:top;min-width:var(--col-maint);}
-
-.dayth{width:var(--day-w);min-width:var(--day-w);height:var(--header-h);text-align:center;vertical-align:bottom;padding-bottom:7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border-s);font-size:9px;font-weight:500;color:var(--text3);line-height:1.2;background:var(--surface);}
-.dayth .dn{display:block;font-size:12px;font-weight:600;color:var(--text2);line-height:1;margin-bottom:2px;font-family:'JetBrains Mono',monospace;}
+.clth{width:var(--col-label);background:var(--surface);border-right:1px solid var(--border-s);position:sticky;left:0;z-index:11;padding:0 14px;height:var(--header-h);vertical-align:middle}
+.cmth{width:var(--col-maint);background:var(--surface);border-right:1px solid var(--border-s);position:sticky;left:var(--col-label);z-index:11;padding:0 10px;height:var(--header-h);vertical-align:middle}
+.cltd{background:var(--surface);border-right:1px solid var(--border-s);padding:7px 14px;position:sticky;left:0;z-index:9;border-bottom:1px solid var(--border);vertical-align:top}
+.cmtd{background:var(--surface);border-right:1px solid var(--border-s);padding:7px 10px;position:sticky;left:var(--col-label);z-index:9;border-bottom:1px solid var(--border);vertical-align:top}
+.dayth{width:var(--day-w);height:var(--header-h);text-align:center;padding-bottom:7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border-s);font-size:9px;color:var(--text3);background:var(--surface)}
+.dayth .dn{display:block;font-size:12px;font-weight:600;color:var(--text2);font-family:'JetBrains Mono',monospace}
 .dayth.tcol{background:var(--accent-mid)!important}
-.dayth.tcol .dn{color:var(--accent)}
 .dayth.wk{background:var(--surface2)}
-
-.vrow{border-bottom:1px solid var(--border);transition:background .1s}
-.vrow:hover .cltd,.vrow:hover .cmtd{background:var(--surface2)}
-.vname{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;letter-spacing:-.01em;}
+.vrow{border-bottom:1px solid var(--border)}
+.vname{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .vplate{font-size:10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
-.plate-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(30,64,175,.2);border-radius:4px;padding:1px 7px;display:inline-block;}
-.plate-loc{font-size:10px;font-weight:500}
-
-.vtelrow{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
-.vti{font-size:9px;color:var(--text3);display:inline-flex;align-items:center;gap:2px;font-weight:400}
-.fbar-track{display:inline-block;width:32px;height:3px;background:var(--border-s);border-radius:2px;overflow:hidden;vertical-align:middle;}
-.fbar-fill{display:block;height:100%;border-radius:2px;transition:width .4s ease}
-
-.maint-alert{display:flex;align-items:flex-start;gap:6px;background:linear-gradient(135deg,#fff1f0,#fee2e2);border:1px solid rgba(185,28,28,.2);border-radius:var(--radius-sm);padding:5px 8px;cursor:pointer;transition:all .15s;box-shadow:0 1px 3px rgba(185,28,28,.08);}
-.maint-alert-text{font-size:9px;line-height:1.45}
-.maint-alert-title{font-weight:700;color:var(--c-error);display:block;}
-.maint-alert-km{color:var(--text2);display:block;margin-top:1px}
+.plate-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(30,64,175,.2);border-radius:4px;padding:1px 7px}
+.vtelrow{display:flex;align-items:center;gap:8px;margin-top:4px}
+.vti{font-size:9px;color:var(--text3)}
+.fbar-track{display:inline-block;width:32px;height:3px;background:var(--border-s);border-radius:2px;overflow:hidden;vertical-align:middle}
+.fbar-fill{display:block;height:100%;border-radius:2px}
+.maint-alert{display:flex;align-items:flex-start;gap:6px;background:linear-gradient(135deg,#fff1f0,#fee2e2);border:1px solid rgba(185,28,28,.2);border-radius:var(--radius-sm);padding:5px 8px;cursor:pointer}
+.maint-alert-title{font-weight:700;color:var(--c-error);display:block}
 .maint-ok{font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px}
 .maint-last{font-size:9px;color:var(--text3);margin-top:3px;display:block}
-.maint-register-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-mid);border:1px solid rgba(13,148,136,.25);border-radius:4px;padding:2px 7px;cursor:pointer;margin-top:4px;font-family:'Inter',sans-serif;}
-
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;}
-.modal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:390px;overflow:hidden;box-shadow:var(--shadow-lg);}
+.maint-register-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-mid);border:1px solid rgba(13,148,136,.25);border-radius:4px;padding:2px 7px;cursor:pointer;margin-top:4px}
+.maint-hist-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);background:none;border:none;cursor:pointer;margin-top:2px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:390px;overflow:hidden;box-shadow:var(--shadow-lg)}
 .modal-head{padding:18px 20px 13px;border-bottom:1px solid var(--border)}
 .modal-title{font-size:14px;font-weight:700}
 .modal-sub{font-size:11px;color:var(--text2);margin-top:2px}
 .modal-body{padding:15px 20px}
 .form-row{margin-bottom:13px}
 .form-label{font-size:11px;font-weight:500;color:var(--text2);display:block;margin-bottom:4px}
-.form-input{width:100%;background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:8px 11px;font-size:12px;color:var(--text);font-family:'Inter',sans-serif;outline:none;}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:8px 11px;font-size:12px;color:var(--text);outline:none}
 .modal-foot{padding:11px 20px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
-.btn-cancel{font-size:12px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer;}
-.btn-save{font-size:12px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer;}
-
-.dcell{width:var(--day-w);height:var(--cell-h);border-right:1px solid var(--border);position:relative;vertical-align:middle;padding:0;}
+.btn-cancel{font-size:12px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer}
+.btn-save{font-size:12px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer}
+.dcell{width:var(--day-w);height:var(--cell-h);border-right:1px solid var(--border);position:relative;vertical-align:middle;padding:0}
 .dcell.wk{background:var(--surface2)}
 .dcell.tcol{background:var(--accent-mid)}
-
-.bar{position:absolute;top:50%;transform:translateY(-50%);height:17px;display:flex;align-items:center;overflow:hidden;z-index:2;font-size:8px;font-weight:600;white-space:nowrap;padding:0 5px;cursor:pointer;}
+.bar{position:absolute;top:50%;transform:translateY(-50%);height:17px;display:flex;align-items:center;overflow:hidden;z-index:2;font-size:8px;font-weight:600;white-space:nowrap;padding:0 5px;cursor:pointer}
 .bar.bs{border-radius:5px 0 0 5px;left:3px;right:0}
 .bar.be{border-radius:0 5px 5px 0;left:0;right:3px}
 .bar.bso{border-radius:5px;left:3px;right:3px}
@@ -189,16 +114,12 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 .bn{background:var(--cl-new);color:var(--c-new);border-left:2.5px solid var(--c-new)}
 .bf{background:var(--cl-future);color:var(--c-future);border-left:2.5px solid var(--c-future)}
 .bs2{background:var(--cl-service);color:var(--c-service);border-left:2.5px solid var(--c-service)}
-
-.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);align-items:center;}
-.li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);align-items:center}
+.li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
 .lsw{width:18px;height:4px;border-radius:2px}
-.tip{position:fixed;background:var(--surface);color:var(--text);font-size:11px;padding:10px 13px;border-radius:var(--radius-sm);pointer-events:none;z-index:9999;display:none;border:1px solid var(--border-s);box-shadow:var(--shadow-lg);}
+.tip{position:fixed;background:var(--surface);color:var(--text);font-size:11px;padding:10px 13px;border-radius:var(--radius-sm);pointer-events:none;z-index:9999;display:none;border:1px solid var(--border-s);box-shadow:var(--shadow-lg)}
 .empty{padding:56px;text-align:center;color:var(--text3)}
-
-.tire-badge-row{display:flex;align-items:center;gap:3px;flex-wrap:wrap;margin-top:3px}
-.tire-mini{font-size:9px;font-weight:500;color:var(--c-booked);background:var(--cl-booked);border-radius:3px;padding:1px 5px;display:inline-flex;align-items:center;gap:2px;font-family:'JetBrains Mono',monospace}
-
+.map-pin-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(96,165,250,.2);border-radius:4px;padding:1px 6px;cursor:pointer;margin-left:2px}
 .map-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2500;display:none;align-items:center;justify-content:center;padding:16px}
 .map-overlay.open{display:flex}
 .map-modal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:640px;overflow:hidden;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:90vh}
@@ -210,8 +131,6 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 .map-foot{padding:8px 18px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .map-coords{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
 .map-btn-osm{font-size:11px;color:var(--accent);background:var(--accent-l);border:1px solid var(--accent);border-radius:5px;padding:5px 10px;text-decoration:none}
-.map-pin-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(96,165,250,.2);border-radius:4px;padding:1px 6px;cursor:pointer;margin-left:2px}
-
 .tmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
 .tmodal{background:var(--surface);border:1px solid var(--border-s);border-radius:14px;width:100%;max-width:660px;box-shadow:0 12px 40px rgba(0,0,0,.35);margin:auto}
 .tmodal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -219,7 +138,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 .tmodal-sub{font-size:11px;color:var(--text2);margin-top:2px}
 .tmodal-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px}
 .tmodal-tabs{display:flex;border-bottom:1px solid var(--border)}
-.tmodal-tab{flex:1;padding:10px 12px;font-size:11px;font-weight:600;background:none;border:none;cursor:pointer;font-family:'Inter',sans-serif;color:var(--text2);border-bottom:2px solid transparent;}
+.tmodal-tab{flex:1;padding:10px 12px;font-size:11px;font-weight:600;background:none;border:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent}
 .tmodal-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tmodal-body{padding:14px 16px 8px}
 .tmodal-foot{padding:10px 16px 14px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);margin-top:4px}
@@ -248,10 +167,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
   </div>
   <div class="tr">
     <span class="datebadge" id="todayLbl"></span>
-    <button class="filebtn" onclick="toggleViewMode()" id="viewToggleBtn" style="color:var(--accent)">
-      <i class="ti ti-layout-grid" style="font-size:13px"></i> Ver Sectores
-    </button>
-    <button class="filebtn" id="btnTireOpen" onclick="openTireModal(null,null)" style="color:var(--accent)">
+    <button class="filebtn" onclick="openTireModal(null,null)" style="color:var(--accent)">
       <i class="ti ti-tire" style="font-size:13px"></i> Neumáticos
     </button>
   </div>
@@ -266,55 +182,8 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 </div>
 
 <div class="main">
-  <!-- VISTA CALENDARIO PRINCIPAL -->
-  <div id="calendarViewContainer">
-    <div id="app">
-      <div class="empty">
-        <i class="ti ti-files"></i>
-        <p>Cargando datos desde el servidor…</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- VISTA DE SECTORES (PERU, CERRITO, BOOKED/TRÁNSITO) CON RENDERS DE MODELOS EXACTOS -->
-  <div id="sectorsViewContainer" style="display:none;">
-    <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:16px;">
-      <!-- Estacionamiento PERU -->
-      <div class="calwrap" style="padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <i class="ti ti-parking" style="color:var(--accent)"></i> Estacionamiento PERÚ
-          </h3>
-          <span id="countPeru" class="plate-tag" style="background:var(--accent-l); color:var(--accent-2);">0 veh</span>
-        </div>
-        <div id="gridPeru" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
-      </div>
-
-      <!-- Estacionamiento CERRITO -->
-      <div class="calwrap" style="padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <i class="ti ti-parking" style="color:var(--c-current)"></i> Estacionamiento CERRITO
-          </h3>
-          <span id="countCerrito" class="plate-tag" style="background:var(--cl-current); color:var(--c-current);">0 veh</span>
-        </div>
-        <div id="gridCerrito" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
-      </div>
-
-      <!-- Tránsito / BOOKED con animación -->
-      <div class="calwrap" style="padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <i class="ti ti-road" style="color:var(--c-booked)"></i> En Tránsito (BOOKED)
-          </h3>
-          <span id="countBooked" class="plate-tag" style="background:var(--cl-booked); color:var(--c-booked);">0 en calle</span>
-        </div>
-        <div style="position:relative; background:var(--surface2); border-radius:8px; height:340px; overflow:hidden; border:1px solid var(--border-s);">
-          <div style="position:absolute; top:50%; left:0; right:0; border-top:2px dashed var(--border-m); transform:translateY(-50%);"></div>
-          <div id="streetTrafficArea" style="position:relative; width:100%; height:100%;"></div>
-        </div>
-      </div>
-    </div>
+  <div id="app">
+    <div class="empty"><i class="ti ti-files"></i><p>Cargando datos desde el servidor…</p></div>
   </div>
 </div>
 
@@ -357,113 +226,6 @@ code,kbd,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
 </div>
 
 <script>
-// SILUETAS / RENDERS VECTORIALES DE ESTUDIO AJUSTADOS A MARCA Y MODELO EXACTO (TOYOTA)
-const TOYOTA_EXACT_RENDERS = {
-  HILUX: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-8 l-5 -7 h-20 v-6 h-22 l-8 13 h-15 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M48 9 v11 h18 l4 -11 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/><path d="M70 20 h25 v8 h-25 z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>`,
-  SW4: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-12 l-8 -8 h-35 l-12 8 h-13 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M28 16 h18 v8 h-22 z M50 16 h22 l5 8 h-27 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
-  CROSS: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M6 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h11 v-10 l-7 -7 h-28 l-10 6 h-17 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M30 18 h16 v7 h-19 z M50 18 h20 l5 7 h-25 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
-  COROLLA_SEDAN: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M4 28 h12 a6 6 0 0 1 12 0 h34 a6 6 0 0 1 12 0 h12 v-7 h-8 l-12 -9 h-26 l-12 8 h-12 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="22" cy="28" r="4" fill="currentColor"/><circle cx="74" cy="28" r="4" fill="currentColor"/><path d="M28 19 h18 v6 h-22 z M50 19 h20 l7 6 h-27 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
-  ETIOS_SEDAN: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h11 v-6 h-6 l-10 -8 h-24 l-10 7 h-11 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/><path d="M28 20 h16 v5 h-20 z M48 20 h18 l6 5 h-24 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`,
-  HATCHBACK: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M8 28 h12 a6 6 0 0 1 12 0 h30 a6 6 0 0 1 12 0 h10 v-9 l-8 -7 h-22 l-12 8 h-16 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="26" cy="28" r="4" fill="currentColor"/><circle cx="72" cy="28" r="4" fill="currentColor"/><path d="M30 19 h16 v6 h-20 z M50 19 h16 l6 6 h-22 z" fill="rgba(13,148,136,0.2)" stroke="currentColor" stroke-width="1.2"/></svg>`
-};
-
-function getExactToyotaRender(modelName, plate) {
-  const m = (modelName || '').toUpperCase();
-  const p = (plate || '').toUpperCase();
-  
-  if (m.includes('HILUX') || p === 'AG838JY') return { render: TOYOTA_EXACT_RENDERS.HILUX, label: 'Toyota Hilux Pick-Up' };
-  if (m.includes('SW4') || p === 'AG269JN') return { render: TOYOTA_EXACT_RENDERS.SW4, label: 'Toyota SW4 4x4 SUV' };
-  if (m.includes('CROSS') || p === 'AG765WS') return { render: TOYOTA_EXACT_RENDERS.CROSS, label: 'Toyota Corolla Cross HV' };
-  if (p === 'AG350QD' || (m.includes('ETIOS') && m.includes('SD'))) return { render: TOYOTA_EXACT_RENDERS.ETIOS_SEDAN, label: 'Toyota Etios Sedán' };
-  if (m.includes('COROLLA') || p === 'AI239SV' || p === 'AG192XC') return { render: TOYOTA_EXACT_RENDERS.COROLLA_SEDAN, label: 'Toyota Corolla HV Sedán' };
-  if (m.includes('YARIS')) return { render: TOYOTA_EXACT_RENDERS.HATCHBACK, label: 'Toyota Yaris Hatchback' };
-  return { render: TOYOTA_EXACT_RENDERS.HATCHBACK, label: 'Toyota Etios Hatchback' };
-}
-
-let currentView = 'calendar';
-function toggleViewMode() {
-  currentView = (currentView === 'calendar') ? 'sectors' : 'calendar';
-  const calCont = document.getElementById('calendarViewContainer');
-  const secCont = document.getElementById('sectorsViewContainer');
-  const btn = document.getElementById('viewToggleBtn');
-
-  if (currentView === 'sectors') {
-    calCont.style.display = 'none';
-    secCont.style.display = 'block';
-    btn.innerHTML = '<i class="ti ti-calendar" style="font-size:13px"></i> Ver Calendario';
-    renderSectorsView();
-  } else {
-    calCont.style.display = 'block';
-    secCont.style.display = 'none';
-    btn.innerHTML = '<i class="ti ti-layout-grid" style="font-size:13px"></i> Ver Sectores';
-  }
-}
-
-function renderSectorsView() {
-  if (!ST || !ST.pque || !ST.tel) return;
-  const pPeru = document.getElementById('gridPeru');
-  const pCerrito = document.getElementById('gridCerrito');
-  const pStreet = document.getElementById('streetTrafficArea');
-  pPeru.innerHTML = ''; pCerrito.innerHTML = ''; pStreet.innerHTML = '';
-
-  let cPeru = 0, cCerrito = 0, cBooked = 0;
-
-  ST.pque.forEach(veh => {
-    const tel = ST.tel[veh.plate] || {};
-    const loc = tel.loc || 'CERRITO';
-    const spec = getExactToyotaRender(veh.model, veh.plate);
-
-    const card = `
-      <div style="background:var(--surface2); border:1px solid var(--border-s); border-radius:8px; display:flex; gap:12px; align-items:center; padding:10px;">
-        <div style="width:65px; height:42px; color:var(--accent); flex-shrink:0;">
-          ${spec.render}
-        </div>
-        <div style="flex:1; overflow:hidden;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="plate-tag">${veh.plate}</span>
-            <span style="font-size:9px; color:var(--text3); font-family:'JetBrains Mono';">${tel.km || '0'} km</span>
-          </div>
-          <div style="font-weight:600; font-size:11px; color:var(--text); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${veh.model}</div>
-          <div style="font-size:9px; color:var(--text2); margin-top:1px;">⛽ ${tel.fuel || '-'}L · <span style="color:var(--accent); font-weight:500;">${spec.label}</span></div>
-        </div>
-      </div>
-    `;
-
-    if (loc === 'PERU') {
-      pPeru.innerHTML += card;
-      cPeru++;
-    } else if (loc === 'BOOKED') {
-      cBooked++;
-      const topPos = 20 + ((cBooked * 65) % 240);
-      const speed = 14 + (cBooked * 2);
-      const sprite = document.createElement('div');
-      sprite.style.cssText = `position:absolute; top:${topPos}px; left:-160px; width:150px; background:var(--surface); border:1px solid var(--border-s); border-radius:6px; padding:6px; box-shadow:0 4px 12px rgba(0,0,0,0.3); animation: driveRight ${speed}s linear infinite; animation-delay: ${cBooked * 1.2}s;`;
-      sprite.innerHTML = `
-        <div style="display:flex; align-items:center; gap:6px;">
-          <div style="width:45px; height:30px; color:var(--c-booked); flex-shrink:0;">${spec.render}</div>
-          <div style="overflow:hidden;">
-            <div style="font-size:9px; font-family:'JetBrains Mono'; font-weight:700; color:var(--c-booked);">${veh.plate}</div>
-            <div style="font-size:8px; color:var(--text3);">⛽ ${tel.fuel || '-'}L</div>
-          </div>
-        </div>
-      `;
-      pStreet.appendChild(sprite);
-    } else {
-      pCerrito.innerHTML += card;
-      cCerrito++;
-    }
-  });
-
-  document.getElementById('countPeru').textContent = `${cPeru} veh`;
-  document.getElementById('countCerrito').textContent = `${cCerrito} veh`;
-  document.getElementById('countBooked').textContent = `${cBooked} en calle`;
-}
-
-const animStyle = document.createElement('style');
-animStyle.innerText = `@keyframes driveRight { 0% { left: -170px; } 100% { left: 105%; } }`;
-document.head.appendChild(animStyle);
-
-// REGISTROS NATIVOS Y CONEXIONES A CLOUDFLARE WORKER / SUPABASE / GITHUB
 const MAINT_TYPES = [
   { label: 'Cambio de aceite y filtro', km: 10000 },
   { label: 'Rotación de neumáticos', km: 10000 },
@@ -478,7 +240,6 @@ const MAINT_TYPES = [
   { label: 'Alineación y balanceo', km: 0 },
   { label: 'Otro (ver observaciones)', km: 0 },
 ];
-
 const STORE_PREFIX = 'fleetcal_maint_';
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 document.getElementById('todayLbl').textContent = TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
@@ -526,62 +287,158 @@ function maintAlertInfo(kmStr, plate){
   return null;
 }
 
-// FUNCIONALIDAD DE NEUMÁTICOS COMPLETA E INTACTA
+window.openMaintModal = function(plate, modelName){
+  modalPlate = plate;
+  const tel = ST.tel ? ST.tel[plate] : null;
+  const kmStr = tel ? tel.km : null;
+  const alertInf = kmStr ? maintAlertInfo(kmStr, plate) : null;
+
+  document.getElementById('modalTitle').textContent = 'Mantenimiento · ' + plate;
+  document.getElementById('modalSub').textContent = modelName + (tel ? ' · ' + tel.km + ' km actuales' : '');
+  document.getElementById('maintDate').value = TODAY.toISOString().slice(0,10);
+  document.getElementById('maintNote').value = '';
+
+  const typeEl = document.getElementById('maintType');
+  typeEl.innerHTML = '<option value="">— Seleccioná el tipo de servicio —</option>';
+  MAINT_TYPES.forEach((t, i) => {
+    const opt = document.createElement('option');
+    opt.value = i; opt.textContent = t.label;
+    typeEl.appendChild(opt);
+  });
+  typeEl.value = '';
+  typeEl.onchange = function() { updateIntervalSelect(alertInf); };
+  updateIntervalSelect(alertInf);
+  renderHistList(plate);
+  document.getElementById('modalOverlay').style.display = 'flex';
+};
+
+function updateIntervalSelect(alertInf) {
+  const typeIdx = document.getElementById('maintType').value;
+  const intEl = document.getElementById('maintInterval');
+  intEl.innerHTML = '';
+  const nextMult = alertInf ? alertInf.nextMultiple : null;
+  for(let k = 10000; k <= 200000; k += 10000) {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = k.toLocaleString('es-AR') + ' km' + (k === nextMult ? ' ⚠️ próximo service' : '');
+    intEl.appendChild(opt);
+  }
+  if(typeIdx !== '' && MAINT_TYPES[typeIdx] && MAINT_TYPES[typeIdx].km > 0) {
+    intEl.value = MAINT_TYPES[typeIdx].km;
+  } else if(nextMult) {
+    intEl.value = nextMult;
+  } else {
+    intEl.value = 10000;
+  }
+}
+
+window.closeModal = function(e){
+  if(e && e.target !== document.getElementById('modalOverlay')) return;
+  document.getElementById('modalOverlay').style.display = 'none';
+  modalPlate = null;
+};
+
+window.saveMaint = function(){
+  if(!modalPlate) return;
+  const date = document.getElementById('maintDate').value;
+  const note = document.getElementById('maintNote').value.trim();
+  if(!date){ alert('Seleccioná una fecha'); return; }
+  const typeIdx = document.getElementById('maintType').value;
+  const typeLabel = typeIdx !== '' ? MAINT_TYPES[typeIdx].label : 'Servicio general';
+  const intervalVal = parseInt(document.getElementById('maintInterval').value) || 10000;
+
+  const tel = ST.tel ? ST.tel[modalPlate] : null;
+  const clearedKmReal = tel && tel.km ? parseInt(tel.km, 10) : intervalVal;
+
+  const nuevoItem = {
+    date: date, tipo: typeLabel, type: typeLabel,
+    intervalo: intervalVal, clearedMultiple: intervalVal,
+    cleared_km: clearedKmReal, note: note, notes: note, ts: Date.now()
+  };
+
+  var p = modalPlate.toUpperCase().trim();
+  var history = getMaintHistory(p);
+  history.push(nuevoItem);
+  try { localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history)); } catch(e){}
+
+  document.getElementById('maintNote').value = '';
+  renderHistList(p);
+  if(typeof renderCal === 'function') renderCal();
+  alert('Mantenimiento registrado con éxito.');
+};
+
+window.deleteMaintEntry = function(plate, ts) {
+  if(!plate) return;
+  const p = plate.toUpperCase().trim();
+  if(!confirm('¿Deseas eliminar este registro de mantenimiento?')) return;
+  let history = getMaintHistory(p);
+  history = history.filter(h => h.ts !== ts);
+  try { localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history)); } catch(e){}
+  renderHistList(p);
+  if(typeof renderCal === 'function') renderCal();
+};
+
+function renderHistList(plate) {
+  if(!plate) return;
+  var p = plate.toUpperCase().trim();
+  var container = document.getElementById('histList');
+  if(!container) return;
+  var history = getMaintHistory(p);
+  if(!history.length){
+    container.innerHTML = '<div class="hist-empty">Sin registros previos.</div>';
+    return;
+  }
+  container.innerHTML = history.map(h => `
+    <div class="hist-item">
+      <div>
+        <span class="hist-date">${h.date} — ${h.tipo || h.type}</span>
+        <div class="hist-note">${h.cleared_km || h.intervalo} km ${h.note || h.notes ? '· ' + (h.note || h.notes) : ''}</div>
+      </div>
+      <button class="hist-del" onclick="deleteMaintEntry('${p}', ${h.ts})">Eliminar</button>
+    </div>
+  `).join('');
+}
+
+// NEUMÁTICOS Y ACCESORIOS
 const TIRE_PREFIX = 'fleetcal_tires_';
 const ACC_PREFIX  = 'fleetcal_acc_';
+const TIRE_POSITIONS = ['Delantera Izq','Delantera Der','Trasera Izq','Trasera Der','Auxilio/Repuesto'];
 let tireModalPlate = null;
-let tireModalModel = null;
-let tireTab = 'tires';
 let tireWorkingCopy = [];
-let accWorkingCopy  = [];
+let accWorkingCopy = [];
 
-function getTireData(plate){
-  try{ const r=localStorage.getItem(TIRE_PREFIX+plate); return r?JSON.parse(r):[]; }catch(e){ return []; }
-}
-function saveTireDataStore(plate,data){
-  try{ localStorage.setItem(TIRE_PREFIX+plate,JSON.stringify(data)); }catch(e){}
-}
-function getAccData(plate){
-  try{ const r=localStorage.getItem(ACC_PREFIX+plate); return r?JSON.parse(r):[]; }catch(e){ return []; }
-}
-function saveAccDataStore(plate,data){
-  try{ localStorage.setItem(ACC_PREFIX+plate,JSON.stringify(data)); }catch(e){}
-}
+function getTireData(plate){ try{ return JSON.parse(localStorage.getItem(TIRE_PREFIX+plate)||'[]'); }catch(e){ return []; } }
+function saveTireDataStore(plate,data){ try{ localStorage.setItem(TIRE_PREFIX+plate,JSON.stringify(data)); }catch(e){} }
+function getAccData(plate){ try{ return JSON.parse(localStorage.getItem(ACC_PREFIX+plate)||'[]'); }catch(e){ return []; } }
+function saveAccDataStore(plate,data){ try{ localStorage.setItem(ACC_PREFIX+plate,JSON.stringify(data)); }catch(e){} }
 
 window.openTireModal = function(plate, modelName){
   tireModalPlate = plate;
-  tireModalModel = modelName;
   if(!plate){ buildVehiclePicker(); return; }
   document.getElementById('tireModalOverlay').style.display = 'flex';
   document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
-  document.getElementById('tireModalSub').textContent   = modelName || '';
+  document.getElementById('tireModalSub').textContent = modelName || '';
   renderTireCards(plate);
   renderAccRows(plate);
 };
 
 function buildVehiclePicker(){
-  if(!ST.pque||!ST.pque.length){ alert('Cargá primero los datos de la flota'); return; }
+  if(!ST.pque||!ST.pque.length){ alert('Cargá primero la flota'); return; }
   document.getElementById('tireModalOverlay').style.display = 'flex';
   document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
-  document.getElementById('tireModalSub').textContent   = 'Elegí un vehículo para gestionar neumáticos y accesorios';
-  
+  document.getElementById('tireModalSub').textContent = 'Elegí un vehículo';
   const panel = document.getElementById('panelTires');
-  panel.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px">' +
-    ST.pque.map(v=>`<button onclick="selectVehicleForTires('${v.plate}','${v.model.replace(/'/g,"\\'")}')"
-      style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:7px;padding:9px 13px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;color:var(--text)">
-      <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--c-booked)">${v.plate}</span>
-      <span style="color:var(--text2);margin-left:8px">${v.model}</span>
-    </button>`).join('') +
+  panel.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">' +
+    ST.pque.map(v=>`<button onclick="selectVehicleForTires('${v.plate}','${v.model.replace(/'/g,"\\'")}')" style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px;color:var(--text)"><span style="font-family:'JetBrains Mono';font-weight:600">${v.plate}</span> — ${v.model}</button>`).join('') +
   '</div>';
 }
 
 window.selectVehicleForTires = function(plate, model){
   tireModalPlate = plate;
-  tireModalModel = model;
   const panel = document.getElementById('panelTires');
   panel.innerHTML = `<div id="tireCards"></div><button class="add-tire-btn" onclick="addTireCard()"><i class="ti ti-plus"></i> Agregar neumático</button>`;
   document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
-  document.getElementById('tireModalSub').textContent   = model;
+  document.getElementById('tireModalSub').textContent = model;
   renderTireCards(plate);
   renderAccRows(plate);
 };
@@ -598,41 +455,67 @@ function renderTireCards(plate){
 
 function rebuildTireCards(){
   const container = document.getElementById('tireCards');
-  if (!container) return;
+  if(!container) return;
   if(!tireWorkingCopy.length){
-    container.innerHTML='<p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Sin neumáticos registrados para este vehículo.</p>';
+    container.innerHTML='<p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Sin neumáticos registrados.</p>';
     return;
   }
   container.innerHTML = tireWorkingCopy.map((t,i)=>`
-    <div class="tire-card">
+    <div class="tire-card" id="tc-${i}">
       <div class="tire-card-head">
-        <span class="tire-pos-badge">${t.posicion||'Posición N/A'}</span>
+        <span class="tire-pos-badge">${t.posicion||'Posición'}</span>
+        <button onclick="removeTireCard(${i})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--c-error)">✕</button>
       </div>
       <div class="tire-row">
-        <div class="tire-field"><label>Número / ID</label><input type="text" value="${t.numero||''}"></div>
-        <div class="tire-field"><label>Marca</label><input type="text" value="${t.marca||''}"></div>
+        <div class="tire-field"><label>Posición</label>
+          <select onchange="updateTireField(${i},'posicion',this.value)">${TIRE_POSITIONS.map(p=>`<option value="${p}" ${t.posicion===p?'selected':''}>${p}</option>`).join('')}</select>
+        </div>
+        <div class="tire-field"><label>Número / ID</label><input type="text" value="${t.numero||''}" onchange="updateTireField(${i},'numero',this.value)"></div>
       </div>
     </div>
   `).join('');
 }
 
-function renderAccRows(plate){
-  accWorkingCopy = JSON.parse(JSON.stringify(getAccData(plate)));
-}
+window.updateTireField = function(i, field, val){ if(tireWorkingCopy[i]) tireWorkingCopy[i][field] = val; };
+window.addTireCard = function(){ tireWorkingCopy.push({posicion:'Delantera Izq',numero:'',marca:'',rodado:''}); rebuildTireCards(); };
+window.removeTireCard = function(i){ tireWorkingCopy.splice(i,1); rebuildTireCards(); };
+window.renderAccRows = function(plate){ accWorkingCopy = JSON.parse(JSON.stringify(getAccData(plate))); };
+window.saveTireData = function(){
+  if(!tireModalPlate) return;
+  saveTireDataStore(tireModalPlate, tireWorkingCopy);
+  saveAccDataStore(tireModalPlate, accWorkingCopy);
+  document.getElementById('tireModalOverlay').style.display='none';
+  renderCal();
+};
 
-// PARSEADORES NATIVOS
+// CHECKLIST
+window.openChecklist = function(el) {
+  try {
+    var d = JSON.parse(el.dataset.checklist.replace(/&quot;/g, '"'));
+    var veh = ST.pque ? ST.pque.find(function(v){ return v.plate === d.plate; }) : null;
+    var tel = ST.tel ? ST.tel[d.plate] : null;
+    var payload = {
+      plate: d.plate, resid: d.code, renter: d.renter,
+      startDate: d.start, endDate: d.end,
+      km: tel ? tel.km : '—', tankCap: veh ? veh.tankCap : 0,
+      tires: getTireData(d.plate), accesorios: getAccData(d.plate)
+    };
+    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+    window.open('checklist_kinto.html', '_blank');
+  } catch(e) { console.error(e); }
+};
+
+// PARSERS
 function parsePque(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
     const cols = line.split('\t');
     const main = cols[0].trim().split(/\s+/);
     const plate = main[main.length-1];
     const model = main.slice(1,-1).join(' ');
-    const bodyType = cols[1] ? cols[1].trim() : '';
     const tankCap = cols[2] ? parseInt(cols[2].trim()) || 0 : 0;
-    return {id: main[0], plate, model, bodyType, tankCap};
+    return {plate, model, tankCap};
   });
 }
-
 function parseRes(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
     const p=line.split('\t');
@@ -642,7 +525,6 @@ function parseRes(txt){
     return {code:code.trim(),renter:renter.trim(),vehicle:vehicle.trim(),plate,start:parseD(startS.trim()),end:parseD(endS.trim()),status:(status||'').trim()};
   }).filter(x=>x&&x.start&&x.end);
 }
-
 function parseTel(txt){
   const m={};
   txt.trim().split('\n').filter(l=>l.trim()).forEach(line=>{
@@ -653,7 +535,6 @@ function parseTel(txt){
   });
   return m;
 }
-
 function parseD(str){
   const mo={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
   const m=str.match(/(\d+):(\d+)\s+(AM|PM)\s+(\w+)\s+(\d+),\s+(\d+)/);
@@ -663,51 +544,25 @@ function parseD(str){
   return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
 }
 
+// SINCRONIZACIÓN AUTOMÁTICA CDN
 function sincronizarFlotaCDN() {
-  var tokenBuster = Date.now();
-  var cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
-  var urlPque = cdnRaiz + "Pque.txt?v=" + tokenBuster;
-  var urlRes = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/scraped_data.txt?v=" + tokenBuster;
-  var urlTel = "https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/TelemGts_data.txt?=" + tokenBuster;
+  const tokenBuster = Date.now();
+  const cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
 
-  fetch(urlRes).then(res=>res.text()).then(data=>{ ST.res = parseRes(data); tryRender(); }).catch(e=>console.warn(e));
-  fetch(urlPque).then(res=>res.text()).then(data=>{ ST.pque = parsePque(data); tryRender(); }).catch(e=>console.warn(e));
-  fetch(urlTel).then(res=>res.text()).then(data=>{ ST.tel = parseTel(data); tryRender(); }).catch(e=>console.warn(e));
+  fetch(cdnRaiz + "Pque.txt?v=" + tokenBuster)
+    .then(r => r.text()).then(t => { ST.pque = parsePque(t); tryRender(); }).catch(e => console.warn(e));
+  
+  fetch("https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/scraped_data.txt?v=" + tokenBuster)
+    .then(r => r.text()).then(t => { ST.res = parseRes(t); tryRender(); }).catch(e => console.warn(e));
+  
+  fetch("https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/TelemGts_data.txt?v=" + tokenBuster)
+    .then(r => r.text()).then(t => { ST.tel = parseTel(t); tryRender(); }).catch(e => console.warn(e));
 }
 
 (function(){
-  ST.pque=parsePque(`18723 Toyota Corolla HV AT AI239SV	SEDAN	43
-10914 Toyota SW4 4x4 7A AT AG269JN	SUV	80
-11131 Toyota Etios SD AT AG350QD	HATCHBACK	45
-11182 Toyota ETIOS HB A/T AG350QF	HATCHBACK	45
-11181 Toyota ETIOS HB A/T AG350QE	HATCHBACK	45
-12469 Toyota Yaris HB AT AG500BY	HATCHBACK	42
-12684 Toyota Yaris HB AT AG708YK	HATCHBACK	42
-12685 Toyota Yaris HB AT AG708YJ	HATCHBACK	42
-12877 Toyota Corolla Cross HV AT AG765WS	SUV2	36
-13131 Toyota Hilux 4x4 DC AT AG838JY	PICKUP	80`);
-  
-  ST.res=parseRes([
-    'yevw52d\tService\tToyota Corolla HV AT AG192XC\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent',
-    'l8mz66g\tNicolas Dominguez\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t12:00 PM  May 27, 2026\t11:00 AM  Jun 30, 2026\tCurrent',
-    'ymzn137\tTeresa Perkins\tToyota Yaris HB AT AG708YK\tRetiro\t--\t4:00 PM  May 29, 2026\t10:00 AM  Jun 16, 2026\tCurrent',
-    'lr181ez\tCUSTOMER SERVICE 21\tToyota Yaris HB AT AG500BY\tRetiro\t--\t4:45 PM  Jun 1, 2026\t6:00 PM  Jun 12, 2026\tCurrent',
-    'kvx36xo\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t9:00 AM  Jun 8, 2026\t9:00 AM  Jun 16, 2026\tCurrent',
-    'k33zx7m\tNicolas Ezequiel Mammone\tToyota Yaris HB AT AG708YJ\tRetiro\t--\t3:00 PM  Jun 8, 2026\t4:00 PM  Jun 13, 2026\tCurrent'
-  ].join('\n'));
-
-  ST.tel=parseTel([
-    '10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED',
-    '11131\t-34.61351, -58.373844\t73,106\t40\tToyota Etios SD AT AG350QD\tPERU',
-    '11182\t-34.613323, -58.374226\t57,335\t38\tToyota ETIOS HB A/T AG350QF\tPERU',
-    '11181\t-34.613499, -58.373867\t75,900\t40\tToyota ETIOS HB A/T AG350QE\tPERU',
-    '12469\t-34.9007, -57.955624\t60,642\t24\tToyota Yaris HB AT AG500BY\tBOOKED',
-    '12684\t-34.593182, -58.43074\t62,840\t19\tToyota Yaris HB AT AG708YK\tBOOKED',
-    '12685\t-32.695877, -63.442169\t57,514\t38\tToyota Yaris HB AT AG708YJ\tBOOKED',
-    '12877\t-34.597813, -58.380341\t32,284\t-\tToyota Corolla Cross HV AT AG765WS\tBOOKED',
-    '13131\t-34.593182, -58.43074\t59,250\t71\tToyota Hilux 4x4 DC AT AG838JY\tPERU'
-  ].join('\n'));
-
+  ST.pque = parsePque(`18723 Toyota Corolla HV AT AI239SV\tSEDAN\t43\n10914 Toyota SW4 4x4 7A AT AG269JN\tSUV\t80\n13131 Toyota Hilux 4x4 DC AT AG838JY\tPICKUP\t80`);
+  ST.res = parseRes('yevw52d\tService\tToyota Corolla HV AT AI239SV\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent');
+  ST.tel = parseTel('10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED');
   tryRender();
   sincronizarFlotaCDN();
 })();
@@ -716,7 +571,6 @@ function tryRender(){
   if(!ST.pque || !ST.res || !ST.tel) return;
   updateStats();
   renderCal();
-  if(currentView === 'sectors') renderSectorsView();
 }
 
 function updateStats(){
@@ -725,9 +579,9 @@ function updateStats(){
   document.getElementById('stN').textContent = ST.res.filter(r=>r.status==='New').length;
   const activePlates = new Set(ST.res.filter(r=>r.start<=TODAY&&r.end>=TODAY).map(r=>r.plate));
   document.getElementById('stA').textContent = ST.pque.filter(v=>!activePlates.has(v.plate)).length;
-  let maintAlerts=0;
+  let maintAlerts = 0;
   ST.pque.forEach(v=>{
-    const tel=ST.tel[v.plate];
+    const tel = ST.tel[v.plate];
     if(tel && maintAlertInfo(tel.km, v.plate)) maintAlerts++;
   });
   document.getElementById('stM').textContent = maintAlerts;
@@ -761,15 +615,26 @@ function renderCal(){
     const vRes=ST.res.filter(r=>r.plate===veh.plate);
     const tel=ST.tel[veh.plate];
     const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
+    const lastMaint=getLastMaint(veh.plate);
+    const histCount=getMaintHistory(veh.plate).length;
 
     html+=`<tr class="vrow">`;
     html+=`<td class="cltd">
       <span class="vname" title="${veh.model}">${veh.model}</span>
-      <span class="vplate"><span class="plate-tag">${veh.plate}</span></span>
+      <span class="vplate">
+        <span class="plate-tag">${veh.plate}</span>
+        ${tel?`<span style="color:var(--accent)">${tel.loc}</span>`:''}
+        ${tel&&tel.coords&&tel.coords!=='-'?`<button class="map-pin-btn" onclick="openVehMap('${veh.plate}')">mapa</button>`:''}
+      </span>
+      ${tel?`<span class="vtelrow"><span class="vti">${tel.km} km · ⛽ ${tel.fuel}L</span></span>`:''}
     </td>`;
-    
+
     html+=`<td class="cmtd">
-      ${alert?`<span style="color:var(--c-error);font-weight:600;font-size:10px">⚠️ Service Próximo</span>`:`<span style="font-size:9px;color:var(--text3)">Al día</span>`}
+      ${alert?`<div class="maint-alert" onclick="openMaintModal('${veh.plate}','${veh.model.replace(/'/g,"\\'")}')"><span class="maint-alert-title">Service próximo</span></div>`:
+      `<span class="maint-ok"><i class="ti ti-circle-check"></i> Al día</span>`}
+      ${lastMaint?`<span class="maint-last">Último: ${lastMaint.date}</span>`:''}
+      <button class="maint-register-btn" onclick="openMaintModal('${veh.plate}','${veh.model.replace(/'/g,"\\'")}')"><i class="ti ti-plus"></i> Registrar</button>
+      ${histCount>0?`<button class="maint-hist-btn" onclick="openMaintModal('${veh.plate}','${veh.model.replace(/'/g,"\\'")}')">${histCount} reg.</button>`:''}
     </td>`;
 
     for(let d=1;d<=days;d++){
@@ -784,37 +649,59 @@ function renderCal(){
           const iS=dd.getTime()===s.getTime(), iE=dd.getTime()===e.getTime();
           const btype = (iS&&iE)?'bso':iS?'bs':iE?'be':'bm';
           const bc = res.status==='Current'?'bc':'bn';
-          html+=`<div class="bar ${btype} ${bc}">${iS?res.renter:''}</div>`;
+          const tipData=JSON.stringify({code:res.code,renter:res.renter,start:res.start.toLocaleDateString(),end:res.end.toLocaleDateString(),plate:res.plate}).replace(/"/g,'&quot;');
+          html+=`<div class="bar ${btype} ${bc}" data-checklist="${tipData}" onclick="openChecklist(this)">${iS?res.renter:''}</div>`;
         }
       });
       html+=`</td>`;
     }
     html+=`</tr>`;
   });
-
   html+=`</tbody></table></div></div>`;
   document.getElementById('app').innerHTML=html;
 }
 
-window.shiftMonth=function(d){ vMonth+=d; if(vMonth>11){vMonth=0;vYear++;} if(vMonth<0){vMonth=11;vYear--;} renderCal(); };
-window.goToday=function(){ vYear=TODAY.getFullYear(); vMonth=TODAY.getMonth(); renderCal(); };
+window.openVehMap = function(plate){
+  const tel = ST.tel[plate];
+  if(!tel || !tel.coords) return;
+  const parts = tel.coords.split(',').map(s => parseFloat(s.trim()));
+  document.getElementById('mapTitle').textContent = 'Ubicación · ' + plate;
+  document.getElementById('mapSub').textContent = tel.km + ' km · ' + tel.loc;
+  document.getElementById('mapCoords').textContent = tel.coords;
+  document.getElementById('mapOsmLink').href = 'https://www.openstreetmap.org/?mlat=' + parts[0] + '&mlon=' + parts[1] + '&zoom=15';
+  document.getElementById('mapOverlay').classList.add('open');
+  setTimeout(()=>{
+    if(!window._leafletMap){
+      window._leafletMap = L.map('fleetMapContainer').setView(parts, 15);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window._leafletMap);
+    } else {
+      window._leafletMap.setView(parts, 15);
+      window._leafletMap.invalidateSize();
+    }
+    L.marker(parts).addTo(window._leafletMap);
+  }, 100);
+};
+
+window.closeMapModal = function(e){
+  if(e && e.target!==document.getElementById('mapOverlay')) return;
+  document.getElementById('mapOverlay').classList.remove('open');
+};
 </script>
 
-<!-- MODAL DE NEUMÁTICOS -->
-<div class="tmodal-overlay" id="tireModalOverlay" style="display:none" onclick="closeTireModal(event)">
-  <div class="tmodal" onclick="event.stopPropagation()">
-    <div class="tmodal-head">
+<!-- MAP MODAL -->
+<div class="map-overlay" id="mapOverlay" onclick="closeMapModal(event)">
+  <div class="map-modal" onclick="event.stopPropagation()">
+    <div class="map-head">
       <div>
-        <div class="tmodal-title" id="tireModalTitle">Neumáticos y Accesorios</div>
-        <div class="tmodal-sub" id="tireModalSub"></div>
+        <div class="map-title" id="mapTitle">Ubicación</div>
+        <div class="map-sub" id="mapSub"></div>
       </div>
-      <button class="tmodal-close" onclick="closeTireModal()"><i class="ti ti-x"></i></button>
+      <button class="map-close" onclick="closeMapModal()"><i class="ti ti-x"></i></button>
     </div>
-    <div class="tmodal-body" id="panelTires">
-      <div id="tireCards"></div>
-    </div>
-    <div class="tmodal-foot">
-      <button class="btn-cancel" onclick="closeTireModal()">Cerrar</button>
+    <div id="fleetMapContainer"></div>
+    <div class="map-foot">
+      <span class="map-coords" id="mapCoords"></span>
+      <a class="map-btn-osm" id="mapOsmLink" href="#" target="_blank">Abrir en OSM</a>
     </div>
   </div>
 </div>
