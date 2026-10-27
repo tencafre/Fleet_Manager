@@ -82,24 +82,23 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .plate-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(30,64,175,.2);border-radius:4px;padding:1px 7px}
 .vtelrow{display:flex;align-items:center;gap:8px;margin-top:4px}
 .vti{font-size:9px;color:var(--text3)}
-.fbar-track{display:inline-block;width:32px;height:3px;background:var(--border-s);border-radius:2px;overflow:hidden;vertical-align:middle}
-.fbar-fill{display:block;height:100%;border-radius:2px}
 .maint-alert{display:flex;align-items:flex-start;gap:6px;background:linear-gradient(135deg,#fff1f0,#fee2e2);border:1px solid rgba(185,28,28,.2);border-radius:var(--radius-sm);padding:5px 8px;cursor:pointer}
 .maint-alert-title{font-weight:700;color:var(--c-error);display:block}
 .maint-ok{font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px}
 .maint-last{font-size:9px;color:var(--text3);margin-top:3px;display:block}
 .maint-register-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-mid);border:1px solid rgba(13,148,136,.25);border-radius:4px;padding:2px 7px;cursor:pointer;margin-top:4px}
 .maint-hist-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);background:none;border:none;cursor:pointer;margin-top:2px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
-.modal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:390px;overflow:hidden;box-shadow:var(--shadow-lg)}
-.modal-head{padding:18px 20px 13px;border-bottom:1px solid var(--border)}
-.modal-title{font-size:14px;font-weight:700}
-.modal-sub{font-size:11px;color:var(--text2);margin-top:2px}
-.modal-body{padding:15px 20px}
+.modal-overlay,.map-overlay,.tmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal,.map-modal,.tmodal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:420px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.map-modal,.tmodal{max-width:660px}
+.modal-head,.map-head,.tmodal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title,.map-title,.tmodal-title{font-size:14px;font-weight:700}
+.modal-sub,.map-sub,.tmodal-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.modal-body,.tmodal-body{padding:16px 20px}
 .form-row{margin-bottom:13px}
 .form-label{font-size:11px;font-weight:500;color:var(--text2);display:block;margin-bottom:4px}
 .form-input{width:100%;background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:8px 11px;font-size:12px;color:var(--text);outline:none}
-.modal-foot{padding:11px 20px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
+.modal-foot,.tmodal-foot{padding:11px 20px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
 .btn-cancel{font-size:12px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer}
 .btn-save{font-size:12px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer}
 .dcell{width:var(--day-w);height:var(--cell-h);border-right:1px solid var(--border);position:relative;vertical-align:middle;padding:0}
@@ -114,35 +113,13 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .bn{background:var(--cl-new);color:var(--c-new);border-left:2.5px solid var(--c-new)}
 .bf{background:var(--cl-future);color:var(--c-future);border-left:2.5px solid var(--c-future)}
 .bs2{background:var(--cl-service);color:var(--c-service);border-left:2.5px solid var(--c-service)}
-.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);align-items:center}
-.li{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)}
-.lsw{width:18px;height:4px;border-radius:2px}
-.tip{position:fixed;background:var(--surface);color:var(--text);font-size:11px;padding:10px 13px;border-radius:var(--radius-sm);pointer-events:none;z-index:9999;display:none;border:1px solid var(--border-s);box-shadow:var(--shadow-lg)}
 .empty{padding:56px;text-align:center;color:var(--text3)}
 .map-pin-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(96,165,250,.2);border-radius:4px;padding:1px 6px;cursor:pointer;margin-left:2px}
-.map-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2500;display:none;align-items:center;justify-content:center;padding:16px}
-.map-overlay.open{display:flex}
-.map-modal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:640px;overflow:hidden;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:90vh}
-.map-head{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.map-title{font-size:14px;font-weight:700}
-.map-sub{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace}
-.map-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px}
-#fleetMapContainer{height:400px;width:100%;flex:1}
+#fleetMapContainer{height:400px;width:100%}
 .map-foot{padding:8px 18px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .map-coords{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
 .map-btn-osm{font-size:11px;color:var(--accent);background:var(--accent-l);border:1px solid var(--accent);border-radius:5px;padding:5px 10px;text-decoration:none}
-.tmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:2000;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
-.tmodal{background:var(--surface);border:1px solid var(--border-s);border-radius:14px;width:100%;max-width:660px;box-shadow:0 12px 40px rgba(0,0,0,.35);margin:auto}
-.tmodal-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.tmodal-title{font-size:14px;font-weight:700}
-.tmodal-sub{font-size:11px;color:var(--text2);margin-top:2px}
-.tmodal-close{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px}
-.tmodal-tabs{display:flex;border-bottom:1px solid var(--border)}
-.tmodal-tab{flex:1;padding:10px 12px;font-size:11px;font-weight:600;background:none;border:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent}
-.tmodal-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.tmodal-body{padding:14px 16px 8px}
-.tmodal-foot{padding:10px 16px 14px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);margin-top:4px}
-.tire-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;margin-bottom:10px}
+.tire-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin-bottom:10px}
 .tire-card{background:var(--surface2);border:1px solid var(--border-s);border-radius:8px;padding:10px 12px}
 .tire-card-head{display:flex;align-items:center;gap:6px;margin-bottom:8px}
 .tire-pos-badge{font-size:10px;font-weight:600;background:var(--c-booked);color:#fff;border-radius:4px;padding:2px 8px}
@@ -150,10 +127,6 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .tire-field label{font-size:10px;font-weight:500;color:var(--text2);display:block;margin-bottom:3px}
 .tire-field input,.tire-field select{width:100%;background:var(--surface);border:1px solid var(--border-s);border-radius:4px;padding:5px 7px;font-size:11px;color:var(--text);outline:none}
 .add-tire-btn{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--accent);background:var(--accent-mid);border:1px dashed var(--accent);border-radius:6px;padding:7px 14px;cursor:pointer;margin-bottom:8px}
-.acc-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
-.acc-table th{font-size:10px;font-weight:600;color:var(--text2);border-bottom:1px solid var(--border-s);padding:5px 8px;text-align:left}
-.acc-table td{padding:4px 4px;border-bottom:1px solid var(--border)}
-.acc-table td input,.acc-table td select{width:100%;background:var(--surface2);border:1px solid var(--border-s);border-radius:4px;padding:5px 7px;font-size:11px;color:var(--text)}
 </style>
 </head>
 <body>
@@ -167,6 +140,9 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
   </div>
   <div class="tr">
     <span class="datebadge" id="todayLbl"></span>
+    <button class="filebtn" onclick="toggleViewMode()" id="viewToggleBtn" style="color:var(--accent)">
+      <i class="ti ti-layout-grid" style="font-size:13px"></i> Ver Sectores
+    </button>
     <button class="filebtn" onclick="openTireModal(null,null)" style="color:var(--accent)">
       <i class="ti ti-tire" style="font-size:13px"></i> Neumáticos
     </button>
@@ -182,45 +158,126 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 </div>
 
 <div class="main">
-  <div id="app">
-    <div class="empty"><i class="ti ti-files"></i><p>Cargando datos desde el servidor…</p></div>
+  <!-- VISTA CALENDARIO TRADICIONAL -->
+  <div id="calendarViewContainer">
+    <div id="app">
+      <div class="empty"><i class="ti ti-files"></i><p>Cargando datos desde el servidor…</p></div>
+    </div>
+  </div>
+
+  <!-- VISTA DE SECTORES POR UBICACIÓN (PERÚ, CERRITO, BOOKED) -->
+  <div id="sectorsViewContainer" style="display:none;">
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:16px;">
+      <!-- Estacionamiento PERU -->
+      <div class="calwrap" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-parking" style="color:var(--accent)"></i> Estacionamiento PERÚ
+          </h3>
+          <span id="countPeru" class="plate-tag" style="background:var(--accent-l); color:var(--accent-2);">0 veh</span>
+        </div>
+        <div id="gridPeru" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
+      </div>
+
+      <!-- Estacionamiento CERRITO -->
+      <div class="calwrap" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-parking" style="color:var(--c-current)"></i> Estacionamiento CERRITO
+          </h3>
+          <span id="countCerrito" class="plate-tag" style="background:var(--cl-current); color:var(--c-current);">0 veh</span>
+        </div>
+        <div id="gridCerrito" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
+      </div>
+
+      <!-- Tránsito / BOOKED con animación -->
+      <div class="calwrap" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-road" style="color:var(--c-booked)"></i> En Tránsito (BOOKED)
+          </h3>
+          <span id="countBooked" class="plate-tag" style="background:var(--cl-booked); color:var(--c-booked);">0 en calle</span>
+        </div>
+        <div style="position:relative; background:var(--surface2); border-radius:8px; height:340px; overflow:hidden; border:1px solid var(--border-s);">
+          <div style="position:absolute; top:50%; left:0; right:0; border-top:2px dashed var(--border-m); transform:translateY(-50%);"></div>
+          <div id="streetTrafficArea" style="position:relative; width:100%; height:100%;"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="tip" id="tip"></div>
-
-<!-- Modal registro mantenimiento -->
-<div class="modal-overlay" id="modalOverlay" style="display:none" onclick="closeModal(event)">
+<!-- Modal Mantenimiento -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal" onclick="event.stopPropagation()">
     <div class="modal-head">
-      <div class="modal-title" id="modalTitle">Registrar mantenimiento</div>
-      <div class="modal-sub" id="modalSub"></div>
+      <div>
+        <div class="modal-title" id="modalTitle">Registrar mantenimiento</div>
+        <div class="modal-sub" id="modalSub"></div>
+      </div>
+      <button onclick="closeModal()" style="background:none;border:none;cursor:pointer;color:var(--text3)"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
       <div class="form-row">
         <label class="form-label">Tipo de servicio</label>
-        <select class="form-input" id="maintType"><option value="">— Seleccioná el tipo de servicio —</option></select>
+        <select class="form-input" id="maintType"><option value="">— Seleccioná el tipo —</option></select>
       </div>
       <div class="form-row">
-        <label class="form-label">Intervalo (km del próximo service)</label>
-        <select class="form-input" id="maintInterval"><option value="">— Se completa automáticamente —</option></select>
+        <label class="form-label">Intervalo (km)</label>
+        <select class="form-input" id="maintInterval"></select>
       </div>
       <div class="form-row">
-        <label class="form-label">Fecha de realización</label>
+        <label class="form-label">Fecha</label>
         <input type="date" class="form-input" id="maintDate">
       </div>
       <div class="form-row">
-        <label class="form-label">Observaciones (opcional)</label>
-        <input type="text" class="form-input" id="maintNote" placeholder="ej: cambio de aceite...">
+        <label class="form-label">Observaciones</label>
+        <input type="text" class="form-input" id="maintNote" placeholder="Notas...">
       </div>
-      <div id="histSection">
-        <div style="font-size:11px;font-weight:500;margin-bottom:4px;color:var(--text2)">Historial de mantenimientos</div>
-        <div id="histList"></div>
-      </div>
+      <div style="font-size:11px;font-weight:600;margin-top:10px;margin-bottom:4px;color:var(--text2)">Historial</div>
+      <div id="histList" style="max-height:100px;overflow-y:auto"></div>
     </div>
     <div class="modal-foot">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="saveMaint()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Neumáticos -->
+<div class="tmodal-overlay" id="tireModalOverlay" onclick="closeTireModal(event)">
+  <div class="tmodal" onclick="event.stopPropagation()">
+    <div class="tmodal-head">
+      <div>
+        <div class="tmodal-title" id="tireModalTitle">Neumáticos</div>
+        <div class="tmodal-sub" id="tireModalSub"></div>
+      </div>
+      <button onclick="closeTireModal()" style="background:none;border:none;cursor:pointer;color:var(--text3)"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="tmodal-body" id="panelTires">
+      <div id="tireCards"></div>
+    </div>
+    <div class="tmodal-foot">
+      <button class="btn-cancel" onclick="closeTireModal()">Cerrar</button>
+      <button class="btn-save" onclick="saveTireData()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Mapa -->
+<div class="map-overlay" id="mapOverlay" onclick="closeMapModal(event)">
+  <div class="map-modal" onclick="event.stopPropagation()">
+    <div class="map-head">
+      <div>
+        <div class="map-title" id="mapTitle">Ubicación</div>
+        <div class="map-sub" id="mapSub"></div>
+      </div>
+      <button onclick="closeMapModal()" style="background:none;border:none;cursor:pointer;color:var(--text3)"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="fleetMapContainer"></div>
+    <div class="map-foot">
+      <span class="map-coords" id="mapCoords"></span>
+      <a class="map-btn-osm" id="mapOsmLink" href="#" target="_blank">Abrir en OSM</a>
     </div>
   </div>
 </div>
@@ -230,282 +287,245 @@ const MAINT_TYPES = [
   { label: 'Cambio de aceite y filtro', km: 10000 },
   { label: 'Rotación de neumáticos', km: 10000 },
   { label: 'Filtro de aire', km: 20000 },
-  { label: 'Filtro de combustible', km: 20000 },
-  { label: 'Bujías', km: 20000 },
-  { label: 'Líquido de frenos', km: 30000 },
-  { label: 'Correa / cadena de distribución', km: 40000 },
-  { label: 'Amortiguadores', km: 50000 },
-  { label: 'Revisión general (service mayor)', km: 0 },
-  { label: 'Revisión de frenos', km: 0 },
-  { label: 'Alineación y balanceo', km: 0 },
-  { label: 'Otro (ver observaciones)', km: 0 },
+  { label: 'Revisión general (service mayor)', km: 0 }
 ];
 const STORE_PREFIX = 'fleetcal_maint_';
+const TIRE_PREFIX = 'fleetcal_tires_';
+const TIRE_POSITIONS = ['Delantera Izq','Delantera Der','Trasera Izq','Trasera Der','Auxilio'];
+
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 document.getElementById('todayLbl').textContent = TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
 
 let vYear = TODAY.getFullYear(), vMonth = TODAY.getMonth();
 let ST = {pque:null, res:null, tel:null};
+let currentView = 'calendar';
 let modalPlate = null;
+let tireModalPlate = null;
+let tireWorkingCopy = [];
 
-function esc(s){
-  if(s==null) return '—';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+// Alternar vistas
+function toggleViewMode() {
+  currentView = (currentView === 'calendar') ? 'sectors' : 'calendar';
+  const calCont = document.getElementById('calendarViewContainer');
+  const secCont = document.getElementById('sectorsViewContainer');
+  const btn = document.getElementById('viewToggleBtn');
+
+  if (currentView === 'sectors') {
+    calCont.style.display = 'none';
+    secCont.style.display = 'block';
+    btn.innerHTML = '<i class="ti ti-calendar" style="font-size:13px"></i> Ver Calendario';
+    renderSectorsView();
+  } else {
+    calCont.style.display = 'block';
+    secCont.style.display = 'none';
+    btn.innerHTML = '<i class="ti ti-layout-grid" style="font-size:13px"></i> Ver Sectores';
+  }
 }
 
-function getMaintHistory(plate) {
-  if (!plate) return [];
-  var p = plate.toUpperCase().trim();
-  var localData = [];
-  try {
-    var raw = localStorage.getItem(STORE_PREFIX + p);
-    localData = raw ? JSON.parse(raw) : [];
-  } catch(e) { localData = []; }
-  return localData; 
+// Vista de Sectores con siluetas exactas
+const TOYOTA_RENDERS = {
+  HILUX: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-8 l-5 -7 h-20 v-6 h-22 l-8 13 h-15 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/></svg>`,
+  SUV: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-12 l-8 -8 h-35 l-12 8 h-13 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/></svg>`,
+  SEDAN: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M4 28 h12 a6 6 0 0 1 12 0 h34 a6 6 0 0 1 12 0 h12 v-7 h-8 l-12 -9 h-26 l-12 8 h-12 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="22" cy="28" r="4" fill="currentColor"/><circle cx="74" cy="28" r="4" fill="currentColor"/></svg>`
+};
+
+function getRender(model){
+  const m = (model||'').toUpperCase();
+  if(m.includes('HILUX')) return TOYOTA_RENDERS.HILUX;
+  if(m.includes('SW4') || m.includes('CROSS')) return TOYOTA_RENDERS.SUV;
+  return TOYOTA_RENDERS.SEDAN;
 }
 
-function getLastMaint(plate) {
-  var h = getMaintHistory(plate);
-  if (!h || !h.length) return null;
-  return h.sort(function(a, b) { return b.date.localeCompare(a.date); })[0];
+function renderSectorsView() {
+  if (!ST.pque || !ST.tel) return;
+  const pPeru = document.getElementById('gridPeru');
+  const pCerrito = document.getElementById('gridCerrito');
+  const pStreet = document.getElementById('streetTrafficArea');
+  pPeru.innerHTML = ''; pCerrito.innerHTML = ''; pStreet.innerHTML = '';
+
+  let cPeru = 0, cCerrito = 0, cBooked = 0;
+
+  ST.pque.forEach(veh => {
+    const tel = ST.tel[veh.plate] || {};
+    const loc = tel.loc || 'CERRITO';
+    const svg = getRender(veh.model);
+
+    const card = `
+      <div style="background:var(--surface2); border:1px solid var(--border-s); border-radius:8px; display:flex; gap:10px; align-items:center; padding:10px;">
+        <div style="width:55px; height:38px; color:var(--accent); flex-shrink:0;">${svg}</div>
+        <div style="flex:1; overflow:hidden;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span class="plate-tag">${veh.plate}</span>
+            <span style="font-size:9px; color:var(--text3);">${tel.km || '0'} km</span>
+          </div>
+          <div style="font-weight:600; font-size:11px; color:var(--text); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${veh.model}</div>
+          <div style="font-size:9px; color:var(--text2);">⛽ ${tel.fuel || '-'}L</div>
+        </div>
+      </div>
+    `;
+
+    if (loc === 'PERU') {
+      pPeru.innerHTML += card; cPeru++;
+    } else if (loc === 'BOOKED') {
+      cBooked++;
+      const topPos = 20 + ((cBooked * 60) % 240);
+      const sprite = document.createElement('div');
+      sprite.style.cssText = `position:absolute; top:${topPos}px; left:-150px; width:140px; background:var(--surface); border:1px solid var(--border-s); border-radius:6px; padding:5px; animation: driveRight 15s linear infinite; animation-delay: ${cBooked * 1.5}s;`;
+      sprite.innerHTML = `<div style="font-size:9px; font-family:'JetBrains Mono'; font-weight:700; color:var(--c-booked);">${veh.plate}</div>`;
+      pStreet.appendChild(sprite);
+    } else {
+      pCerrito.innerHTML += card; cCerrito++;
+    }
+  });
+
+  document.getElementById('countPeru').textContent = `${cPeru} veh`;
+  document.getElementById('countCerrito').textContent = `${cCerrito} veh`;
+  document.getElementById('countBooked').textContent = `${cBooked} en calle`;
 }
 
-function maintAlertInfo(kmStr, plate){
+const animStyle = document.createElement('style');
+animStyle.innerText = `@keyframes driveRight { 0% { left: -160px; } 100% { left: 105%; } }`;
+document.head.appendChild(animStyle);
+
+// Mantenimientos
+function getMaintHistory(plate){ try{ return JSON.parse(localStorage.getItem(STORE_PREFIX + plate.toUpperCase())||'[]'); }catch(e){return [];} }
+function getLastMaint(plate){ const h=getMaintHistory(plate); return h.length ? h.sort((a,b)=>b.date.localeCompare(a.date))[0] : null; }
+
+function maintAlertInfo(kmStr){
   if(!kmStr || kmStr==='-') return null;
   const km = parseInt(kmStr.replace(/[.,]/g,''));
   if(isNaN(km)) return null;
   const nextMultiple = Math.ceil((km+1)/10000)*10000;
-  const remaining = nextMultiple - km;
-  if(remaining <= 2000){
-    if(plate){
-      const history = getMaintHistory(plate);
-      const alreadyCleared = history.some(h => h.clearedMultiple === nextMultiple);
-      if(alreadyCleared) return null;
-    }
-    return { km, nextMultiple, remaining };
-  }
+  if((nextMultiple - km) <= 2000) return { nextMultiple };
   return null;
 }
 
-window.openMaintModal = function(plate, modelName){
+window.openMaintModal = function(plate, model){
   modalPlate = plate;
-  const tel = ST.tel ? ST.tel[plate] : null;
-  const kmStr = tel ? tel.km : null;
-  const alertInf = kmStr ? maintAlertInfo(kmStr, plate) : null;
-
+  const tel = ST.tel[plate] || {};
   document.getElementById('modalTitle').textContent = 'Mantenimiento · ' + plate;
-  document.getElementById('modalSub').textContent = modelName + (tel ? ' · ' + tel.km + ' km actuales' : '');
+  document.getElementById('modalSub').textContent = model + ' (' + (tel.km||'0') + ' km)';
   document.getElementById('maintDate').value = TODAY.toISOString().slice(0,10);
-  document.getElementById('maintNote').value = '';
-
+  
   const typeEl = document.getElementById('maintType');
-  typeEl.innerHTML = '<option value="">— Seleccioná el tipo de servicio —</option>';
-  MAINT_TYPES.forEach((t, i) => {
-    const opt = document.createElement('option');
-    opt.value = i; opt.textContent = t.label;
-    typeEl.appendChild(opt);
-  });
-  typeEl.value = '';
-  typeEl.onchange = function() { updateIntervalSelect(alertInf); };
-  updateIntervalSelect(alertInf);
+  typeEl.innerHTML = '<option value="">— Seleccioná —</option>';
+  MAINT_TYPES.forEach((t,i)=> typeEl.innerHTML += `<option value="${i}">${t.label}</option>` );
+  
+  const intEl = document.getElementById('maintInterval');
+  intEl.innerHTML = '';
+  for(let k=10000; k<=150000; k+=10000) intEl.innerHTML += `<option value="${k}">${k.toLocaleString()} km</option>`;
+  intEl.value = 10000;
+
   renderHistList(plate);
   document.getElementById('modalOverlay').style.display = 'flex';
 };
 
-function updateIntervalSelect(alertInf) {
-  const typeIdx = document.getElementById('maintType').value;
-  const intEl = document.getElementById('maintInterval');
-  intEl.innerHTML = '';
-  const nextMult = alertInf ? alertInf.nextMultiple : null;
-  for(let k = 10000; k <= 200000; k += 10000) {
-    const opt = document.createElement('option');
-    opt.value = k;
-    opt.textContent = k.toLocaleString('es-AR') + ' km' + (k === nextMult ? ' ⚠️ próximo service' : '');
-    intEl.appendChild(opt);
-  }
-  if(typeIdx !== '' && MAINT_TYPES[typeIdx] && MAINT_TYPES[typeIdx].km > 0) {
-    intEl.value = MAINT_TYPES[typeIdx].km;
-  } else if(nextMult) {
-    intEl.value = nextMult;
-  } else {
-    intEl.value = 10000;
-  }
-}
-
 window.closeModal = function(e){
   if(e && e.target !== document.getElementById('modalOverlay')) return;
   document.getElementById('modalOverlay').style.display = 'none';
-  modalPlate = null;
 };
 
 window.saveMaint = function(){
   if(!modalPlate) return;
   const date = document.getElementById('maintDate').value;
-  const note = document.getElementById('maintNote').value.trim();
-  if(!date){ alert('Seleccioná una fecha'); return; }
   const typeIdx = document.getElementById('maintType').value;
-  const typeLabel = typeIdx !== '' ? MAINT_TYPES[typeIdx].label : 'Servicio general';
+  const typeLabel = typeIdx !== '' ? MAINT_TYPES[typeIdx].label : 'Servicio';
   const intervalVal = parseInt(document.getElementById('maintInterval').value) || 10000;
-
-  const tel = ST.tel ? ST.tel[modalPlate] : null;
-  const clearedKmReal = tel && tel.km ? parseInt(tel.km, 10) : intervalVal;
-
-  const nuevoItem = {
-    date: date, tipo: typeLabel, type: typeLabel,
-    intervalo: intervalVal, clearedMultiple: intervalVal,
-    cleared_km: clearedKmReal, note: note, notes: note, ts: Date.now()
-  };
-
-  var p = modalPlate.toUpperCase().trim();
-  var history = getMaintHistory(p);
-  history.push(nuevoItem);
-  try { localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history)); } catch(e){}
-
-  document.getElementById('maintNote').value = '';
-  renderHistList(p);
-  if(typeof renderCal === 'function') renderCal();
-  alert('Mantenimiento registrado con éxito.');
+  
+  const history = getMaintHistory(modalPlate);
+  history.push({ date, tipo: typeLabel, intervalo: intervalVal, ts: Date.now() });
+  localStorage.setItem(STORE_PREFIX + modalPlate.toUpperCase(), JSON.stringify(history));
+  
+  closeModal();
+  tryRender();
+  alert('Mantenimiento guardado con éxito.');
 };
 
-window.deleteMaintEntry = function(plate, ts) {
-  if(!plate) return;
-  const p = plate.toUpperCase().trim();
-  if(!confirm('¿Deseas eliminar este registro de mantenimiento?')) return;
-  let history = getMaintHistory(p);
-  history = history.filter(h => h.ts !== ts);
-  try { localStorage.setItem(STORE_PREFIX + p, JSON.stringify(history)); } catch(e){}
-  renderHistList(p);
-  if(typeof renderCal === 'function') renderCal();
-};
-
-function renderHistList(plate) {
-  if(!plate) return;
-  var p = plate.toUpperCase().trim();
-  var container = document.getElementById('histList');
+function renderHistList(plate){
+  const h = getMaintHistory(plate);
+  const container = document.getElementById('histList');
   if(!container) return;
-  var history = getMaintHistory(p);
-  if(!history.length){
-    container.innerHTML = '<div class="hist-empty">Sin registros previos.</div>';
+  if(!h.length){ container.innerHTML = '<div style="font-size:10px;color:var(--text3)">Sin registros.</div>'; return; }
+  container.innerHTML = h.map(item=>`<div style="font-size:10px;padding:3px 0;border-bottom:1px solid var(--border)"><b>${item.date}</b>: ${item.tipo}</div>`).join('');
+}
+
+// Neumáticos
+window.openTireModal = function(plate, model){
+  if(!plate){
+    if(!ST.pque || !ST.pque.length){ alert('Flota no cargada'); return; }
+    document.getElementById('tireModalOverlay').style.display = 'flex';
+    document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
+    document.getElementById('tireModalSub').textContent = 'Elegí un vehículo';
+    document.getElementById('panelTires').innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">' +
+      ST.pque.map(v=>`<button onclick="openTireModal('${v.plate}','${v.model.replace(/'/g,"\\'")}')" style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px;color:var(--text)"><span style="font-family:'JetBrains Mono';font-weight:600">${v.plate}</span> — ${v.model}</button>`).join('') +
+    '</div>';
     return;
   }
-  container.innerHTML = history.map(h => `
-    <div class="hist-item">
-      <div>
-        <span class="hist-date">${h.date} — ${h.tipo || h.type}</span>
-        <div class="hist-note">${h.cleared_km || h.intervalo} km ${h.note || h.notes ? '· ' + (h.note || h.notes) : ''}</div>
-      </div>
-      <button class="hist-del" onclick="deleteMaintEntry('${p}', ${h.ts})">Eliminar</button>
-    </div>
-  `).join('');
-}
-
-// NEUMÁTICOS Y ACCESORIOS
-const TIRE_PREFIX = 'fleetcal_tires_';
-const ACC_PREFIX  = 'fleetcal_acc_';
-const TIRE_POSITIONS = ['Delantera Izq','Delantera Der','Trasera Izq','Trasera Der','Auxilio/Repuesto'];
-let tireModalPlate = null;
-let tireWorkingCopy = [];
-let accWorkingCopy = [];
-
-function getTireData(plate){ try{ return JSON.parse(localStorage.getItem(TIRE_PREFIX+plate)||'[]'); }catch(e){ return []; } }
-function saveTireDataStore(plate,data){ try{ localStorage.setItem(TIRE_PREFIX+plate,JSON.stringify(data)); }catch(e){} }
-function getAccData(plate){ try{ return JSON.parse(localStorage.getItem(ACC_PREFIX+plate)||'[]'); }catch(e){ return []; } }
-function saveAccDataStore(plate,data){ try{ localStorage.setItem(ACC_PREFIX+plate,JSON.stringify(data)); }catch(e){} }
-
-window.openTireModal = function(plate, modelName){
   tireModalPlate = plate;
-  if(!plate){ buildVehiclePicker(); return; }
   document.getElementById('tireModalOverlay').style.display = 'flex';
   document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
-  document.getElementById('tireModalSub').textContent = modelName || '';
-  renderTireCards(plate);
-  renderAccRows(plate);
-};
-
-function buildVehiclePicker(){
-  if(!ST.pque||!ST.pque.length){ alert('Cargá primero la flota'); return; }
-  document.getElementById('tireModalOverlay').style.display = 'flex';
-  document.getElementById('tireModalTitle').textContent = 'Seleccionar vehículo';
-  document.getElementById('tireModalSub').textContent = 'Elegí un vehículo';
-  const panel = document.getElementById('panelTires');
-  panel.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">' +
-    ST.pque.map(v=>`<button onclick="selectVehicleForTires('${v.plate}','${v.model.replace(/'/g,"\\'")}')" style="text-align:left;background:var(--surface2);border:1px solid var(--border-s);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px;color:var(--text)"><span style="font-family:'JetBrains Mono';font-weight:600">${v.plate}</span> — ${v.model}</button>`).join('') +
-  '</div>';
-}
-
-window.selectVehicleForTires = function(plate, model){
-  tireModalPlate = plate;
-  const panel = document.getElementById('panelTires');
-  panel.innerHTML = `<div id="tireCards"></div><button class="add-tire-btn" onclick="addTireCard()"><i class="ti ti-plus"></i> Agregar neumático</button>`;
-  document.getElementById('tireModalTitle').textContent = 'Neumáticos · ' + plate;
-  document.getElementById('tireModalSub').textContent = model;
-  renderTireCards(plate);
-  renderAccRows(plate);
+  document.getElementById('tireModalSub').textContent = model || '';
+  
+  try{ tireWorkingCopy = JSON.parse(localStorage.getItem(TIRE_PREFIX + plate) || '[]'); }catch(e){ tireWorkingCopy = []; }
+  rebuildTireCards();
 };
 
 window.closeTireModal = function(e){
-  if(e && e.target!==document.getElementById('tireModalOverlay')) return;
-  document.getElementById('tireModalOverlay').style.display='none';
+  if(e && e.target !== document.getElementById('tireModalOverlay')) return;
+  document.getElementById('tireModalOverlay').style.display = 'none';
 };
-
-function renderTireCards(plate){
-  tireWorkingCopy = JSON.parse(JSON.stringify(getTireData(plate)));
-  rebuildTireCards();
-}
 
 function rebuildTireCards(){
   const container = document.getElementById('tireCards');
   if(!container) return;
-  if(!tireWorkingCopy.length){
-    container.innerHTML='<p style="font-size:11px;color:var(--text3);margin-bottom:10px;">Sin neumáticos registrados.</p>';
-    return;
-  }
-  container.innerHTML = tireWorkingCopy.map((t,i)=>`
-    <div class="tire-card" id="tc-${i}">
-      <div class="tire-card-head">
-        <span class="tire-pos-badge">${t.posicion||'Posición'}</span>
-        <button onclick="removeTireCard(${i})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--c-error)">✕</button>
-      </div>
-      <div class="tire-row">
-        <div class="tire-field"><label>Posición</label>
-          <select onchange="updateTireField(${i},'posicion',this.value)">${TIRE_POSITIONS.map(p=>`<option value="${p}" ${t.posicion===p?'selected':''}>${p}</option>`).join('')}</select>
-        </div>
-        <div class="tire-field"><label>Número / ID</label><input type="text" value="${t.numero||''}" onchange="updateTireField(${i},'numero',this.value)"></div>
-      </div>
+  container.innerHTML = `
+    <div class="tire-grid">
+      ${tireWorkingCopy.map((t,i)=>`
+        <div class="tire-card">
+          <div class="tire-card-head"><span class="tire-pos-badge">${t.posicion}</span><button onclick="removeTire(${i})" style="margin-left:auto;background:none;border:none;color:var(--c-error);cursor:pointer">✕</button></div>
+          <div class="tire-row"><div class="tire-field"><label>ID / Nº</label><input type="text" value="${t.numero||''}" onchange="tireWorkingCopy[${i}].numero=this.value"></div></div>
+        </div>`).join('')}
     </div>
-  `).join('');
+    <button class="add-tire-btn" onclick="addTire()"><i class="ti ti-plus"></i> Añadir neumático</button>`;
 }
 
-window.updateTireField = function(i, field, val){ if(tireWorkingCopy[i]) tireWorkingCopy[i][field] = val; };
-window.addTireCard = function(){ tireWorkingCopy.push({posicion:'Delantera Izq',numero:'',marca:'',rodado:''}); rebuildTireCards(); };
-window.removeTireCard = function(i){ tireWorkingCopy.splice(i,1); rebuildTireCards(); };
-window.renderAccRows = function(plate){ accWorkingCopy = JSON.parse(JSON.stringify(getAccData(plate))); };
+window.addTire = function(){ tireWorkingCopy.push({posicion:'Delantera Izq',numero:''}); rebuildTireCards(); };
+window.removeTire = function(i){ tireWorkingCopy.splice(i,1); rebuildTireCards(); };
 window.saveTireData = function(){
   if(!tireModalPlate) return;
-  saveTireDataStore(tireModalPlate, tireWorkingCopy);
-  saveAccDataStore(tireModalPlate, accWorkingCopy);
-  document.getElementById('tireModalOverlay').style.display='none';
-  renderCal();
+  localStorage.setItem(TIRE_PREFIX + tireModalPlate, JSON.stringify(tireWorkingCopy));
+  closeTireModal();
+  alert('Neumáticos guardados.');
 };
 
-// CHECKLIST
-window.openChecklist = function(el) {
-  try {
-    var d = JSON.parse(el.dataset.checklist.replace(/&quot;/g, '"'));
-    var veh = ST.pque ? ST.pque.find(function(v){ return v.plate === d.plate; }) : null;
-    var tel = ST.tel ? ST.tel[d.plate] : null;
-    var payload = {
-      plate: d.plate, resid: d.code, renter: d.renter,
-      startDate: d.start, endDate: d.end,
-      km: tel ? tel.km : '—', tankCap: veh ? veh.tankCap : 0,
-      tires: getTireData(d.plate), accesorios: getAccData(d.plate)
-    };
-    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
-    window.open('checklist_kinto.html', '_blank');
-  } catch(e) { console.error(e); }
+// Mapa
+window.openVehMap = function(plate){
+  const tel = ST.tel[plate];
+  if(!tel || !tel.coords) return;
+  const parts = tel.coords.split(',').map(s => parseFloat(s.trim()));
+  document.getElementById('mapTitle').textContent = 'Ubicación · ' + plate;
+  document.getElementById('mapSub').textContent = tel.km + ' km · ' + tel.loc;
+  document.getElementById('mapCoords').textContent = tel.coords;
+  document.getElementById('mapOsmLink').href = 'https://www.openstreetmap.org/?mlat=' + parts[0] + '&mlon=' + parts[1] + '&zoom=15';
+  document.getElementById('mapOverlay').style.display = 'flex';
+  setTimeout(()=>{
+    if(!window._leafletMap){
+      window._leafletMap = L.map('fleetMapContainer').setView(parts, 15);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window._leafletMap);
+    } else {
+      window._leafletMap.setView(parts, 15);
+      window._leafletMap.invalidateSize();
+    }
+    L.marker(parts).addTo(window._leafletMap);
+  }, 100);
 };
 
-// PARSERS
+window.closeMapModal = function(e){
+  if(e && e.target !== document.getElementById('mapOverlay')) return;
+  document.getElementById('mapOverlay').style.display = 'none';
+};
+
+// Parsers
 function parsePque(txt){
   return txt.trim().split('\n').filter(l=>l.trim()).map(line=>{
     const cols = line.split('\t');
@@ -544,33 +564,18 @@ function parseD(str){
   return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
 }
 
-// SINCRONIZACIÓN AUTOMÁTICA CDN
-function sincronizarFlotaCDN() {
-  const tokenBuster = Date.now();
-  const cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
-
-  fetch(cdnRaiz + "Pque.txt?v=" + tokenBuster)
-    .then(r => r.text()).then(t => { ST.pque = parsePque(t); tryRender(); }).catch(e => console.warn(e));
-  
-  fetch("https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/scraped_data.txt?v=" + tokenBuster)
-    .then(r => r.text()).then(t => { ST.res = parseRes(t); tryRender(); }).catch(e => console.warn(e));
-  
-  fetch("https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/TelemGts_data.txt?v=" + tokenBuster)
-    .then(r => r.text()).then(t => { ST.tel = parseTel(t); tryRender(); }).catch(e => console.warn(e));
-}
-
 (function(){
   ST.pque = parsePque(`18723 Toyota Corolla HV AT AI239SV\tSEDAN\t43\n10914 Toyota SW4 4x4 7A AT AG269JN\tSUV\t80\n13131 Toyota Hilux 4x4 DC AT AG838JY\tPICKUP\t80`);
   ST.res = parseRes('yevw52d\tService\tToyota Corolla HV AT AI239SV\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent');
-  ST.tel = parseTel('10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED');
+  ST.tel = parseTel('10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED\n13131\t-34.593182, -58.43074\t59,250\t71\tToyota Hilux 4x4 DC AT AG838JY\tPERU');
   tryRender();
-  sincronizarFlotaCDN();
 })();
 
 function tryRender(){
   if(!ST.pque || !ST.res || !ST.tel) return;
   updateStats();
   renderCal();
+  if(currentView === 'sectors') renderSectorsView();
 }
 
 function updateStats(){
@@ -582,7 +587,7 @@ function updateStats(){
   let maintAlerts = 0;
   ST.pque.forEach(v=>{
     const tel = ST.tel[v.plate];
-    if(tel && maintAlertInfo(tel.km, v.plate)) maintAlerts++;
+    if(tel && maintAlertInfo(tel.km)) maintAlerts++;
   });
   document.getElementById('stM').textContent = maintAlerts;
 }
@@ -614,7 +619,7 @@ function renderCal(){
   ST.pque.forEach(veh=>{
     const vRes=ST.res.filter(r=>r.plate===veh.plate);
     const tel=ST.tel[veh.plate];
-    const alert=tel?maintAlertInfo(tel.km,veh.plate):null;
+    const alert=tel?maintAlertInfo(tel.km):null;
     const lastMaint=getLastMaint(veh.plate);
     const histCount=getMaintHistory(veh.plate).length;
 
@@ -649,8 +654,7 @@ function renderCal(){
           const iS=dd.getTime()===s.getTime(), iE=dd.getTime()===e.getTime();
           const btype = (iS&&iE)?'bso':iS?'bs':iE?'be':'bm';
           const bc = res.status==='Current'?'bc':'bn';
-          const tipData=JSON.stringify({code:res.code,renter:res.renter,start:res.start.toLocaleDateString(),end:res.end.toLocaleDateString(),plate:res.plate}).replace(/"/g,'&quot;');
-          html+=`<div class="bar ${btype} ${bc}" data-checklist="${tipData}" onclick="openChecklist(this)">${iS?res.renter:''}</div>`;
+          html+=`<div class="bar ${btype} ${bc}" onclick="openTireModal('${res.plate}','')">${iS?res.renter:''}</div>`;
         }
       });
       html+=`</td>`;
@@ -661,50 +665,8 @@ function renderCal(){
   document.getElementById('app').innerHTML=html;
 }
 
-window.openVehMap = function(plate){
-  const tel = ST.tel[plate];
-  if(!tel || !tel.coords) return;
-  const parts = tel.coords.split(',').map(s => parseFloat(s.trim()));
-  document.getElementById('mapTitle').textContent = 'Ubicación · ' + plate;
-  document.getElementById('mapSub').textContent = tel.km + ' km · ' + tel.loc;
-  document.getElementById('mapCoords').textContent = tel.coords;
-  document.getElementById('mapOsmLink').href = 'https://www.openstreetmap.org/?mlat=' + parts[0] + '&mlon=' + parts[1] + '&zoom=15';
-  document.getElementById('mapOverlay').classList.add('open');
-  setTimeout(()=>{
-    if(!window._leafletMap){
-      window._leafletMap = L.map('fleetMapContainer').setView(parts, 15);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window._leafletMap);
-    } else {
-      window._leafletMap.setView(parts, 15);
-      window._leafletMap.invalidateSize();
-    }
-    L.marker(parts).addTo(window._leafletMap);
-  }, 100);
-};
-
-window.closeMapModal = function(e){
-  if(e && e.target!==document.getElementById('mapOverlay')) return;
-  document.getElementById('mapOverlay').classList.remove('open');
-};
+window.shiftMonth=function(d){ vMonth+=d; if(vMonth>11){vMonth=0;vYear++;} if(vMonth<0){vMonth=11;vYear--;} renderCal(); };
+window.goToday=function(){ vYear=TODAY.getFullYear(); vMonth=TODAY.getMonth(); renderCal(); };
 </script>
-
-<!-- MAP MODAL -->
-<div class="map-overlay" id="mapOverlay" onclick="closeMapModal(event)">
-  <div class="map-modal" onclick="event.stopPropagation()">
-    <div class="map-head">
-      <div>
-        <div class="map-title" id="mapTitle">Ubicación</div>
-        <div class="map-sub" id="mapSub"></div>
-      </div>
-      <button class="map-close" onclick="closeMapModal()"><i class="ti ti-x"></i></button>
-    </div>
-    <div id="fleetMapContainer"></div>
-    <div class="map-foot">
-      <span class="map-coords" id="mapCoords"></span>
-      <a class="map-btn-osm" id="mapOsmLink" href="#" target="_blank">Abrir en OSM</a>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
