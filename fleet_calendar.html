@@ -14,7 +14,7 @@
 <title>Fleet Calendar — Retiro CERRITO CAR (Arcade Garage)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -80,14 +80,23 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .vname{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .vplate{font-size:10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px}
 .plate-tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--c-booked);background:var(--cl-booked);border:1px solid rgba(30,64,175,.2);border-radius:4px;padding:1px 7px}
-.vtelrow{display:flex;align-items:center;gap:8px;margin-top:4px}
-.vti{font-size:9px;color:var(--text3)}
+.vtelrow{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:9px;color:var(--text3);align-items:center;}
 .maint-alert{display:flex;align-items:flex-start;gap:6px;background:linear-gradient(135deg,#fff1f0,#fee2e2);border:1px solid rgba(185,28,28,.2);border-radius:var(--radius-sm);padding:5px 8px;cursor:pointer}
 .maint-alert-title{font-weight:700;color:var(--c-error);display:block}
 .maint-ok{font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px}
 .maint-last{font-size:9px;color:var(--text3);margin-top:3px;display:block}
 .maint-register-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-mid);border:1px solid rgba(13,148,136,.25);border-radius:4px;padding:2px 7px;cursor:pointer;margin-top:4px}
 .maint-hist-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);background:none;border:none;cursor:pointer;margin-top:2px}
+
+/* Mini barra de combustible en la celda del calendario */
+.cal-fuel-pill{display:inline-flex;align-items:center;gap:3px;background:var(--surface2);border:1px solid var(--border-s);padding:1px 5px;border-radius:3px;font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--text2)}
+.cal-fuel-bar{width:22px;height:4px;background:var(--border-m);border-radius:2px;overflow:hidden;display:inline-block;vertical-align:middle}
+.cal-fuel-fill{height:100%;background:var(--accent)}
+
+/* LEYENDA / REFERENCIAS DE COLORES AL PIE */
+.legend-bar{display:flex;align-items:center;gap:18px;margin-top:14px;padding:10px 16px;background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius);font-size:11px;color:var(--text2);box-shadow:var(--shadow-sm);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:12px;height:12px;border-radius:3px}
 
 .modal-overlay,.map-overlay,.tmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
 .modal,.map-modal,.tmodal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:420px;overflow:hidden;box-shadow:var(--shadow-lg)}
@@ -578,9 +587,9 @@ function renderSectorsView() {
 
   let cPeru = 0, cCerrito = 0, cBooked = 0;
 
-  ST.pque.forEach((veh, idx) => {
+  ST.pque.forEach((veh) => {
     const tel = ST.tel[veh.plate] || {};
-    const loc = tel.loc || 'CERRITO';
+    const loc = (tel.loc || 'CERRITO').trim().toUpperCase();
     const svg = getArcadeSprite(veh.model);
     const fuelVal = parseInt((tel.fuel || '0').toString().replace('%','')) || 50;
 
@@ -596,7 +605,7 @@ function renderSectorsView() {
           <div class="arcade-hud">
             <span>FUEL</span>
             <div class="arcade-fuel-bar"><div class="arcade-fuel-fill" style="width:${fuelVal}%"></div></div>
-            <span>${tel.fuel || '-'}L</span>
+            <span>${tel.fuel || '-'}L / ${veh.tankCap || '-'}L</span>
           </div>
         </div>
       </div>
@@ -604,7 +613,7 @@ function renderSectorsView() {
 
     if (loc === 'PERU') {
       pPeru.innerHTML += cardHTML; cPeru++;
-    } else if (loc === 'BOOKED') {
+    } else if (loc === 'BOOKED' || loc === 'TRANSITO') {
       cBooked++;
       const leftPos = (cBooked % 2 === 0) ? 15 : 55;
       const animDelay = (cBooked * 2.2) % 8;
@@ -798,9 +807,15 @@ window.openChecklist = function(el) {
     var veh = ST.pque ? ST.pque.find(function(v){ return v.plate === d.plate; }) : null;
     var tel = ST.tel ? ST.tel[d.plate] : null;
     var payload = {
-      plate: d.plate, resid: d.code, renter: d.renter,
-      startDate: d.start, endDate: d.end,
-      km: tel ? tel.km : '—', tankCap: veh ? veh.tankCap : 0,
+      plate: d.plate, 
+      model: veh ? veh.model : '',
+      bodyType: veh ? veh.bodyType : '',
+      resid: d.code, 
+      renter: d.renter,
+      startDate: d.start, 
+      endDate: d.end,
+      km: tel ? tel.km : '—', 
+      tankCap: veh ? veh.tankCap : 0,
       tires: JSON.parse(localStorage.getItem(TIRE_PREFIX + d.plate) || '[]')
     };
     localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
@@ -978,6 +993,11 @@ function renderCal(){
     const lastMaint=getLastMaint(veh.plate);
     const histCount=getMaintHistory(veh.plate).length;
 
+    // Cálculo del nivel de combustible respecto a la capacidad del tanque del vehículo
+    const fuelL = tel && tel.fuel && tel.fuel !== '-' ? parseFloat(tel.fuel.toString().replace(',','.')) : 0;
+    const tankMax = veh.tankCap || 50;
+    const fuelPct = Math.min(100, Math.max(0, Math.round((fuelL / tankMax) * 100)));
+
     html+=`<tr class="vrow">`;
     html+=`<td class="cltd">
       <span class="vname" title="${veh.model}">${veh.model}</span>
@@ -986,7 +1006,13 @@ function renderCal(){
         ${tel?`<span style="color:var(--accent)">${tel.loc}</span>`:''}
         ${tel&&tel.coords&&tel.coords!=='-'?`<button class="map-pin-btn" onclick="openVehMap('${veh.plate}')">mapa</button>`:''}
       </span>
-      ${tel?`<span class="vtelrow"><span class="vti">${tel.km} km · ⛽ ${tel.fuel}L</span></span>`:''}
+      ${tel?`<span class="vtelrow">
+        <span class="vti">${tel.km} km</span>
+        <span class="cal-fuel-pill" title="${fuelL}L de ${tankMax}L (${fuelPct}%)">
+          ⛽ ${tel.fuel}L / ${tankMax}L
+          <span class="cal-fuel-bar"><span class="cal-fuel-fill" style="width:${fuelPct}%"></span></span>
+        </span>
+      </span>`:''}
     </td>`;
 
     html+=`<td class="cmtd">
@@ -1017,7 +1043,17 @@ function renderCal(){
     }
     html+=`</tr>`;
   });
-  html+=`</tbody></table></div></div>`;
+  html+=`</tbody></table></div>`;
+
+  // Barra de referencias de colores al pie
+  html+=`<div class="legend-bar">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--c-current)"></div><span>En curso (Current)</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--c-new)"></div><span>Nuevas / Pendientes</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--c-future)"></div><span>Futuras</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--c-service)"></div><span>Servicio / Taller</span></div>
+  </div>`;
+
+  html+=`</div>`;
   document.getElementById('app').innerHTML=html;
 }
 
