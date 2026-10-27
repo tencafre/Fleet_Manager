@@ -291,7 +291,6 @@ const MAINT_TYPES = [
 ];
 const STORE_PREFIX = 'fleetcal_maint_';
 const TIRE_PREFIX = 'fleetcal_tires_';
-const TIRE_POSITIONS = ['Delantera Izq','Delantera Der','Trasera Izq','Trasera Der','Auxilio'];
 
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 document.getElementById('todayLbl').textContent = TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
@@ -322,7 +321,7 @@ function toggleViewMode() {
   }
 }
 
-// Vista de Sectores con siluetas exactas
+// Vista de Sectores
 const TOYOTA_RENDERS = {
   HILUX: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-8 l-5 -7 h-20 v-6 h-22 l-8 13 h-15 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/></svg>`,
   SUV: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-12 l-8 -8 h-35 l-12 8 h-13 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/></svg>`,
@@ -341,6 +340,7 @@ function renderSectorsView() {
   const pPeru = document.getElementById('gridPeru');
   const pCerrito = document.getElementById('gridCerrito');
   const pStreet = document.getElementById('streetTrafficArea');
+  if(!pPeru || !pCerrito || !pStreet) return;
   pPeru.innerHTML = ''; pCerrito.innerHTML = ''; pStreet.innerHTML = '';
 
   let cPeru = 0, cCerrito = 0, cBooked = 0;
@@ -498,6 +498,25 @@ window.saveTireData = function(){
   alert('Neumáticos guardados.');
 };
 
+// Checklist restaurado correctamente
+window.openChecklist = function(el) {
+  try {
+    var raw = el.dataset.checklist;
+    if(!raw) return;
+    var d = JSON.parse(raw.replace(/&quot;/g, '"'));
+    var veh = ST.pque ? ST.pque.find(function(v){ return v.plate === d.plate; }) : null;
+    var tel = ST.tel ? ST.tel[d.plate] : null;
+    var payload = {
+      plate: d.plate, resid: d.code, renter: d.renter,
+      startDate: d.start, endDate: d.end,
+      km: tel ? tel.km : '—', tankCap: veh ? veh.tankCap : 0,
+      tires: JSON.parse(localStorage.getItem(TIRE_PREFIX + d.plate) || '[]')
+    };
+    localStorage.setItem('fleetcal_checklist_data', JSON.stringify(payload));
+    window.open('checklist_kinto.html', '_blank');
+  } catch(e) { console.error('Error abriendo checklist:', e); }
+};
+
 // Mapa
 window.openVehMap = function(plate){
   const tel = ST.tel[plate];
@@ -532,8 +551,9 @@ function parsePque(txt){
     const main = cols[0].trim().split(/\s+/);
     const plate = main[main.length-1];
     const model = main.slice(1,-1).join(' ');
+    const bodyType = cols[1] ? cols[1].trim() : '';
     const tankCap = cols[2] ? parseInt(cols[2].trim()) || 0 : 0;
-    return {plate, model, tankCap};
+    return {id: main[0], plate, model, bodyType, tankCap};
   });
 }
 function parseRes(txt){
@@ -564,11 +584,56 @@ function parseD(str){
   return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
 }
 
+// Carga principal sincronizada con respaldo CDN y datos locales robustos
+function sincronizarFlotaCDN() {
+  const tokenBuster = Date.now();
+  const cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
+
+  fetch(cdnRaiz + "Pque.txt?v=" + tokenBuster)
+    .then(r => r.text()).then(t => { ST.pque = parsePque(t); tryRender(); }).catch(e => console.warn(e));
+  
+  fetch("https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/scraped_data.txt?v=" + tokenBuster)
+    .then(r => r.text()).then(t => { ST.res = parseRes(t); tryRender(); }).catch(e => console.warn(e));
+  
+  fetch("https://raw.githubusercontent.com/tencafre/Fleet_Manager/main/TelemGts_data.txt?v=" + tokenBuster)
+    .then(r => r.text()).then(t => { ST.tel = parseTel(t); tryRender(); }).catch(e => console.warn(e));
+}
+
 (function(){
-  ST.pque = parsePque(`18723 Toyota Corolla HV AT AI239SV\tSEDAN\t43\n10914 Toyota SW4 4x4 7A AT AG269JN\tSUV\t80\n13131 Toyota Hilux 4x4 DC AT AG838JY\tPICKUP\t80`);
-  ST.res = parseRes('yevw52d\tService\tToyota Corolla HV AT AI239SV\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent');
-  ST.tel = parseTel('10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED\n13131\t-34.593182, -58.43074\t59,250\t71\tToyota Hilux 4x4 DC AT AG838JY\tPERU');
+  ST.pque = parsePque(`18723 Toyota Corolla HV AT AI239SV	SEDAN	43
+10914 Toyota SW4 4x4 7A AT AG269JN	SUV	80
+11131 Toyota Etios SD AT AG350QD	HATCHBACK	45
+11182 Toyota ETIOS HB A/T AG350QF	HATCHBACK	45
+11181 Toyota ETIOS HB A/T AG350QE	HATCHBACK	45
+12469 Toyota Yaris HB AT AG500BY	HATCHBACK	42
+12684 Toyota Yaris HB AT AG708YK	HATCHBACK	42
+12685 Toyota Yaris HB AT AG708YJ	HATCHBACK	42
+12877 Toyota Corolla Cross HV AT AG765WS	SUV2	36
+13131 Toyota Hilux 4x4 DC AT AG838JY	PICKUP	80`);
+
+  ST.res = parseRes([
+    'yevw52d\tService\tToyota Corolla HV AT AG192XC\tRetiro\t--\t4:55 PM  May 22, 2026\t6:55 PM  Jan 1, 2027\tCurrent',
+    'l8mz66g\tNicolas Dominguez\tToyota SW4 4x4 7A AT AG269JN\tRetiro\t--\t12:00 PM  May 27, 2026\t11:00 AM  Jun 30, 2026\tCurrent',
+    'ymzn137\tTeresa Perkins\tToyota Yaris HB AT AG708YK\tRetiro\t--\t4:00 PM  May 29, 2026\t10:00 AM  Jun 16, 2026\tCurrent',
+    'lr181ez\tCUSTOMER SERVICE 21\tToyota Yaris HB AT AG500BY\tRetiro\t--\t4:45 PM  Jun 1, 2026\t6:00 PM  Jun 12, 2026\tCurrent',
+    'kvx36xo\tViviana Duffau\tToyota Hilux 4x4 DC AT AG838JY\tRetiro\t--\t9:00 AM  Jun 8, 2026\t9:00 AM  Jun 16, 2026\tCurrent',
+    'k33zx7m\tNicolas Ezequiel Mammone\tToyota Yaris HB AT AG708YJ\tRetiro\t--\t3:00 PM  Jun 8, 2026\t4:00 PM  Jun 13, 2026\tCurrent'
+  ].join('\n'));
+
+  ST.tel = parseTel([
+    '10914\t-34.606693, -58.427342\t56,916\t55\tToyota SW4 4x4 7A AT AG269JN\tBOOKED',
+    '11131\t-34.61351, -58.373844\t73,106\t40\tToyota Etios SD AT AG350QD\tPERU',
+    '11182\t-34.613323, -58.374226\t57,335\t38\tToyota ETIOS HB A/T AG350QF\tPERU',
+    '11181\t-34.613499, -58.373867\t75,900\t40\tToyota ETIOS HB A/T AG350QE\tPERU',
+    '12469\t-34.9007, -57.955624\t60,642\t24\tToyota Yaris HB AT AG500BY\tBOOKED',
+    '12684\t-34.593182, -58.43074\t62,840\t19\tToyota Yaris HB AT AG708YK\tBOOKED',
+    '12685\t-32.695877, -63.442169\t57,514\t38\tToyota Yaris HB AT AG708YJ\tBOOKED',
+    '12877\t-34.597813, -58.380341\t32,284\t-\tToyota Corolla Cross HV AT AG765WS\tBOOKED',
+    '13131\t-34.593182, -58.43074\t59,250\t71\tToyota Hilux 4x4 DC AT AG838JY\tPERU'
+  ].join('\n'));
+
   tryRender();
+  sincronizarFlotaCDN();
 })();
 
 function tryRender(){
@@ -654,7 +719,8 @@ function renderCal(){
           const iS=dd.getTime()===s.getTime(), iE=dd.getTime()===e.getTime();
           const btype = (iS&&iE)?'bso':iS?'bs':iE?'be':'bm';
           const bc = res.status==='Current'?'bc':'bn';
-          html+=`<div class="bar ${btype} ${bc}" onclick="openTireModal('${res.plate}','')">${iS?res.renter:''}</div>`;
+          const tipData = JSON.stringify({code:res.code,renter:res.renter,start:res.start.toLocaleDateString(),end:res.end.toLocaleDateString(),plate:res.plate}).replace(/"/g,'&quot;');
+          html+=`<div class="bar ${btype} ${bc}" data-checklist="${tipData}" onclick="openChecklist(this)">${iS?res.renter:''}</div>`;
         }
       });
       html+=`</td>`;
