@@ -11,10 +11,10 @@
   img-src * data: blob:;
 ">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fleet Calendar — Retiro CERRITO CAR</title>
+<title>Fleet Calendar — Retiro CERRITO CAR (Arcade Garage)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
@@ -88,6 +88,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .maint-last{font-size:9px;color:var(--text3);margin-top:3px;display:block}
 .maint-register-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-mid);border:1px solid rgba(13,148,136,.25);border-radius:4px;padding:2px 7px;cursor:pointer;margin-top:4px}
 .maint-hist-btn{display:inline-flex;align-items:center;gap:3px;font-size:9px;color:var(--text3);background:none;border:none;cursor:pointer;margin-top:2px}
+
 .modal-overlay,.map-overlay,.tmodal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px}
 .modal,.map-modal,.tmodal{background:var(--surface);border:1px solid var(--border-s);border-radius:var(--radius-lg);width:100%;max-width:420px;overflow:hidden;box-shadow:var(--shadow-lg)}
 .map-modal,.tmodal{max-width:660px}
@@ -101,6 +102,12 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .modal-foot,.tmodal-foot{padding:11px 20px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border)}
 .btn-cancel{font-size:12px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border-s);border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer}
 .btn-save{font-size:12px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;border-radius:var(--radius-sm);padding:7px 16px;cursor:pointer}
+.tmodal-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface2)}
+.tmodal-tab{flex:1;padding:9px;text-align:center;font-size:11px;font-weight:600;background:none;border:none;color:var(--text2);cursor:pointer}
+.tmodal-tab.active{color:var(--accent);border-bottom:2px solid var(--accent);background:var(--surface)}
+.acc-table{width:100%;border-collapse:collapse;font-size:11px}
+.acc-table th,.acc-table td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+
 .dcell{width:var(--day-w);height:var(--cell-h);border-right:1px solid var(--border);position:relative;vertical-align:middle;padding:0}
 .dcell.wk{background:var(--surface2)}
 .dcell.tcol{background:var(--accent-mid)}
@@ -127,6 +134,209 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .tire-field label{font-size:10px;font-weight:500;color:var(--text2);display:block;margin-bottom:3px}
 .tire-field input,.tire-field select{width:100%;background:var(--surface);border:1px solid var(--border-s);border-radius:4px;padding:5px 7px;font-size:11px;color:var(--text);outline:none}
 .add-tire-btn{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--accent);background:var(--accent-mid);border:1px dashed var(--accent);border-radius:6px;padding:7px 14px;cursor:pointer;margin-bottom:8px}
+
+/* ESTILOS MODO VIDEOJUEGO DE AUTOS (SECTORES) */
+.arcade-garage-container {
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr 1.4fr;
+  gap: 16px;
+  background: #090c10;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  border: 2px solid #1f293d;
+  box-shadow: 0 0 25px rgba(0,0,0,0.8);
+}
+.arcade-zone {
+  background: #121620;
+  border: 2px solid #232a3b;
+  border-radius: 12px;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+}
+.arcade-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  border-bottom: 2px dashed #2d374d;
+  padding-bottom: 8px;
+}
+.arcade-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  color: #00f2fe;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 0 0 8px rgba(0,242,254,0.4);
+}
+.arcade-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(0,242,254,0.15);
+  color: #00f2fe;
+  border: 1px solid #00f2fe;
+}
+.arcade-bay-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  max-height: 520px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.arcade-car-card {
+  background: linear-gradient(135deg, #1a202c 0%, #151923 100%);
+  border: 1px solid #303b54;
+  border-left: 4px solid #00f2fe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.arcade-car-card:hover {
+  transform: translateY(-2px);
+  border-color: #00f2fe;
+}
+.arcade-sprite-box {
+  width: 90px;
+  height: 48px;
+  background: #0d1117;
+  border: 1px solid #283144;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+}
+.arcade-sprite-box svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 3px rgba(0,242,254,0.3));
+}
+.arcade-car-info {
+  flex: 1;
+  overflow: hidden;
+}
+.arcade-car-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.arcade-plate {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  background: #000;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid #445373;
+}
+.arcade-km {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #a0aec0;
+}
+.arcade-model {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.arcade-hud {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #718096;
+}
+.arcade-fuel-bar {
+  flex: 1;
+  height: 5px;
+  background: #2d3748;
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+}
+.arcade-fuel-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4e50, #f9d423);
+  border-radius: 3px;
+}
+
+/* Carretera Videojuego (Tránsito) */
+.arcade-road-track {
+  position: relative;
+  background: #171c26;
+  border: 2px solid #2d374d;
+  border-radius: 10px;
+  height: 500px;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
+}
+.arcade-road-lane {
+  position: absolute;
+  top: 0; bottom: 0; left: 0; right: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    #171c26,
+    #171c26 20px,
+    #1e2533 20px,
+    #1e2533 40px
+  );
+}
+.arcade-center-line {
+  position: absolute;
+  left: 50%; top: -40px; bottom: -40px;
+  width: 4px;
+  background: repeating-linear-gradient(
+    180deg,
+    #ffcc00,
+    #ffcc00 25px,
+    transparent 25px,
+    transparent 50px
+  );
+  animation: roadScroll 1s linear infinite;
+}
+@keyframes roadScroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(50px); }
+}
+.arcade-moving-car {
+  position: absolute;
+  width: 170px;
+  background: rgba(13, 17, 23, 0.95);
+  border: 1.5px solid #00f2fe;
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 15px rgba(0,242,254,0.3);
+  animation: carDrive 12s linear infinite;
+}
+@keyframes carDrive {
+  0% { transform: translateY(520px); }
+  100% { transform: translateY(-120px); }
+}
 </style>
 </head>
 <body>
@@ -165,44 +375,41 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
     </div>
   </div>
 
-  <!-- VISTA DE SECTORES POR UBICACIÓN (PERÚ, CERRITO, BOOKED) -->
+  <!-- VISTA DE SECTORES MODO VIDEOJUEGO DE AUTOS -->
   <div id="sectorsViewContainer" style="display:none;">
-    <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:16px;">
-      <!-- Estacionamiento PERU -->
-      <div class="calwrap" style="padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <i class="ti ti-parking" style="color:var(--accent)"></i> Estacionamiento PERÚ
-          </h3>
-          <span id="countPeru" class="plate-tag" style="background:var(--accent-l); color:var(--accent-2);">0 veh</span>
+    <div class="arcade-garage-container">
+      
+      <!-- Zona PERU -->
+      <div class="arcade-zone">
+        <div class="arcade-head">
+          <div class="arcade-title"><i class="ti ti-parking" style="color:#00f2fe;"></i> GARAGE PERÚ</div>
+          <span class="arcade-badge" id="countPeru">0 VEH</span>
         </div>
-        <div id="gridPeru" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
+        <div class="arcade-bay-grid" id="gridPeru"></div>
       </div>
 
-      <!-- Estacionamiento CERRITO -->
-      <div class="calwrap" style="padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <i class="ti ti-parking" style="color:var(--c-current)"></i> Estacionamiento CERRITO
-          </h3>
-          <span id="countCerrito" class="plate-tag" style="background:var(--cl-current); color:var(--c-current);">0 veh</span>
+      <!-- Zona CERRITO -->
+      <div class="arcade-zone">
+        <div class="arcade-head">
+          <div class="arcade-title" style="color:#4ade80;"><i class="ti ti-building-warehouse" style="color:#4ade80;"></i> GARAGE CERRITO</div>
+          <span class="arcade-badge" id="countCerrito" style="color:#4ade80; border-color:#4ade80; background:rgba(74,222,128,0.15);">0 VEH</span>
         </div>
-        <div id="gridCerrito" style="display:grid; grid-template-columns:1fr; gap:10px;"></div>
+        <div class="arcade-bay-grid" id="gridCerrito"></div>
       </div>
 
-      <!-- Tránsito / BOOKED con animación -->
-      <div class="calwrap" style="padding:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h3 style="font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px;">
-            <i class="ti ti-road" style="color:var(--c-booked)"></i> En Tránsito (BOOKED)
-          </h3>
-          <span id="countBooked" class="plate-tag" style="background:var(--cl-booked); color:var(--c-booked);">0 en calle</span>
+      <!-- Zona BOOKED (Carretera en movimiento) -->
+      <div class="arcade-zone">
+        <div class="arcade-head">
+          <div class="arcade-title" style="color:#ffcc00;"><i class="ti ti-steering-wheel" style="color:#ffcc00;"></i> EN PISTA (BOOKED)</div>
+          <span class="arcade-badge" id="countBooked" style="color:#ffcc00; border-color:#ffcc00; background:rgba(255,204,0,0.15);">0 EN RUTA</span>
         </div>
-        <div style="position:relative; background:var(--surface2); border-radius:8px; height:340px; overflow:hidden; border:1px solid var(--border-s);">
-          <div style="position:absolute; top:50%; left:0; right:0; border-top:2px dashed var(--border-m); transform:translateY(-50%);"></div>
-          <div id="streetTrafficArea" style="position:relative; width:100%; height:100%;"></div>
+        <div class="arcade-road-track">
+          <div class="arcade-road-lane"></div>
+          <div class="arcade-center-line"></div>
+          <div id="streetTrafficArea"></div>
         </div>
       </div>
+
     </div>
   </div>
 </div>
@@ -244,7 +451,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
   </div>
 </div>
 
-<!-- Modal Neumáticos (Original e Intacto) -->
+<!-- Modal Neumáticos y Accesorios -->
 <div class="tmodal-overlay" id="tireModalOverlay" onclick="closeTireModal(event)">
   <div class="tmodal" onclick="event.stopPropagation()">
     <div class="tmodal-head">
@@ -303,7 +510,6 @@ const MAINT_TYPES = [
 const STORE_PREFIX = 'fleetcal_maint_';
 const TIRE_PREFIX = 'fleetcal_tires_';
 const ACC_PREFIX  = 'fleetcal_acc_';
-const TIRE_POSITIONS = ['Delantera Izq','Delantera Der','Trasera Izq','Trasera Der','Auxilio'];
 
 const TODAY = new Date(); TODAY.setHours(0,0,0,0);
 document.getElementById('todayLbl').textContent = TODAY.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
@@ -337,18 +543,29 @@ function toggleViewMode() {
   }
 }
 
-// Vista de Sectores
-const TOYOTA_RENDERS = {
-  HILUX: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-8 l-5 -7 h-20 v-6 h-22 l-8 13 h-15 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/></svg>`,
-  SUV: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M5 28 h12 a6 6 0 0 1 12 0 h32 a6 6 0 0 1 12 0 h12 v-12 l-8 -8 h-35 l-12 8 h-13 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="23" cy="28" r="4" fill="currentColor"/><circle cx="73" cy="28" r="4" fill="currentColor"/></svg>`,
-  SEDAN: `<svg viewBox="0 0 100 45" width="100%" height="100%"><path d="M4 28 h12 a6 6 0 0 1 12 0 h34 a6 6 0 0 1 12 0 h12 v-7 h-8 l-12 -9 h-26 l-12 8 h-12 z" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="22" cy="28" r="4" fill="currentColor"/><circle cx="74" cy="28" r="4" fill="currentColor"/></svg>`
+// MOTOR DE SPRITES DE AUTOS (VIDEOJUEGO DE AUTOS)
+const VEHICLE_SPRITES = {
+  HILUX: `<svg viewBox="0 0 110 40" fill="none"><path d="M5 24 h14 a7 7 0 0 1 14 0 h36 a7 7 0 0 1 14 0 h22 v-9 l-6 -8 h-24 v-7 h-26 l-10 15 h-18 z" fill="#1e293b" stroke="#00f2fe" stroke-width="2"/><circle cx="26" cy="24" r="5" fill="#00f2fe"/><circle cx="83" cy="24" r="5" fill="#00f2fe"/><path d="M45 9 h20 v7 h-24 z" fill="#00f2fe" opacity="0.3"/><rect x="85" y="15" width="18" height="3" fill="#ff4e50"/></svg>`,
+  SW4: `<svg viewBox="0 0 110 40" fill="none"><path d="M6 24 h14 a7 7 0 0 1 14 0 h36 a7 7 0 0 1 14 0 h16 v-13 l-10 -7 h-40 l-14 8 h-14 z" fill="#1e293b" stroke="#4ade80" stroke-width="2"/><circle cx="27" cy="24" r="5" fill="#4ade80"/><circle cx="84" cy="24" r="5" fill="#4ade80"/><path d="M42 9 h22 v7 h-28 z" fill="#4ade80" opacity="0.3"/><path d="M67 9 h18 v7 h-18 z" fill="#4ade80" opacity="0.3"/></svg>`,
+  CROSS: `<svg viewBox="0 0 105 40" fill="none"><path d="M5 24 h14 a7 7 0 0 1 14 0 h34 a7 7 0 0 1 14 0 h16 v-10 l-9 -8 h-36 l-12 8 h-13 z" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/><circle cx="26" cy="24" r="5" fill="#38bdf8"/><circle cx="81" cy="24" r="5" fill="#38bdf8"/><path d="M40 9 h20 v7 h-24 z" fill="#38bdf8" opacity="0.35"/></svg>`,
+  COROLLA: `<svg viewBox="0 0 105 40" fill="none"><path d="M4 24 h14 a7 7 0 0 1 14 0 h36 a7 7 0 0 1 14 0 h14 v-7 h-10 l-14 -9 h-28 l-13 8 h-13 z" fill="#1e293b" stroke="#a855f7" stroke-width="2"/><circle cx="25" cy="24" r="5" fill="#a855f7"/><circle cx="82" cy="24" r="5" fill="#a855f7"/><path d="M40 9 h24 v7 h-30 z" fill="#a855f7" opacity="0.3"/></svg>`,
+  ETIOS_HB: `<svg viewBox="0 0 95 40" fill="none"><path d="M5 24 h12 a7 7 0 0 1 14 0 h30 a7 7 0 0 1 14 0 h12 v-11 l-8 -7 h-28 l-12 8 h-14 z" fill="#1e293b" stroke="#f97316" stroke-width="2"/><circle cx="24" cy="24" r="5" fill="#f97316"/><circle cx="75" cy="24" r="5" fill="#f97316"/><path d="M38 9 h22 v7 h-26 z" fill="#f97316" opacity="0.35"/></svg>`,
+  ETIOS_SD: `<svg viewBox="0 0 100 40" fill="none"><path d="M4 24 h13 a7 7 0 0 1 14 0 h32 a7 7 0 0 1 14 0 h15 v-6 h-8 l-12 -9 h-26 l-12 8 h-12 z" fill="#1e293b" stroke="#fbbf24" stroke-width="2"/><circle cx="24" cy="24" r="5" fill="#fbbf24"/><circle cx="77" cy="24" r="5" fill="#fbbf24"/><path d="M38 9 h22 v7 h-26 z" fill="#fbbf24" opacity="0.3"/></svg>`,
+  YARIS_HB: `<svg viewBox="0 0 98 40" fill="none"><path d="M5 24 h13 a7 7 0 0 1 14 0 h32 a7 7 0 0 1 14 0 h12 v-12 l-9 -7 h-27 l-13 8 h-14 z" fill="#1e293b" stroke="#ec4899" stroke-width="2"/><circle cx="25" cy="24" r="5" fill="#ec4899"/><circle cx="78" cy="24" r="5" fill="#ec4899"/><path d="M39 8 h22 v7 h-27 z" fill="#ec4899" opacity="0.35"/></svg>`,
+  HIACE: `<svg viewBox="0 0 115 42" fill="none"><path d="M6 25 h14 a7 7 0 0 1 14 0 h42 a7 7 0 0 1 14 0 h14 v-18 h-10 l-6 -4 h-64 z" fill="#1e293b" stroke="#e2e8f0" stroke-width="2"/><circle cx="27" cy="25" r="5" fill="#e2e8f0"/><circle cx="84" cy="25" r="5" fill="#e2e8f0"/><path d="M22 8 h18 v8 h-18 z" fill="#e2e8f0" opacity="0.4"/><path d="M44 8 h22 v8 h-22 z" fill="#e2e8f0" opacity="0.3"/><path d="M70 8 h22 v8 h-22 z" fill="#e2e8f0" opacity="0.3"/></svg>`
 };
 
-function getRender(model){
-  const m = (model||'').toUpperCase();
-  if(m.includes('HILUX')) return TOYOTA_RENDERS.HILUX;
-  if(m.includes('SW4') || m.includes('CROSS')) return TOYOTA_RENDERS.SUV;
-  return TOYOTA_RENDERS.SEDAN;
+function getArcadeSprite(model) {
+  const m = (model || '').toUpperCase();
+  if (m.includes('HILUX')) return VEHICLE_SPRITES.HILUX;
+  if (m.includes('SW4')) return VEHICLE_SPRITES.SW4;
+  if (m.includes('HIACE')) return VEHICLE_SPRITES.HIACE;
+  if (m.includes('CROSS') || m.includes('RAV4')) return VEHICLE_SPRITES.CROSS;
+  if (m.includes('ETIOS HB') || m.includes('ETIOS 5')) return VEHICLE_SPRITES.ETIOS_HB;
+  if (m.includes('ETIOS SD') || m.includes('ETIOS 4')) return VEHICLE_SPRITES.ETIOS_SD;
+  if (m.includes('YARIS HB') || m.includes('YARIS 5')) return VEHICLE_SPRITES.YARIS_HB;
+  if (m.includes('COROLLA')) return VEHICLE_SPRITES.COROLLA;
+  return VEHICLE_SPRITES.YARIS_HB;
 }
 
 function renderSectorsView() {
@@ -361,49 +578,59 @@ function renderSectorsView() {
 
   let cPeru = 0, cCerrito = 0, cBooked = 0;
 
-  ST.pque.forEach(veh => {
+  ST.pque.forEach((veh, idx) => {
     const tel = ST.tel[veh.plate] || {};
     const loc = tel.loc || 'CERRITO';
-    const svg = getRender(veh.model);
+    const svg = getArcadeSprite(veh.model);
+    const fuelVal = parseInt((tel.fuel || '0').toString().replace('%','')) || 50;
 
-    const card = `
-      <div style="background:var(--surface2); border:1px solid var(--border-s); border-radius:8px; display:flex; gap:10px; align-items:center; padding:10px;">
-        <div style="width:55px; height:38px; color:var(--accent); flex-shrink:0;">${svg}</div>
-        <div style="flex:1; overflow:hidden;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="plate-tag">${veh.plate}</span>
-            <span style="font-size:9px; color:var(--text3);">${tel.km || '0'} km</span>
+    const cardHTML = `
+      <div class="arcade-car-card">
+        <div class="arcade-sprite-box">${svg}</div>
+        <div class="arcade-car-info">
+          <div class="arcade-car-header">
+            <span class="arcade-plate">${veh.plate}</span>
+            <span class="arcade-km">${tel.km || '0'} KM</span>
           </div>
-          <div style="font-weight:600; font-size:11px; color:var(--text); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${veh.model}</div>
-          <div style="font-size:9px; color:var(--text2);">⛽ ${tel.fuel || '-'}L</div>
+          <div class="arcade-model">${veh.model}</div>
+          <div class="arcade-hud">
+            <span>FUEL</span>
+            <div class="arcade-fuel-bar"><div class="arcade-fuel-fill" style="width:${fuelVal}%"></div></div>
+            <span>${tel.fuel || '-'}L</span>
+          </div>
         </div>
       </div>
     `;
 
     if (loc === 'PERU') {
-      pPeru.innerHTML += card; cPeru++;
+      pPeru.innerHTML += cardHTML; cPeru++;
     } else if (loc === 'BOOKED') {
       cBooked++;
-      const topPos = 20 + ((cBooked * 60) % 240);
-      const sprite = document.createElement('div');
-      sprite.style.cssText = `position:absolute; top:${topPos}px; left:-150px; width:140px; background:var(--surface); border:1px solid var(--border-s); border-radius:6px; padding:5px; animation: driveRight 15s linear infinite; animation-delay: ${cBooked * 1.5}s;`;
-      sprite.innerHTML = `<div style="font-size:9px; font-family:'JetBrains Mono'; font-weight:700; color:var(--c-booked);">${veh.plate}</div>`;
-      pStreet.appendChild(sprite);
+      const leftPos = (cBooked % 2 === 0) ? 15 : 55;
+      const animDelay = (cBooked * 2.2) % 8;
+      const spriteDiv = document.createElement('div');
+      spriteDiv.className = 'arcade-moving-car';
+      spriteDiv.style.left = leftPos + '%';
+      spriteDiv.style.animationDelay = animDelay + 's';
+      spriteDiv.innerHTML = `
+        <div style="width:50px; height:28px; flex-shrink:0;">${svg}</div>
+        <div>
+          <div class="arcade-plate" style="font-size:9px; padding:0 4px;">${veh.plate}</div>
+          <div style="font-size:9px; color:#ffcc00; font-family:'JetBrains Mono'; font-weight:700; margin-top:2px;">EN RUTA</div>
+        </div>
+      `;
+      pStreet.appendChild(spriteDiv);
     } else {
-      pCerrito.innerHTML += card; cCerrito++;
+      pCerrito.innerHTML += cardHTML; cCerrito++;
     }
   });
 
-  document.getElementById('countPeru').textContent = `${cPeru} veh`;
-  document.getElementById('countCerrito').textContent = `${cCerrito} veh`;
-  document.getElementById('countBooked').textContent = `${cBooked} en calle`;
+  document.getElementById('countPeru').textContent = `${cPeru} VEH`;
+  document.getElementById('countCerrito').textContent = `${cCerrito} VEH`;
+  document.getElementById('countBooked').textContent = `${cBooked} EN RUTA`;
 }
 
-const animStyle = document.createElement('style');
-animStyle.innerText = `@keyframes driveRight { 0% { left: -160px; } 100% { left: 105%; } }`;
-document.head.appendChild(animStyle);
-
-// Mantenimientos y Alertas (Respetando desactivación por service realizado)
+// Mantenimientos
 function getMaintHistory(plate){ try{ return JSON.parse(localStorage.getItem(STORE_PREFIX + plate.toUpperCase())||'[]'); }catch(e){return [];} }
 function getLastMaint(plate){ const h=getMaintHistory(plate); return h.length ? h.sort((a,b)=>b.date.localeCompare(a.date))[0] : null; }
 
@@ -464,7 +691,7 @@ window.saveMaint = function(){
   
   closeModal();
   tryRender();
-  alert('Mantenimiento guardado y alerta desactivada para el intervalo.');
+  alert('Mantenimiento guardado y alerta desactivada.');
 };
 
 window.deleteMaintEntry = function(plate, ts){
@@ -487,7 +714,7 @@ function renderHistList(plate){
     </div>`).join('');
 }
 
-// Neumáticos y Accesorios (Original e Intacto)
+// Neumáticos y Accesorios
 window.openTireModal = function(plate, model){
   if(!plate){
     if(ST.pque && ST.pque.length){ plate = ST.pque[0].plate; model = ST.pque[0].model; }
@@ -559,7 +786,7 @@ window.saveTireData = function(){
   localStorage.setItem(TIRE_PREFIX + tireModalPlate, JSON.stringify(tireWorkingCopy));
   localStorage.setItem(ACC_PREFIX + tireModalPlate, JSON.stringify(accWorkingCopy));
   closeTireModal();
-  alert('Datos de neumáticos y accesorios guardados correctamente.');
+  alert('Datos de neumáticos y accesorios guardados.');
 };
 
 // Checklist
@@ -648,7 +875,6 @@ function parseD(str){
   return new Date(parseInt(yr),mo[mon],parseInt(day),h,parseInt(min));
 }
 
-// Sincronización CDN oficial
 function sincronizarFlotaCDN() {
   const tokenBuster = Date.now();
   const cdnRaiz = "https://cdn.jsdelivr.net/gh/tencafre/Fleet_Manager/";
@@ -666,7 +892,7 @@ function sincronizarFlotaCDN() {
 (function(){
   ST.pque = parsePque(`18723 Toyota Corolla HV AT AI239SV	SEDAN	43
 10914 Toyota SW4 4x4 7A AT AG269JN	SUV	80
-11131 Toyota Etios SD AT AG350QD	HATCHBACK	45
+11131 Toyota Etios SD AT AG350QD	SEDAN	45
 11182 Toyota ETIOS HB A/T AG350QF	HATCHBACK	45
 11181 Toyota ETIOS HB A/T AG350QE	HATCHBACK	45
 12469 Toyota Yaris HB AT AG500BY	HATCHBACK	42
