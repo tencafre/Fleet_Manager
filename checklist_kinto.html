@@ -310,9 +310,18 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
   </div>
 
   <div class="bottom-bar">
-    <div style="display:flex;align-items:center;gap:6px">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;row-gap:4px">
       <input type="checkbox" id="c-fin">
       <label for="c-fin" style="font-size:8.5px;color:#555">Se realizó explicación de extensión, finalización de reserva y encuesta</label>
+      <span style="font-size:8.5px;color:#555;margin-left:8px;white-space:nowrap">Cobertura diaria Telepase:</span>
+      <span style="display:inline-flex;align-items:center;gap:2px">
+        <span style="font-size:8.5px;color:#555">$</span>
+        <input type="number" id="telepase-diario" min="0" step="0.01"
+          placeholder="0,00"
+          style="width:64px;font-size:8.5px;border:none;border-bottom:0.8px solid #bbb;background:transparent;outline:none;color:#222;padding:1px 2px;text-align:right;"
+          oninput="localStorage.setItem('kinto_telepase_diario', this.value)"
+        >
+      </span>
     </div>
     <div class="hora-cell">Hora devolución: <span id="var-hora" style="font-weight:500">__:__</span></div>
   </div>
@@ -926,7 +935,14 @@ window.addEventListener('load', () => {
       tire_fl:'AT201', tire_fr:'AT202', tire_rl:'AT203', tire_rr:'AT204'
     });
   }
-  
+
+  /* ── Restore last Telepase daily rate ── */
+  const savedTelepase = localStorage.getItem('kinto_telepase_diario');
+  if (savedTelepase) {
+    const el = document.getElementById('telepase-diario');
+    if (el) el.value = savedTelepase;
+  }
+
 });
 </script>
 </body>
