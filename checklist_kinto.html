@@ -348,6 +348,24 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
     </button>
 
     <button class="print-btn" onclick="window.print()">Imprimir</button>
+    <button id="btn-wa-share" class="btn-wa-share" onclick="compartirPorWhatsApp()" style="
+      display:none;
+      align-items:center;
+      gap:6px;
+      background:#25D366;
+      color:#fff;
+      border:none;
+      padding:6px 14px;
+      border-radius:6px;
+      font-family:'Inter',sans-serif;
+      font-size:11px;
+      font-weight:500;
+      cursor:pointer;
+      margin-left:6px;
+    ">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.124 1.532 5.857L0 24l6.335-1.51A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.032-1.383l-.36-.213-3.732.889.933-3.638-.234-.374A9.818 9.818 0 012.182 12c0-5.423 4.395-9.818 9.818-9.818S21.818 6.577 21.818 12 17.423 21.818 12 21.818z"/></svg>
+      WhatsApp
+    </button>
   </div>
 
 </div><!-- /page -->
@@ -854,6 +872,117 @@ async function exportarRemitoPDF() {
   window.print();
 }
 
+
+
+/* ─── COMPARTIR PDF POR WHATSAPP (MÓVIL) ─── */
+async function compartirPorWhatsApp() {
+  var btn = document.getElementById('btn-wa-share');
+  var originalHTML = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '⏳ Generando...'; btn.disabled = true; }
+
+  try {
+    // ── Construir texto resumen del remito ──
+    var patente  = (typeof currentPlate !== 'undefined' && currentPlate) ? currentPlate.toUpperCase().trim() : '—';
+    var resid    = document.getElementById('var-resid') ? document.getElementById('var-resid').textContent.trim() : '—';
+    var usuario  = document.getElementById('var-usuario') ? document.getElementById('var-usuario').textContent.trim() : '—';
+    var entrega  = document.getElementById('var-entrega') ? document.getElementById('var-entrega').textContent.trim() : '—';
+    var fin      = document.getElementById('var-fin') ? document.getElementById('var-fin').textContent.trim() : '—';
+    var hora     = document.getElementById('var-hora') ? document.getElementById('var-hora').textContent.trim() : '—';
+    var telepase = document.getElementById('telepase-diario') ? document.getElementById('telepase-diario').value : '';
+    var fecha    = new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
+    var hora_now = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+
+    var texto =
+      '🚗 *KINTO Share · Remito de Inspección*\n' +
+      '──────────────────────\n' +
+      '📋 *Reserva:* ' + resid + '\n' +
+      '🚘 *Patente:* ' + patente + '\n' +
+      '👤 *Cliente:* ' + usuario + '\n' +
+      '📅 *Entrega:* ' + entrega + '\n' +
+      '🏁 *Fin reserva:* ' + fin + '\n' +
+      '🕐 *Hora devolución:* ' + hora + '\n' +
+      (telepase ? '📡 *Telepase diario:* $' + telepase + '\n' : '') +
+      '──────────────────────\n' +
+      '✅ Remito generado el ' + fecha + ' a las ' + hora_now + '\n' +
+      '#KINTOShare #Retiro #Inspeccion';
+
+    // ── Intentar compartir PDF real vía Print-to-PDF + Web Share API ──
+    var pdfShared = false;
+
+    if (window.navigator && window.navigator.share && window.navigator.canShare) {
+      try {
+        // Generar PDF usando la API de impresión del navegador en un iframe oculto
+        // y capturar como blob si es posible
+        var pdfFile = null;
+
+        // Intentar con html2canvas + jsPDF si están disponibles
+        if (typeof html2canvas !== 'undefined' && typeof jspdf !== 'undefined') {
+          var page = document.getElementById('page') || document.body;
+          var canvas = await html2canvas(page, { scale: 1.5, useCORS: true, logging: false });
+          var imgData = canvas.toDataURL('image/jpeg', 0.85);
+          var { jsPDF } = jspdf;
+          var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+          var pw = pdf.internal.pageSize.getWidth();
+          var ph = pdf.internal.pageSize.getHeight();
+          var ratio = canvas.width / canvas.height;
+          var imgW = pw;
+          var imgH = imgW / ratio;
+          if (imgH > ph) { imgH = ph; imgW = imgH * ratio; }
+          pdf.addImage(imgData, 'JPEG', (pw - imgW) / 2, 0, imgW, imgH);
+          var pdfBlob = pdf.output('blob');
+          pdfFile = new File([pdfBlob], 'Remito_KINTO_' + patente + '_' + fecha.replace(/\//g, '-') + '.pdf', { type: 'application/pdf' });
+        }
+
+        if (pdfFile && navigator.canShare({ files: [pdfFile] })) {
+          await navigator.share({ title: 'Remito KINTO Share · ' + patente, text: texto, files: [pdfFile] });
+          pdfShared = true;
+        } else if (navigator.canShare({ text: texto })) {
+          // Compartir solo el texto (sin PDF)
+          await navigator.share({ title: 'Remito KINTO Share · ' + patente, text: texto });
+          pdfShared = true;
+        }
+      } catch (shareErr) {
+        if (shareErr.name !== 'AbortError') {
+          console.warn('Share API falló, usando fallback WhatsApp link:', shareErr);
+        } else {
+          // Usuario canceló — no hacer nada más
+          pdfShared = true;
+        }
+      }
+    }
+
+    // ── Fallback: abrir WhatsApp Web / App con el texto precompletado ──
+    if (!pdfShared) {
+      // Primero ofrecer guardar el PDF por impresión nativa
+      var irImprimir = confirm(
+        'Tu navegador no soporta compartir archivos directamente.\n\n' +
+        '¿Querés guardar el PDF primero?\n' +
+        '(Se abrirá el diálogo de impresión — guardá como PDF, luego adjuntalo en WhatsApp)'
+      );
+      if (irImprimir) { window.print(); }
+
+      // Abrir WhatsApp con el resumen
+      var waURL = 'https://wa.me/?text=' + encodeURIComponent(texto);
+      window.open(waURL, '_blank');
+    }
+
+  } catch (e) {
+    console.error('compartirPorWhatsApp error:', e);
+    alert('No se pudo compartir. Usá el botón "Imprimir" para guardar el PDF y compartilo manualmente.');
+  } finally {
+    if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
+  }
+}
+
+/* ─── Mostrar botón WhatsApp solo en dispositivos móviles ─── */
+(function() {
+  var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+                 (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  if (isMobile) {
+    var waBtn = document.getElementById('btn-wa-share');
+    if (waBtn) waBtn.style.display = 'inline-flex';
+  }
+})();
 
 
 /* ─── AUTO-LOAD FROM FLEET CALENDAR ─── */
