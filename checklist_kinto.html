@@ -3,11 +3,8 @@
 <html lang="es">
 <head>
   <!-- ── LIBRERÍAS DE GENERACIÓN DE REPORTE PDF (A4 CLIENTE) ── -->
-<script src="https://cloudflare.com"></script>
-<script src="https://cloudflare.com"></script>
-<!-- ── LIBRERÍAS DE REPORTE PDF VÍA UNPKG (IGNORA LOS BLOQUEOS DE CSP VIEJOS) ── -->
-<script src="https://unpkg.com"></script>
-<script src="https://unpkg.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <!-- REEMPLAZO ABSOLUTO DE LA CSP EN TU HEAD -->
 <meta http-equiv="Content-Security-Policy" content="
@@ -150,7 +147,87 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
 .mono{font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.05em}
 
 /* ── PRINT ── */
+@media print {
+  /* Ocultar controles interactivos */
+  .vehicle-selector,
+  .damage-controls,
+  .bottom-bar button,
+  .print-btn,
+  .btn-pdf-export,
+  .btn-wa-share,
+  #btn-wa-share,
+  button { display: none !important; }
 
+  /* Resetear página */
+  html, body { background: #fff !important; font-size: 10px !important; }
+  .page { max-width: 100% !important; padding: 10mm 12mm !important; margin: 0 !important; }
+
+  /* Oscurecer todos los textos grises para impresión */
+  .fc-label,
+  .cv-label,
+  .section-label,
+  .fuel-label,
+  .card-label,
+  .tire-badge,
+  .obs-box p,
+  .bottom-note,
+  .hora-cell,
+  .legend span,
+  .qr-label,
+  .doc-meta,
+  .cap-cell,
+  label[for="c-fin"],
+  .bottom-bar label,
+  .bottom-bar span,
+  [style*="color:#aaa"],
+  [style*="color: #aaa"],
+  [style*="color:#555"],
+  [style*="color: #555"] {
+    color: #333 !important;
+  }
+
+  /* Labels de sección más oscuros */
+  .section-label { color: #111 !important; font-weight: 600 !important; }
+
+  /* Borders más definidos */
+  .field-strip, .field-cell,
+  .car-diagram, .checklist-grid, .check-col,
+  .fuel-row, .card-row, .extras-grid, .ext-cell,
+  .obs-box, .footer-grid, .footer-cell {
+    border-color: #999 !important;
+  }
+  .ci { border-bottom-color: #ccc !important; }
+
+  /* Combustible visible */
+  .fuel-fill { background: #333 !important; }
+  .fuel-bar  { border-color: #999 !important; }
+
+  /* Texto de valores de campos */
+  .fc-val, .card-val { color: #000 !important; font-weight: 600 !important; }
+
+  /* Neumáticos */
+  .tire-badge b { color: #000 !important; }
+
+  /* Checkboxes — forzar visibles */
+  input[type="checkbox"] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Bottom bar */
+  .bottom-bar { border-top-color: #ccc !important; }
+
+  /* Sig line más oscura */
+  .sig-line { border-bottom-color: #666 !important; border-bottom-width: 0.8px !important; }
+  .fc-sig-label { color: #333 !important; }
+
+  /* Header */
+  .header-bar { border-bottom-color: #333 !important; }
+  .brand { color: #1a7b8a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Forzar que imágenes del diagrama se impriman */
+  img { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Ocultar selector de vehículo (ya está en el diagrama) */
+  .section-label:first-of-type + .vehicle-selector { display: none !important; }
+}
 
 </style>
 </head>
@@ -180,10 +257,25 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
   <div class="field-strip" style="grid-template-columns:repeat(6,1fr)">
     <div class="field-cell"><span class="fc-label">Dominio</span><div class="fc-val" id="var-dominio">— — —</div></div>
     <div class="field-cell"><span class="fc-label">ID Reserva</span><div class="fc-val mono" id="var-resid">—</div></div>
-    <div class="field-cell"><span class="fc-label">Entrega</span><div class="fc-val" id="var-entrega">—</div></div>
-    <div class="field-cell"><span class="fc-label">Finalización</span><div class="fc-val" id="var-fin">—</div></div>
+    <div class="field-cell">
+      <span class="fc-label">Fecha entrega</span>
+      <div class="fc-val" id="var-entrega-fecha">—</div>
+      <span class="fc-label" style="margin-top:3px">Hora entrega</span>
+      <div class="fc-val" id="var-entrega-hora" style="color:#1a7b8a">—</div>
+    </div>
+    <div class="field-cell">
+      <span class="fc-label">Fecha devolución</span>
+      <div class="fc-val" id="var-fin-fecha">—</div>
+      <span class="fc-label" style="margin-top:3px">Hora devolución</span>
+      <div class="fc-val" id="var-hora" style="color:#c00">__:__</div>
+    </div>
     <div class="field-cell"><span class="fc-label">Km odómetro</span><div class="fc-val" id="var-km">—</div></div>
     <div class="field-cell"><span class="fc-label">Usuario</span><div class="fc-val" id="var-usuario">—</div></div>
+  </div>
+  <!-- campos ocultos para compatibilidad con setVars existente -->
+  <div style="display:none">
+    <div id="var-entrega"></div>
+    <div id="var-fin"></div>
   </div>
 
   <!-- VEHICLE TYPE -->
@@ -323,7 +415,6 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
         >
       </span>
     </div>
-    <div class="hora-cell">Hora devolución: <span id="var-hora" style="font-weight:500">__:__</span></div>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:0.5px solid #eee">
     <div class="bottom-note"><b>RECORDÁ</b> finalizar la reserva · Evitá cobros indebidos</div>
@@ -574,6 +665,22 @@ function setVars(data) {
     if (k === 'vehicle') { selectVehicle(v); return; }
     const el = document.getElementById(map[k] || k);
     if (el) el.textContent = v;
+
+    // ── Poblar campos separados de fecha y hora ──
+    if (k === 'entrega') {
+      // formato esperado: "11/06/2026  ·  09:42"
+      var parts = v.split(/\s*·\s*/);
+      var ef = document.getElementById('var-entrega-fecha');
+      var eh = document.getElementById('var-entrega-hora');
+      if (ef) ef.textContent = parts[0] ? parts[0].trim() : '—';
+      if (eh) eh.textContent = parts[1] ? parts[1].trim() : '—';
+    }
+    if (k === 'fin') {
+      var parts2 = v.split(/\s*·\s*/);
+      var ff = document.getElementById('var-fin-fecha');
+      if (ff) ff.textContent = parts2[0] ? parts2[0].trim() : '—';
+      // var-hora se setea por separado con key 'hora'
+    }
   });
 }
 
@@ -880,95 +987,105 @@ async function compartirPorWhatsApp() {
   var originalHTML = btn ? btn.innerHTML : '';
   if (btn) { btn.innerHTML = '⏳ Generando...'; btn.disabled = true; }
 
+  // Elementos a ocultar durante la captura (botones, controles interactivos)
+  var OCULTAR_SELECTORS = [
+    '.vehicle-selector', '.damage-controls', '.print-btn',
+    '.btn-pdf-export', '#btn-wa-share', '.btn-wa-share',
+    '[onclick="window.print()"]'
+  ];
+  var ocultos = [];
+
   try {
-    // ── Construir texto resumen del remito ──
-    var patente  = (typeof currentPlate !== 'undefined' && currentPlate) ? currentPlate.toUpperCase().trim() : '—';
-    var resid    = document.getElementById('var-resid') ? document.getElementById('var-resid').textContent.trim() : '—';
-    var usuario  = document.getElementById('var-usuario') ? document.getElementById('var-usuario').textContent.trim() : '—';
-    var entrega  = document.getElementById('var-entrega') ? document.getElementById('var-entrega').textContent.trim() : '—';
-    var fin      = document.getElementById('var-fin') ? document.getElementById('var-fin').textContent.trim() : '—';
-    var hora     = document.getElementById('var-hora') ? document.getElementById('var-hora').textContent.trim() : '—';
-    var telepase = document.getElementById('telepase-diario') ? document.getElementById('telepase-diario').value : '';
-    var fecha    = new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' });
-    var hora_now = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
-
-    var texto =
-      '🚗 *KINTO Share · Remito de Inspección*\n' +
-      '──────────────────────\n' +
-      '📋 *Reserva:* ' + resid + '\n' +
-      '🚘 *Patente:* ' + patente + '\n' +
-      '👤 *Cliente:* ' + usuario + '\n' +
-      '📅 *Entrega:* ' + entrega + '\n' +
-      '🏁 *Fin reserva:* ' + fin + '\n' +
-      '🕐 *Hora devolución:* ' + hora + '\n' +
-      (telepase ? '📡 *Telepase diario:* $' + telepase + '\n' : '') +
-      '──────────────────────\n' +
-      '✅ Remito generado el ' + fecha + ' a las ' + hora_now + '\n' +
-      '#KINTOShare #Retiro #Inspeccion';
-
-    // ── Intentar compartir PDF real vía Print-to-PDF + Web Share API ──
-    var pdfShared = false;
-
-    if (window.navigator && window.navigator.share && window.navigator.canShare) {
-      try {
-        // Generar PDF usando la API de impresión del navegador en un iframe oculto
-        // y capturar como blob si es posible
-        var pdfFile = null;
-
-        // Intentar con html2canvas + jsPDF si están disponibles
-        if (typeof html2canvas !== 'undefined' && typeof jspdf !== 'undefined') {
-          var page = document.getElementById('page') || document.body;
-          var canvas = await html2canvas(page, { scale: 1.5, useCORS: true, logging: false });
-          var imgData = canvas.toDataURL('image/jpeg', 0.85);
-          var { jsPDF } = jspdf;
-          var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-          var pw = pdf.internal.pageSize.getWidth();
-          var ph = pdf.internal.pageSize.getHeight();
-          var ratio = canvas.width / canvas.height;
-          var imgW = pw;
-          var imgH = imgW / ratio;
-          if (imgH > ph) { imgH = ph; imgW = imgH * ratio; }
-          pdf.addImage(imgData, 'JPEG', (pw - imgW) / 2, 0, imgW, imgH);
-          var pdfBlob = pdf.output('blob');
-          pdfFile = new File([pdfBlob], 'Remito_KINTO_' + patente + '_' + fecha.replace(/\//g, '-') + '.pdf', { type: 'application/pdf' });
-        }
-
-        if (pdfFile && navigator.canShare({ files: [pdfFile] })) {
-          await navigator.share({ title: 'Remito KINTO Share · ' + patente, text: texto, files: [pdfFile] });
-          pdfShared = true;
-        } else if (navigator.canShare({ text: texto })) {
-          // Compartir solo el texto (sin PDF)
-          await navigator.share({ title: 'Remito KINTO Share · ' + patente, text: texto });
-          pdfShared = true;
-        }
-      } catch (shareErr) {
-        if (shareErr.name !== 'AbortError') {
-          console.warn('Share API falló, usando fallback WhatsApp link:', shareErr);
-        } else {
-          // Usuario canceló — no hacer nada más
-          pdfShared = true;
-        }
-      }
+    if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+      throw new Error('Librerías PDF no disponibles');
     }
 
-    // ── Fallback: abrir WhatsApp Web / App con el texto precompletado ──
-    if (!pdfShared) {
-      // Primero ofrecer guardar el PDF por impresión nativa
-      var irImprimir = confirm(
-        'Tu navegador no soporta compartir archivos directamente.\n\n' +
-        '¿Querés guardar el PDF primero?\n' +
-        '(Se abrirá el diálogo de impresión — guardá como PDF, luego adjuntalo en WhatsApp)'
-      );
-      if (irImprimir) { window.print(); }
+    var patente = (typeof currentPlate !== 'undefined' && currentPlate)
+      ? currentPlate.toUpperCase().trim() : 'KINTO';
+    var fecha = new Date().toLocaleDateString('es-AR',
+      { day:'2-digit', month:'2-digit', year:'numeric' }).replace(/\//g, '-');
+    var nombreArchivo = 'CheckList_KINTO_' + patente + '_' + fecha + '.pdf';
 
-      // Abrir WhatsApp con el resumen
-      var waURL = 'https://wa.me/?text=' + encodeURIComponent(texto);
-      window.open(waURL, '_blank');
+    var nodo = document.getElementById('main');
+    if (!nodo) throw new Error('No se encontró #main');
+
+    // ── 1. Ocultar controles interactivos antes de capturar ──
+    OCULTAR_SELECTORS.forEach(function(sel) {
+      document.querySelectorAll(sel).forEach(function(el) {
+        if (el.style.display !== 'none') {
+          ocultos.push({ el: el, prev: el.style.display });
+          el.style.display = 'none';
+        }
+      });
+    });
+
+    // ── 2. Capturar con html2canvas ──
+    var scrollY = window.scrollY;
+    window.scrollTo(0, 0);
+
+    var canvas = await html2canvas(nodo, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      windowWidth: nodo.scrollWidth,
+      windowHeight: nodo.scrollHeight,
+      onclone: function(doc) {
+        // En el clon también oscurecer los grises para el PDF
+        doc.querySelectorAll('[style*="color:#aaa"],[style*="color:#555"],[style*="color: #aaa"],[style*="color: #555"]').forEach(function(el) {
+          el.style.color = '#333';
+        });
+        doc.querySelectorAll('.fc-label,.cv-label,.section-label,.fuel-label,.card-label,.tire-badge,.obs-box p,.hora-cell,.legend span,.qr-label,.doc-meta,.cap-cell').forEach(function(el) {
+          el.style.color = '#333';
+        });
+      }
+    });
+
+    window.scrollTo(0, scrollY);
+
+    // ── 3. Restaurar elementos ocultos ──
+    ocultos.forEach(function(o) { o.el.style.display = o.prev; });
+    ocultos = [];
+
+    // ── 4. Construir PDF A4 (210×297 mm) ──
+    var { jsPDF } = jspdf;
+    var pdf    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var pageW  = pdf.internal.pageSize.getWidth();
+    var pageH  = pdf.internal.pageSize.getHeight();
+    var margin = 8;
+    var maxW   = pageW - margin * 2;
+    var maxH   = pageH - margin * 2;
+    var ratio  = canvas.width / canvas.height;
+    var imgW   = maxW;
+    var imgH   = imgW / ratio;
+    if (imgH > maxH) { imgH = maxH; imgW = imgH * ratio; }
+    var offX   = margin + (maxW - imgW) / 2;
+
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.93), 'JPEG', offX, margin, imgW, imgH);
+
+    var pdfBlob = pdf.output('blob');
+    var pdfFile = new File([pdfBlob], nombreArchivo, { type: 'application/pdf' });
+
+    // ── 5. Compartir ──
+    if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      await navigator.share({ title: 'Check List KINTO · ' + patente, files: [pdfFile] });
+    } else {
+      // Fallback: descarga + instrucción
+      var dlUrl = URL.createObjectURL(pdfBlob);
+      var a = document.createElement('a');
+      a.href = dlUrl; a.download = nombreArchivo; a.click();
+      setTimeout(function() { URL.revokeObjectURL(dlUrl); }, 8000);
+      setTimeout(function() {
+        alert('PDF descargado: ' + nombreArchivo + '\n\nAbrí WhatsApp y adjuntalo desde tus archivos o galería.');
+      }, 500);
     }
 
   } catch (e) {
-    console.error('compartirPorWhatsApp error:', e);
-    alert('No se pudo compartir. Usá el botón "Imprimir" para guardar el PDF y compartilo manualmente.');
+    // Restaurar por si el error cortó antes
+    ocultos.forEach(function(o) { o.el.style.display = o.prev; });
+    if (e && e.name === 'AbortError') return;
+    console.error('compartirPorWhatsApp:', e);
+    alert('No se pudo generar el PDF.\nUsá "Imprimir" → Guardar como PDF y compartilo manualmente.');
   } finally {
     if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; }
   }
@@ -1014,7 +1131,7 @@ window.addEventListener('load', () => {
         km:      d.km        || '—',
         usuario: d.renter    || '—',
         cap:     d.tankCap   ? d.tankCap + ' L' : '—',
-        hora:    d.startTime || '__:__',
+        hora:    d.endTime   || '__:__',
       });
 
       /* Update page title */
@@ -1060,7 +1177,7 @@ window.addEventListener('load', () => {
     setVars({
       dominio:'AB 123 CD', resid:'RES-00123', entrega:'11/06/2026  ·  09:42',
       fin:'30/06/2026  ·  11:00',
-      km:'47.320', usuario:'J. García', cap:'45 L', hora:'09:42',
+      km:'47.320', usuario:'J. García', cap:'45 L', hora:'11:00',
       tire_fl:'AT201', tire_fr:'AT202', tire_rl:'AT203', tire_rr:'AT204'
     });
   }
