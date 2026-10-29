@@ -1,6 +1,5 @@
 yo6e51n	Jose Eduardo Baracco	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO CAR	--	4:30 PM  Sep 28, 2026	5:00 PM  Oct 31, 2026	Current
 kvrxpz9	ONE DESMET	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	9:00 AM  Oct 20, 2026	6:00 PM  Jan 20, 2027	Current
-ynmg0gq	Francisco Ricci	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	9:00 AM  Oct 26, 2026	12:00 PM  Oct 30, 2026	Current
 yqvzqvd	Lieven Van Nevel	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	11:05 AM  Oct 28, 2026	11:05 AM  Nov 4, 2026	Current
 y44520j	Anahi Ayerve	Toyota Yaris HB AT AI545FP	Retiro CERRITO CAR	--	4:30 PM  Oct 28, 2026	4:30 PM  Oct 29, 2026	Current
 ymdzxg7	Tomas Ezequiel Daleve	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	6:00 PM  Oct 28, 2026	6:00 PM  Oct 29, 2026	Current
@@ -10,6 +9,7 @@ ypnjrw1	Mercedes Alvarez	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	10:3
 ynmv0x3	Viviana Duffau	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	12:00 PM  Nov 6, 2026	4:00 PM  Nov 13, 2026	New
 l2x5r0d	Fernando Donadt	Toyota Corolla Cross HV AT AG765WS	Retiro CERRITO CAR	--	11:00 AM  Nov 13, 2026	12:00 PM  Nov 30, 2026	New
 lrj1x2d	Gabriel Ferrari	Toyota Yaris HB AT AI545FP	Retiro CERRITO CAR	--	6:00 PM  Nov 13, 2026	11:00 AM  Dec 2, 2026	New
+y6mm82j	Walter Fabian Montenegro	Toyota Etios SD AT AG350QD	Retiro CERRITO CAR	--	10:00 AM  Nov 20, 2026	11:00 AM  Nov 24, 2026	New
 y76dwx8	Horacio M. C. Fernández	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	9:30 AM  Nov 24, 2026	12:30 PM  Nov 28, 2026	New
 k90wo9v	Sofia Speluzzi	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	10:00 AM  Dec 14, 2026	10:00 AM  Jan 15, 2027	New
 k90z3ne	Luis augusto Branca	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	11:00 AM  Dec 17, 2026	11:00 AM  Jan 15, 2027	New
