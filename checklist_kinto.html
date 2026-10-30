@@ -1122,6 +1122,21 @@ window.addEventListener('load', () => {
       currentPlate = d.plate || '';
       if (currentPlate) loadDamages(currentPlate);
 
+      /* ── DEBUG: ver claves del payload ── */
+      console.log('[KINTO DEBUG] payload completo:', JSON.stringify(d, null, 2));
+
+      /* ── Poblar campos directamente para mayor robustez ── */
+      // Fecha y hora de entrega
+      var efEl = document.getElementById('var-entrega-fecha');
+      var ehEl = document.getElementById('var-entrega-hora');
+      var ffEl = document.getElementById('var-fin-fecha');
+      var horaEl = document.getElementById('var-hora');
+
+      if (efEl) efEl.textContent = d.startDate || '—';
+      if (ehEl) ehEl.textContent = d.startTime || '—';
+      if (ffEl) ffEl.textContent = d.endDate   || '—';
+      if (horaEl) horaEl.textContent = d.endTime || '__:__';
+
       /* Populate fields */
       setVars({
         dominio: d.plate     || '— — —',
