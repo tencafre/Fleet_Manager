@@ -261,13 +261,17 @@ html,body{font-family:'Inter',sans-serif;font-size:11px;color:#1a1a1a;background
       <span class="fc-label">Fecha entrega</span>
       <div class="fc-val" id="var-entrega-fecha">—</div>
       <span class="fc-label" style="margin-top:3px">Hora entrega</span>
-      <div class="fc-val" id="var-entrega-hora" style="color:#1a7b8a">—</div>
+      <input type="time" id="var-entrega-hora"
+        style="font-size:12px;font-weight:600;color:#1a7b8a;border:none;border-bottom:1px solid #bbb;background:transparent;outline:none;padding:1px 0;width:100%;font-family:'Inter',sans-serif;"
+        oninput="guardarHoras()">
     </div>
     <div class="field-cell">
       <span class="fc-label">Fecha devolución</span>
       <div class="fc-val" id="var-fin-fecha">—</div>
       <span class="fc-label" style="margin-top:3px">Hora devolución</span>
-      <div class="fc-val" id="var-hora" style="color:#c00">__:__</div>
+      <input type="time" id="var-hora"
+        style="font-size:12px;font-weight:600;color:#c00;border:none;border-bottom:1px solid #bbb;background:transparent;outline:none;padding:1px 0;width:100%;font-family:'Inter',sans-serif;"
+        oninput="guardarHoras()">
     </div>
     <div class="field-cell"><span class="fc-label">Km odómetro</span><div class="fc-val" id="var-km">—</div></div>
     <div class="field-cell"><span class="fc-label">Usuario</span><div class="fc-val" id="var-usuario">—</div></div>
@@ -666,20 +670,14 @@ function setVars(data) {
     const el = document.getElementById(map[k] || k);
     if (el) el.textContent = v;
 
-    // ── Poblar campos separados de fecha y hora ──
+    // ── Poblar campos de fecha directamente ──
     if (k === 'entrega') {
-      // formato esperado: "11/06/2026  ·  09:42"
-      var parts = v.split(/\s*·\s*/);
       var ef = document.getElementById('var-entrega-fecha');
-      var eh = document.getElementById('var-entrega-hora');
-      if (ef) ef.textContent = parts[0] ? parts[0].trim() : '—';
-      if (eh) eh.textContent = parts[1] ? parts[1].trim() : '—';
+      if (ef) ef.textContent = v || '—';
     }
     if (k === 'fin') {
-      var parts2 = v.split(/\s*·\s*/);
       var ff = document.getElementById('var-fin-fecha');
-      if (ff) ff.textContent = parts2[0] ? parts2[0].trim() : '—';
-      // var-hora se setea por separado con key 'hora'
+      if (ff) ff.textContent = v || '—';
     }
   });
 }
@@ -981,6 +979,28 @@ async function exportarRemitoPDF() {
 
 
 
+/* ─── HORAS DE ENTREGA Y DEVOLUCIÓN (persistencia por reserva) ─── */
+function guardarHoras() {
+  var resid = document.getElementById('var-resid') ? document.getElementById('var-resid').textContent.trim() : '';
+  if (!resid || resid === '—') return;
+  var hEntrega  = document.getElementById('var-entrega-hora') ? document.getElementById('var-entrega-hora').value : '';
+  var hDevol    = document.getElementById('var-hora')         ? document.getElementById('var-hora').value         : '';
+  localStorage.setItem('kinto_horas_' + resid, JSON.stringify({ entrega: hEntrega, devol: hDevol }));
+}
+
+function cargarHoras(resid) {
+  if (!resid || resid === '—') return;
+  var raw = localStorage.getItem('kinto_horas_' + resid);
+  if (!raw) return;
+  try {
+    var h = JSON.parse(raw);
+    var ehEl   = document.getElementById('var-entrega-hora');
+    var horaEl = document.getElementById('var-hora');
+    if (ehEl   && h.entrega) ehEl.value   = h.entrega;
+    if (horaEl && h.devol)   horaEl.value = h.devol;
+  } catch(e) {}
+}
+
 /* ─── COMPARTIR PDF POR WHATSAPP (MÓVIL) ─── */
 async function compartirPorWhatsApp() {
   var btn = document.getElementById('btn-wa-share');
@@ -1122,32 +1142,25 @@ window.addEventListener('load', () => {
       currentPlate = d.plate || '';
       if (currentPlate) loadDamages(currentPlate);
 
-      /* ── DEBUG: ver claves del payload ── */
-      console.log('[KINTO DEBUG] payload completo:', JSON.stringify(d, null, 2));
-
-      /* ── Poblar campos directamente para mayor robustez ── */
-      // Fecha y hora de entrega
-      var efEl = document.getElementById('var-entrega-fecha');
-      var ehEl = document.getElementById('var-entrega-hora');
-      var ffEl = document.getElementById('var-fin-fecha');
-      var horaEl = document.getElementById('var-hora');
-
-      if (efEl) efEl.textContent = d.startDate || '—';
-      if (ehEl) ehEl.textContent = d.startTime || '—';
-      if (ffEl) ffEl.textContent = d.endDate   || '—';
-      if (horaEl) horaEl.textContent = d.endTime || '__:__';
-
       /* Populate fields */
       setVars({
         dominio: d.plate     || '— — —',
         resid:   d.resid     || '—',
-        entrega: (d.startDate || '—') + (d.startTime ? '  ·  ' + d.startTime : ''),
-        fin:     (d.endDate   || '—') + (d.endTime   ? '  ·  ' + d.endTime   : ''),
+        entrega: d.startDate || '—',
+        fin:     d.endDate   || '—',
         km:      d.km        || '—',
         usuario: d.renter    || '—',
         cap:     d.tankCap   ? d.tankCap + ' L' : '—',
-        hora:    d.endTime   || '__:__',
       });
+
+      /* Poblar fechas directamente */
+      var efEl = document.getElementById('var-entrega-fecha');
+      var ffEl = document.getElementById('var-fin-fecha');
+      if (efEl) efEl.textContent = d.startDate || '—';
+      if (ffEl) ffEl.textContent = d.endDate   || '—';
+
+      /* Restaurar horas guardadas para esta reserva */
+      cargarHoras(d.resid);
 
       /* Update page title */
       if (d.plate) {
@@ -1190,9 +1203,9 @@ window.addEventListener('load', () => {
     /* ── No data: show demo ── */
     selectVehicle('HATCHBACK');
     setVars({
-      dominio:'AB 123 CD', resid:'RES-00123', entrega:'11/06/2026  ·  09:42',
-      fin:'30/06/2026  ·  11:00',
-      km:'47.320', usuario:'J. García', cap:'45 L', hora:'11:00',
+      dominio:'AB 123 CD', resid:'RES-00123', entrega:'11/06/2026',
+      fin:'30/06/2026',
+      km:'47.320', usuario:'J. García', cap:'45 L',
       tire_fl:'AT201', tire_fr:'AT202', tire_rl:'AT203', tire_rr:'AT204'
     });
   }
