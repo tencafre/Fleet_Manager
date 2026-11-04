@@ -825,8 +825,10 @@ window.openChecklist = function(el) {
       bodyType: veh ? veh.bodyType : '',
       resid: d.code, 
       renter: d.renter,
-      startDate: d.start, 
+      startDate: d.start,
+      startTime: d.startTime || '',
       endDate: d.end,
+      endTime: d.endTime || '',
       km: tel ? tel.km : '—', 
       tankCap: veh ? veh.tankCap : 0,
       tires: JSON.parse(localStorage.getItem(TIRE_PREFIX + d.plate) || '[]')
@@ -1047,7 +1049,9 @@ function renderCal(){
           const iS=dd.getTime()===s.getTime(), iE=dd.getTime()===e.getTime();
           const btype = (iS&&iE)?'bso':iS?'bs':iE?'be':'bm';
           const bc = res.status==='Current'?'bc':'bn';
-          const tipData = JSON.stringify({code:res.code,renter:res.renter,start:res.start.toLocaleDateString(),end:res.end.toLocaleDateString(),plate:res.plate}).replace(/"/g,'&quot;');
+          const fmtTime = d => d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false});
+          const fmtDate = d => d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+          const tipData = JSON.stringify({code:res.code,renter:res.renter,start:fmtDate(res.start),end:fmtDate(res.end),startTime:fmtTime(res.start),endTime:fmtTime(res.end),plate:res.plate}).replace(/"/g,'&quot;');
           html+=`<div class="bar ${btype} ${bc}" data-checklist="${tipData}" onclick="openChecklist(this)">${iS?res.renter:''}</div>`;
         }
       });
