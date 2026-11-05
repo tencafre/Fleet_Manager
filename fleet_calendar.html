@@ -130,6 +130,12 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
 .tr-badge{display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;color:#9a3412;background:#ffedd5;border:1px solid rgba(194,65,12,.35);cursor:default}
 .tr-badge.hoy{color:#fff;background:#dc2626;border-color:#b91c1c;animation:trpulse 1.6s ease-in-out infinite}
 @keyframes trpulse{0%,100%{opacity:1}50%{opacity:.65}}
+.tr-badge.coord{color:#1e3a8a;background:#dbeafe;border-color:rgba(30,64,175,.35);animation:none}
+.tr-badge.done{color:#14532d;background:#dcfce7;border-color:rgba(22,101,52,.35);animation:none}
+.tr-ctl{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+.tr-btn{font-size:9px;font-weight:600;padding:2px 6px;border-radius:4px;border:1px solid var(--border-s);background:var(--surface);color:var(--text2);cursor:pointer;font-family:inherit}
+.tr-btn:hover{border-color:var(--accent);color:var(--accent)}
+.tr-btn.on{background:#dcfce7;border-color:#16a34a;color:#14532d}
 .tr-mk{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:11px;line-height:1;z-index:4}
 .maint-mk{position:absolute;top:1px;left:50%;transform:translateX(-50%);font-size:11px;line-height:1;z-index:4;cursor:pointer;filter:drop-shadow(0 0 1px rgba(0,0,0,.35))}
 .empty{padding:56px;text-align:center;color:var(--text3)}
@@ -377,7 +383,7 @@ code,kbd,.mono{font-family:'JetBrains Mono',monospace}
   <div class="sc"><div class="sl">Próximas</div><div class="sv" id="stN">—</div><div class="ss">reservas nuevas</div></div>
   <div class="sc"><div class="sl">Disponibles</div><div class="sv" id="stA">—</div><div class="ss">sin reserva</div></div>
   <div class="sc"><div class="sl">Alertas mant.</div><div class="sv" id="stM" style="color:#dc2626">—</div><div class="ss">próx. service</div></div>
-  <div class="sc"><div class="sl">Traslados</div><div class="sv" id="stTr" style="color:#ea580c">—</div><div class="ss">PERU → CERRITO (próx. 3 días)</div></div>
+  <div class="sc"><div class="sl">Traslados</div><div class="sv" id="stTr" style="color:#ea580c">—</div><div class="ss" id="stTrS">PERU → CERRITO (próx. 3 días)</div></div>
 </div>
 
 <div class="main">
@@ -651,6 +657,27 @@ function isServiceRes(r){ return /^\s*(service|taller|mantenimiento)\b/i.test((r
 
 // Alerta de traslado: reserva que arranca entre hoy y los próximos 3 días (cubre fines de semana) y el vehículo está en PERU
 const TRASLADO_DIAS = 3;
+const TRASLADO_PREFIX = 'fleetcal_traslado_';
+function getTraslado(code){ try{ return JSON.parse(localStorage.getItem(TRASLADO_PREFIX+code)||'{}'); }catch(e){ return {}; } }
+window.toggleTraslado = function(code, field){
+  const t = getTraslado(code);
+  if(t[field]) delete t[field]; else t[field] = new Date().toISOString();
+  try{ if(Object.keys(t).length) localStorage.setItem(TRASLADO_PREFIX+code, JSON.stringify(t)); else localStorage.removeItem(TRASLADO_PREFIX+code); }catch(e){ console.warn('No se pudo guardar traslado', e); }
+  tryRender();
+};
+function fmtTr(iso){ const d=new Date(iso); return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}); }
+function trasladoHTML(a){
+  const hm = d => d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  const cuando = a.dias===0?'HOY':a.dias===1?'MAÑANA':'EN '+a.dias+' DÍAS ('+a.start.toLocaleDateString('es-AR',{weekday:'short'}).replace('.','').toUpperCase()+')';
+  const cls = a.exec ? 'done' : a.coord ? 'coord' : (a.hoy ? 'hoy' : '');
+  const txt = a.exec ? '✅ Traslado realizado' : a.coord ? '🚚 Traslado coordinado · '+cuando+' '+hm(a.start) : '🚚 Trasladar a CERRITO · '+cuando+' '+hm(a.start);
+  const tip = ('Reserva '+a.code+' · retiro '+a.start.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})+' '+hm(a.start)).replace(/"/g,'&quot;');
+  return `<span class="tr-badge ${cls}" title="${tip}">${txt}</span>`+
+    `<div class="tr-ctl">`+
+    `<button class="tr-btn ${a.coord?'on':''}" title="${a.coord?'Coordinado el '+fmtTr(a.coord)+' (click para deshacer)':'Marcar traslado como coordinado'}" onclick="toggleTraslado('${a.code}','coord')">${a.coord?'✔ Coordinado '+fmtTr(a.coord):'☐ Coordinado'}</button>`+
+    `<button class="tr-btn ${a.exec?'on':''}" title="${a.exec?'Ejecutado el '+fmtTr(a.exec)+' (click para deshacer)':'Marcar traslado como ejecutado'}" onclick="toggleTraslado('${a.code}','exec')">${a.exec?'✔ Ejecutado '+fmtTr(a.exec):'☐ Ejecutado'}</button>`+
+    `</div>`;
+}
 function trasladoAlertInfo(plate){
   const tel = ST.tel && ST.tel[plate];
   if(!tel) return null;
@@ -664,7 +691,8 @@ function trasladoAlertInfo(plate){
   if(!cand.length) return null;
   const r = cand[0];
   const dias = Math.round((day(r.start)-d0)/86400000);
-  return { res:r, code:r.code, hoy: dias===0, dias, start:r.start };
+  const st = getTraslado(r.code);
+  return { res:r, code:r.code, hoy: dias===0, dias, start:r.start, coord:st.coord||null, exec:st.exec||null };
 }
 
 function maintAlertInfo(kmStr, plate){
@@ -1001,7 +1029,10 @@ function updateStats(){
     if(tel && maintAlertInfo(tel.km, v.plate)) maintAlerts++;
   });
   document.getElementById('stM').textContent = maintAlerts;
-  document.getElementById('stTr').textContent = ST.pque.filter(v=>trasladoAlertInfo(v.plate)).length;
+  const trAll = ST.pque.map(v=>trasladoAlertInfo(v.plate)).filter(Boolean);
+  const trPend = trAll.filter(a=>!a.exec);
+  document.getElementById('stTr').textContent = trPend.length;
+  document.getElementById('stTrS').textContent = trPend.filter(a=>!a.coord).length + ' sin coordinar · PERU → CERRITO';
 }
 
 function renderCal(){
@@ -1057,7 +1088,7 @@ function renderCal(){
           <span class="cal-fuel-bar"><span class="cal-fuel-fill" style="width:${fuelPct}%"></span></span>
         </span>
       </span>`:''}
-      ${trAlert?`<span class="tr-badge ${trAlert.hoy?'hoy':''}" title="Reserva ${trAlert.code} · retiro ${trAlert.start.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})} ${trAlert.start.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false})}">🚚 Trasladar a CERRITO · ${trAlert.dias===0?'HOY':trAlert.dias===1?'MAÑANA':'EN '+trAlert.dias+' DÍAS ('+trAlert.start.toLocaleDateString('es-AR',{weekday:'short'}).replace('.','').toUpperCase()+')'} ${trAlert.start.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false})}</span>`:''}
+      ${trAlert?trasladoHTML(trAlert):''}
     </td>`;
 
     html+=`<td class="cmtd">
@@ -1074,7 +1105,7 @@ function renderCal(){
       html+=`<td class="dcell${dow===0||dow===6?' wk':''}${isToday?' tcol':''}">`;
       const dayKey=`${y}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       if(trAlert && new Date(trAlert.start).setHours(0,0,0,0)===toD(d).getTime()){
-        html+=`<span class="tr-mk" title="Trasladar desde PERU a CERRITO antes del retiro">🚚</span>`;
+        html+=`<span class="tr-mk" title="Traslado PERU → CERRITO${trAlert.exec?' (realizado)':trAlert.coord?' (coordinado)':' pendiente'}">${trAlert.exec?'✅':'🚚'}</span>`;
       }
       if(maintByDay[dayKey]){
         const tip=maintByDay[dayKey].map(h=>(h.tipo||'Servicio')+(h.note?' — '+h.note:'')).join(' | ').replace(/"/g,'&quot;');
