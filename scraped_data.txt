@@ -5,7 +5,7 @@ lrjnvjo	Julio Cesar Franco Verdun	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO 
 y76dwx8	Horacio M. C. Fernández	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	9:30 AM  Nov 24, 2026	12:30 PM  Nov 28, 2026	Current
 yej9jww	Anibal Cataño	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	12:00 PM  Nov 24, 2026	12:00 PM  Dec 2, 2026	Current
 ymd8jo7	Víctor Pugliese	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	2:00 PM  Nov 26, 2026	9:00 AM  Dec 2, 2026	Current
-kvr6zro	Carlos Alberto Suite	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	3:00 PM  Nov 26, 2026	6:00 PM  Nov 30, 2026	Pending
+kvr6zro	Carlos Alberto Suite	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	3:00 PM  Nov 26, 2026	6:00 PM  Nov 30, 2026	Current
 lrjn4mz	Sebaatian Caruso	Toyota Corolla Cross HV AT AG765WS	Retiro CERRITO CAR	--	4:00 PM  Dec 1, 2026	4:00 PM  Jan 22, 2027	New
 ypnnq3q	Leandro Sime	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	9:30 AM  Dec 2, 2026	9:25 AM  Dec 9, 2026	New
 k90wo9v	Sofia Speluzzi	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	10:00 AM  Dec 14, 2026	10:00 AM  Jan 15, 2027	New
@@ -14,7 +14,7 @@ kgg7nw2	Sergio Caballero	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	10:00 
 y6m1m06	Marco Antonio Pasetti	Toyota Yaris HB AT AI545FP	Retiro CERRITO CAR	--	10:00 AM  Dec 22, 2026	10:00 AM  Jan 2, 2027	New
 k3rj9wm	Maria Cecilia Bianchi	Toyota Corolla HV AT AI239SV	Retiro CERRITO CAR	--	9:00 AM  Dec 23, 2026	9:00 PM  Jan 5, 2027	New
 ynm12j3	Airin Hoshino	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	2:00 PM  Dec 23, 2026	2:00 PM  Jan 4, 2027	New
-yej9q70	Martina Corsini	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO CAR	--	4:30 PM  Dec 29, 2026	10:00 AM  Jan 4, 2027	New
+yej9q70	Martina Corsini	Toyota Hilux 4x4 DC AT AG838JY	Retiro CERRITO CAR	--	5:30 PM  Dec 28, 2026	10:00 AM  Jan 4, 2027	New
 y76373g	Roberto Mario Ortiz	Toyota Yaris HB AT AG500BY	Retiro CERRITO CAR	--	5:00 PM  Dec 29, 2026	5:00 PM  Jan 5, 2027	New
 yqvp3wv	Matias Ezequiel Ortiz	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	9:10 AM  Jan 21, 2027	10:00 AM  Feb 1, 2027	New
 ljm14z1	Verónica Pinasco	Toyota Yaris HB AT AI545FP	Retiro CERRITO CAR	--	10:00 AM  Feb 1, 2027	10:00 AM  Feb 6, 2027	New
