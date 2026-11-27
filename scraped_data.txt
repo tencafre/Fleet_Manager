@@ -7,6 +7,7 @@ ymd8jo7	Víctor Pugliese	Toyota ETIOS HB A/T AG350QF	Retiro CERRITO CAR	--	2:00 
 kvr6zro	Carlos Alberto Suite	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	3:00 PM  Nov 26, 2026	6:00 PM  Nov 30, 2026	Current
 l8n84pj	Emiliano Morel	Toyota Etios SD AT AG350QD	Retiro CERRITO CAR	--	5:25 PM  Nov 27, 2026	9:10 AM  Nov 30, 2026	Pending
 lrjn4mz	Sebaatian Caruso	Toyota Corolla Cross HV AT AG765WS	Retiro CERRITO CAR	--	4:00 PM  Dec 1, 2026	4:00 PM  Jan 22, 2027	New
+l0rqv1n	Service	Toyota Etios SD AT AG350QD	Retiro CERRITO CAR	--	4:15 PM  Dec 1, 2026	8:15 PM  Dec 9, 2026	New
 ypnnq3q	Leandro Sime	Toyota Yaris HB AT AG708YJ	Retiro CERRITO CAR	--	9:30 AM  Dec 2, 2026	9:25 AM  Dec 9, 2026	New
 k90wo9v	Sofia Speluzzi	Toyota Yaris HB AT AG708YK	Retiro CERRITO CAR	--	10:00 AM  Dec 14, 2026	10:00 AM  Jan 15, 2027	New
 k90z3ne	Luis augusto Branca	Toyota SW4 4x4 7A AT AG269JN	Retiro CERRITO CAR	--	11:00 AM  Dec 17, 2026	11:00 AM  Jan 15, 2027	New
